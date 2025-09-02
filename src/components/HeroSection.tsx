@@ -3,15 +3,17 @@ interface HeroSectionProps {
   title: string;
   subtitle: string;
   backgroundImage: string;
+  slug: string;
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({
   title,
   subtitle,
   backgroundImage,
+  slug
 }) => {
   return (
-    <div className="w-full relative h-[400px] overflow-hidden shadow-2xl z-0">
+    <div className="w-full relative h-[200px] overflow-hidden shadow-md z-0">
       {/* Imagen de fondo */}
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -31,7 +33,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
       </div>
 
       {/* Enlace click al hero */}
-      <Link to="/perfumes-arabes" className="absolute inset-0 z-20"></Link>
+      <Link to={`/categoria/${slug}`} className="absolute inset-0 z-20"></Link>
     </div>
   );
 };

@@ -51,7 +51,7 @@ const CategoryPage: React.FC = () => {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
-
+  const [showSidebar, setShowSidebar] = useState(false);
   // ------------------------------
   // ATTRIBUTES STATE
   // ------------------------------
@@ -188,7 +188,14 @@ const CategoryPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4">
       <div className="flex gap-6">
         {/* Sidebar categorías + atributos */}
-        <aside className="w-1/4 space-y-6">
+        <aside
+          className={`
+    fixed top-0 left-0 h-full w-64 bg-white z-50 p-4 overflow-auto shadow-md
+    transform transition-transform duration-300
+    ${showSidebar ? "translate-x-0" : "-translate-x-full"} 
+    md:relative md:translate-x-0 md:w-1/4
+  `}
+        >
           <div className="flex flex-col space-y-2">
             <button
               className={`px-3 py-1 rounded text-sm ${
@@ -236,13 +243,21 @@ const CategoryPage: React.FC = () => {
         </aside>
 
         {/* Productos con InfiniteScroll */}
-        <main className="w-3/4">
+        <main className="w-full md:w-3/4 md:ml-1/4">
           {loading && products.length === 0 && (
             <div className="flex justify-center items-center py-10">
               <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin"></div>
             </div>
           )}
-
+          {/* Botón Filtros para móviles */}
+          <div className="flex justify-end mb-4 md:hidden">
+            <button
+              onClick={() => setShowSidebar(!showSidebar)}
+              className="px-4 py-2 bg-orange-200 text-black rounded"
+            >
+              Filtros
+            </button>
+          </div>
           <InfiniteScroll
             dataLength={products.length}
             next={loadMore}
@@ -254,18 +269,21 @@ const CategoryPage: React.FC = () => {
               </p>
             }
           >
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-2">
               {products.map((product) => (
                 <Link to={`/producto/${product.id}`} key={product.id}>
                   <div className="p-2 rounded shadow-sm">
                     <div
-                      className="relative"
+                      className="relative border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 text-center lg:h-40 h-80 flex flex-col"
                       style={{
                         backgroundImage: `url(${
                           product.images?.[0]?.src || "/placeholder.png"
                         })`,
                         minHeight: "10rem",
-                        backgroundSize: "cover",
+                        backgroundSize: "contain",
+                        backgroundRepeat: "no-repeat",
+                        backgroundOrigin: "center",
+                        backgroundPosition: "center",
                       }}
                     >
                       {product.price && (

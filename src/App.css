@@ -1,7 +1,5 @@
 @import "tailwindcss";
 @import "react-toastify/dist/ReactToastify.css";
-@import "slick-carousel/slick/slick.css"; 
-@import "slick-carousel/slick/slick-theme.css";
 
 @plugin "flowbite-react/plugin/tailwindcss";
 @plugin "flowbite/plugin";
@@ -12,3 +10,4 @@
 body {
   @apply bg-orange-50;
 }
+

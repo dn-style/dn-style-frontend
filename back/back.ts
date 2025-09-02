@@ -5,7 +5,13 @@ import "dotenv/config";
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors(
+  {
+    origin: ['http://localhost:3001', 'http://miamo.com.ar'],
+    credentials: true,
+    
+  }
+));
 
 const api = new WooCommerceRestApi({
   url: process.env.WC_BASE!,

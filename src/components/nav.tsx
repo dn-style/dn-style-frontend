@@ -1,8 +1,9 @@
 import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingCart, Search } from "lucide-react";
+import { ShoppingCart, Search, MenuIcon } from "lucide-react";
 import { useCategoriesStore } from "../store/categoriesStore";
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Category {
   id: number;
@@ -12,9 +13,7 @@ interface Category {
   link: string;
 }
 const fetchCategories = async (): Promise<Category[]> => {
-  const res = await fetch(
-    "http://dn-style.com.ar:8080/wp-json/wp/v2/product_cat"
-  );
+  const res = await fetch("http://miamo.com.ar/wp-json/wp/v2/product_cat");
   if (!res.ok) throw new Error("Error fetching categories");
   return res.json();
 };
@@ -68,28 +67,32 @@ const Header: React.FC = () => {
 
       {/* main nav */}
       <div className="flex flex-col max-w-5xl mx-auto relative z-50">
-        <div className="flex flex-row mx-auto justify-between items-center py-4 px-4">
+        <div className="flex flex-row md:mx-auto justify-between place-items-end py-4 px-4">
           {/* logo */}
-          <a href="/" className="flex items-center">
-            <img
-              src="http://dn-style.com.ar:8080/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
-              alt="Logo"
-              className="h-16 w-auto hidden md:block"
-            />
-            <img
-              src="/wp-content/uploads/2018/01/Haikmaro_logo_moblie.png"
-              alt="Logo Mobile"
-              className="h-8 w-auto md:hidden"
-            />
-          </a>
+          <div>
+            <a href="/" className="flex items-center">
+              <img
+                src="http://miamo.com.ar/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
+                alt="Logo"
+                className="h-16 w-auto hidden md:block"
+              />
+              <img
+                src="http://miamo.com.ar/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
+                alt="Logo Mobile"
+                className="h-16 w-auto md:hidden"
+              />
+            </a>
+          </div>
+          <div>
 
           {/* mobile menu button */}
           <button
             className="md:hidden text-gray-800"
             onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            ☰
+            >
+            <MenuIcon size={36}></MenuIcon>
           </button>
+            </div>
         </div>
       </div>
       <div>
@@ -164,7 +167,10 @@ const Header: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="hidden md:flex items-center border-0 h-7 overflow-hidden ml-4 bg-pink-50"
                   />
-                  <button type="submit" className="bg-pink-200 px-3 py-1.5  hover:bg-pink-300 transition-colors duration-200 rounded-r-full">
+                  <button
+                    type="submit"
+                    className="bg-pink-200 px-3 py-1.5  hover:bg-pink-300 transition-colors duration-200 rounded-r-full"
+                  >
                     <Search size={16} />
                   </button>
                 </form>
