@@ -22,22 +22,24 @@
     <div class="container">
       <div class="logo">DN STYLE</div>
       <h1>¡Gracias por tu compra!</h1>
-      <p>Hola {{name}}, hemos recibido tu pedido #{{order_id}}. Estamos preparando tus productos con el mayor cuidado.</p>
+      <p>Hola Leandro Fusco, hemos recibido tu pedido #12345. Estamos preparando tus productos con el mayor cuidado.</p>
       
       <div class="order-card">
-        {{#each items}}
         <div class="item-row">
-          <span class="item-name">{{name}} x{{quantity}}</span>
-          <span class="item-price">${{price}}</span>
+          <span class="item-name">iPhone 15 Pro Max - Titanio x1</span>
+          <span class="item-price">$1199.00</span>
         </div>
-        {{/each}}
-        <div class="total-row">Total: ${{total}}</div>
+        <div class="item-row">
+          <span class="item-name">Libre Eau de Parfum 90ml x1</span>
+          <span class="item-price">$400.00</span>
+        </div>
+        <div class="total-row">Total: $1599.00</div>
       </div>
 
       <p style="font-size: 13px;">Recibirás otro correo cuando tu pedido esté en camino.</p>
       
       <div class="footer">
-        DN STYLE STORE &copy; {{year}} | BUENOS AIRES, ARGENTINA
+        DN STYLE STORE &copy; 2026 | BUENOS AIRES, ARGENTINA
       </div>
     </div>
   </div>

@@ -118,7 +118,7 @@ const CheckoutPage = () => {
       }
       
       clearCart();
-      navigate('/');
+      navigate('/thanks');
     } catch (error: any) {
       console.error('Error en checkout:', error);
       toast.error(error.message);

@@ -1,4 +1,6 @@
 import express, { Request, Response } from 'express';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import WooCommerceRestApi from 'woocommerce-rest-ts-api';
 import cors from 'cors';
 import { createProxyMiddleware } from 'http-proxy-middleware';
@@ -10,14 +12,55 @@ import nodemailer from 'nodemailer';
 import hbs from 'handlebars';
 import fs from 'fs';
 import path from 'path';
+import { createClient } from 'redis';
+
+// --- CONFIGURACIÓN REDIS ---
+const redisClient = createClient({
+  url: process.env.REDIS_URL || 'redis://host.docker.internal:6380'
+});
+
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.connect().then(() => console.log('✅ Conectado a Redis')).catch(console.error);
+
+const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "*", 
+    methods: ["GET", "POST"]
+  }
+});
+
+// --- SOCKET.IO LÓGICA ---
+io.on('connection', (socket) => {
+  console.log('Cliente conectado al chat:', socket.id);
+
+  socket.on('join_chat', (data) => {
+    console.log(`Usuario ${data?.name || 'Anónimo'} se unió al chat`);
+    socket.emit('receive_message', {
+      text: '¡Hola! Bienvenido a DN Style. ¿En qué podemos ayudarte hoy?',
+      sender: 'agent',
+      timestamp: new Date()
+    });
+  });
+
+  socket.on('send_message', (msg) => {
+    console.log('Mensaje recibido:', msg);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Cliente desconectado:', socket.id);
+  });
+});
 
 // --- CONFIGURACIÓN EMAIL ---
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.ethereal.email',
-  port: Number(process.env.SMTP_PORT) || 587,
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: process.env.SMTP_SECURE === 'true', 
   auth: {
-    user: process.env.SMTP_USER || 'ethereal_user',
-    pass: process.env.SMTP_PASS || 'ethereal_pass',
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 
@@ -28,24 +71,20 @@ const sendEmail = async (to: string, subject: string, templateName: string, cont
     const template = hbs.compile(templateSource);
     const html = template(context);
 
+    const fromAddress = process.env.EMAIL_FROM || '"DN Style Store" <ventas@hipotecatech.es>';
+
     const info = await transporter.sendMail({
-      from: '"DN Style Store" <noreply@dnstyle.com>',
+      from: fromAddress,
       to,
       subject,
       html,
     });
 
-    console.log(`Email enviado a ${to}: ${info.messageId}`);
-    // Si es Ethereal, mostrar URL de preview
-    if (process.env.SMTP_HOST?.includes('ethereal')) {
-      console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
-    }
+    console.log(`✅ Email enviado a ${to}: ${info.messageId}`);
   } catch (error) {
-    console.error('Error enviando email:', error);
+    console.error('❌ Error enviando email:', error);
   }
 };
-
-const app = express();
 
 // --- Configuración MinIO / S3 ---
 const s3Client = new S3Client({
@@ -55,7 +94,7 @@ const s3Client = new S3Client({
     accessKeyId: process.env.S3_ACCESS_KEY_ID || 'minioadmin',
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || 'minioadmin',
   },
-  forcePathStyle: true, // Necesario para MinIO
+  forcePathStyle: true, 
 });
 
 const BUCKET_NAME = 'pagos';
@@ -377,7 +416,7 @@ app.post('/wc/reviews', async (req: Request, res: Response) => {
       reviewer,
       reviewer_email,
       rating,
-      status: 'approved' // O 'hold' si prefieres moderarlas
+      status: 'approved' 
     });
     res.json(response.data);
   } catch (err: any) {
@@ -523,69 +562,26 @@ app.post('/checkout', async (req: Request, res: Response) => {
       customer_note: customer_note
     });
 
-    res.json({ order_id: response.data.id, link: response.data.link });
+    const newOrder = response.data;
+
+    // Enviar email de confirmación
+    await sendEmail(billing.email, `Confirmación de pedido #${newOrder.id}`, 'order-confirmation', {
+      name: billing.first_name,
+      order_id: newOrder.id,
+      items: newOrder.line_items.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price
+      })),
+      total: newOrder.total,
+      year: new Date().getFullYear()
+    });
+
+    res.json({ order_id: newOrder.id, link: newOrder.link });
   } catch (err: any) {
     console.error('Error creando pedido:', err.response?.data || err.message);
     res.status(err.response?.status || 500).json({ error: 'Error creando pedido', details: err.response?.data });
   }
 });
 
-// --- PASSWORD RECOVERY ---
-
-app.post('/auth/forgot-password', async (req: Request, res: Response) => {
-  const { email } = req.body;
-  try {
-    // 1. Verificar si el usuario existe en WP
-    const usersRes = await api._request('GET', 'customers', { email });
-    if (!usersRes.data || usersRes.data.length === 0) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
-    }
-    const user = usersRes.data[0];
-
-    // 2. Generar token temporal (Simulado para este MVP, idealmente se guarda en Redis/DB con expiración)
-    const resetToken = Buffer.from(`${user.id}:${Date.now()}`).toString('base64');
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`; // URL del Frontend
-
-    // 3. Enviar email
-    await sendEmail(email, 'Recuperación de Contraseña', 'reset-password', {
-      name: user.first_name || 'Cliente',
-      reset_link: resetLink,
-      year: new Date().getFullYear()
-    });
-
-    res.json({ message: 'Correo de recuperación enviado' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error procesando solicitud' });
-  }
-});
-
-// --- WEBHOOKS (WooCommerce -> Node) ---
-
-app.post('/webhooks/order-updated', async (req: Request, res: Response) => {
-  const order = req.body;
-  
-  try {
-    console.log(`Webhook recibido: Pedido #${order.id} está ${order.status}`);
-
-    // Si el pedido pasa a "completed" o "shipped" (depende de tus estados custom)
-    if (order.status === 'completed' || order.status === 'processing') {
-        const trackingMeta = order.meta_data.find((m: any) => m.key === '_tracking_number' || m.key === 'tracking_number');
-        const trackingNumber = trackingMeta ? trackingMeta.value : null;
-
-        await sendEmail(order.billing.email, `Tu pedido #${order.id} está en camino`, 'order-shipped', {
-          name: order.billing.first_name,
-          order_id: order.id,
-          tracking_number: trackingNumber,
-          tracking_url: trackingNumber ? `https://correo.com/tracking/${trackingNumber}` : null // URL de ejemplo
-        });
-    }
-    
-    res.status(200).send('Webhook processed');
-  } catch (err) {
-    console.error('Webhook error:', err);
-    res.status(500).send('Error processing webhook');
-  }
-});
-
-app.listen(4000, () => console.log('Proxy WooCommerce corriendo en puerto 4000'));
+httpServer.listen(4000, () => console.log('Servidor (HTTP + Socket.IO) corriendo en puerto 4000'));

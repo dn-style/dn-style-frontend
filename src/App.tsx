@@ -19,11 +19,13 @@ import FAQPage from "./components/FAQPage";
 import TermsPage from "./components/TermsPage";
 import PrivacyPage from "./components/PrivacyPage";
 import TrackingPage from "./components/TrackingPage";
-import WhatsAppButton from "./components/WhatsAppButton";
+import SpeedDialButton from "./components/SpeedDialButton";
 import LoadingScreen from "./components/LoadingScreen";
 import ScrollToTop from "./components/ScrollToTop";
-import FloatingCart from "./components/FloatingCart";
 import SearchPage from "./components/SearchPage";
+import ResetPasswordPage from "./components/ResetPasswordPage";
+import VerifyEmailPage from "./components/VerifyEmailPage";
+import ThankYouPage from "./components/ThankYouPage";
 
 const queryClient = new QueryClient();
 
@@ -47,8 +49,7 @@ function App() {
         <ScrollToTop />
         <div className="flex flex-col min-h-screen">
           <Navbar />
-          <WhatsAppButton />
-          <FloatingCart />
+          <SpeedDialButton />
           <main className="flex-grow">
             <ToastContainer position="bottom-right" autoClose={3000} />
             <Routes>
@@ -56,6 +57,9 @@ function App() {
               <Route path="/about" element={<AboutPage />} />
               <Route path="/support" element={<SupportPage />} />
               <Route path="/search" element={<SearchPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify" element={<VerifyEmailPage />} />
+              <Route path="/thanks" element={<ThankYouPage />} />
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
