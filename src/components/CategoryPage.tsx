@@ -65,8 +65,9 @@ const CategoryPage: React.FC = () => {
     if (!mainCategoryId) return;
 
     const fetchAttributesForCategory = async (categoryId: number) => {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
       const res = await fetch(
-        `http://localhost:4000/wc/products?category=${categoryId}&per_page=100`
+        `${apiUrl}/wc/products?category=${categoryId}&per_page=100`
       );
       if (!res.ok) return [];
       const products: Product[] = await res.json();
@@ -146,7 +147,8 @@ const CategoryPage: React.FC = () => {
       attributes: JSON.stringify(selectedAttributes),
     };
 
-    const url = `http://localhost:4000/wc/products?${new URLSearchParams(
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    const url = `${apiUrl}/wc/products?${new URLSearchParams(
       params
     )}`;
     const res = await fetch(url);
@@ -190,7 +192,7 @@ const CategoryPage: React.FC = () => {
         {/* Sidebar categorías + atributos */}
         <aside
           className={`
-    fixed top-0 left-0 h-full w-64 bg-white z-50 p-4 overflow-auto shadow-md
+    fixed top-0 left-0 h-full w-64 bg-white z-30 p-4 overflow-auto shadow-md
     transform transition-transform duration-300
     ${showSidebar ? "translate-x-0" : "-translate-x-full"} 
     md:relative md:translate-x-0 md:w-1/4
@@ -287,7 +289,7 @@ const CategoryPage: React.FC = () => {
                       }}
                     >
                       {product.price && (
-                        <span className="absolute -top-4 right-0 z-50 bg-orange-200 text-black flex items-center justify-center rounded-full w-10 h-10 shadow-md">
+                        <span className="absolute -top-4 right-0 z-30 bg-orange-200 text-black flex items-center justify-center rounded-full w-10 h-10 shadow-md">
                           ${product.price}
                         </span>
                       )}

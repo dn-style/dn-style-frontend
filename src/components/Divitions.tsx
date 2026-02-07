@@ -31,7 +31,8 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
     setLoading(true);
     setError(false);
 
-    fetch(`http://10.10.0.3:4000/wc/products?category=${categoryId}`)
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    fetch(`${apiUrl}/wc/products?category=${categoryId}`)
       .then((res) => {
         if (!res.ok) throw new Error("Error al obtener productos");
         return res.json();
@@ -144,33 +145,37 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
             {sortedProducts.map((product) => (
               <Link to={`/producto/${product.id}`} key={product.id}>
                 <div key={product.id} className="px-2 focus:outline-none">
-                  <div className="border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 text-center lg:h-40 h-80 flex flex-col">
+                  <div className="border border-gray-100  rounded-xl bg-white  shadow-sm hover:shadow-xl transition-all duration-300 p-4 h-full flex flex-col group">
                     <div
-                      className="flex-1 relative overflow-visible rounded-md bg-gray-100"
-                      style={{
-                        backgroundImage: `url(${
-                          product.images[0]?.src || "/placeholder.png"
-                        })`,
-                        backgroundPosition: "center",
-                        backgroundOrigin: "center",
-                        backgroundSize: "contain",
-                        backgroundRepeat: "no-repeat",
-
-                      }}
+                      className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-50  mb-4 flex items-center justify-center p-4"
                     >
+                      {/* Image background */}
+                       <img 
+                         src={product.images[0]?.src || "/placeholder.png"}
+                         alt={product.name}
+                         className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
+                         loading="lazy"
+                       />
+                       
+                       {/* Badge for price */}
                       {product.price && (
-                        <span className="absolute top-3 right-2 -translate-y-1/2 z-10 bg-orange-200 text-black flex items-center justify-center rounded-full w-12 h-12 shadow-md">
+                        <div className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full shadow-sm">
                           ${product.price}
-                        </span>
+                        </div>
                       )}
                     </div>
-                    <div className="mt-3">
-                      <h3 className="text-sm font-medium text-gray-800 line-clamp-2">
-                        {product.name}
-                      </h3>
-                      {/* <p className="text-lg font-bold text-blue-600 mt-1">
-                      {product.price}
-                    </p> */}
+                    
+                    <div className="flex flex-col flex-grow justify-between">
+                      <div>
+                        <h3 className="text-base font-semibold text-gray-900  line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
+                          {product.name}
+                        </h3>
+                        <p className="text-xs text-gray-500  line-clamp-2" dangerouslySetInnerHTML={{__html: product.description?.replace(/<[^>]*>?/gm, '') || ''}}></p>
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-gray-100  flex items-center text-blue-600 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                        Ver Detalles
+                        <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                      </div>
                     </div>
                   </div>
                 </div>

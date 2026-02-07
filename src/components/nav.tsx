@@ -1,9 +1,10 @@
 import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ShoppingCart, Search, MenuIcon } from "lucide-react";
+import { ShoppingCart, Search, MenuIcon, User } from "lucide-react";
 import { useCategoriesStore } from "../store/categoriesStore";
-const API_URL = import.meta.env.VITE_API_URL;
+import { useCartStore } from "../store/cartStore";
+// const API_URL = import.meta.env.VITE_API_URL;
 
 interface Category {
   id: number;
@@ -11,15 +12,73 @@ interface Category {
   slug: string;
   parent: number;
   link: string;
+  image?: string;
 }
-const fetchCategories = async (): Promise<Category[]> => {
-  const res = await fetch("http://miamo.com.ar/wp-json/wp/v2/product_cat");
-  if (!res.ok) throw new Error("Error fetching categories");
+
+interface Brand {
+  name: string;
+  image: string;
+}
+
+const BRANDS: Record<string, Brand[]> = {
+  perfumes: [
+    {
+      name: "Carolina Herrera",
+      image:
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ48yDcHtJx2ZVFfyqGuRrTFWwts89-WSWucw&s",
+    },
+    {
+      name: "Bvlgari",
+      image:
+        "https://i.pinimg.com/736x/d5/61/cd/d561cd448f7c7880ae6943b798cce1ca.jpg",
+    },
+    {
+      name: "Bvlgari",
+      image:
+        "https://i.pinimg.com/736x/d5/61/cd/d561cd448f7c7880ae6943b798cce1ca.jpg",
+    },
+    {
+      name: "Bvlgari",
+      image:
+        "https://i.pinimg.com/736x/d5/61/cd/d561cd448f7c7880ae6943b798cce1ca.jpg",
+    },
+    {
+      name: "Bvlgari",
+      image:
+        "https://i.pinimg.com/736x/d5/61/cd/d561cd448f7c7880ae6943b798cce1ca.jpg",
+    },
+    {
+      name: "Bvlgari",
+      image:
+        "https://i.pinimg.com/736x/d5/61/cd/d561cd448f7c7880ae6943b798cce1ca.jpg",
+    },
+    {
+      name: "Bvlgari",
+      image:
+        "https://i.pinimg.com/736x/d5/61/cd/d561cd448f7c7880ae6943b798cce1ca.jpg",
+    },
+  ],
+  electronica: [
+    { name: "Samsung", image: "https://via.placeholder.com/150" },
+    { name: "Sony", image: "https://via.placeholder.com/150" },
+  ],
+  iphone: [
+    { name: "Apple", image: "https://via.placeholder.com/150" },
+    { name: "Beats", image: "https://via.placeholder.com/150" },
+  ],
+};
+  const fetchCategories = async (): Promise<Category[]> => {
+    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    const res = await fetch(`${apiUrl}/wc/categories`);
+    if (!res.ok) throw new Error("Error fetching categories");
+
   return res.json();
 };
 
 const Header: React.FC = () => {
   const setCategoriesStore = useCategoriesStore((state) => state.setCategories);
+  const itemsCount = useCartStore((state) => state.itemsCount());
+  
   const { data, isLoading, error } = useQuery<Category[], Error>({
     queryKey: ["categories"],
     queryFn: fetchCategories,
@@ -72,27 +131,26 @@ const Header: React.FC = () => {
           <div>
             <a href="/" className="flex items-center">
               <img
-                src="http://miamo.com.ar/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
+                src="/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
                 alt="Logo"
                 className="h-16 w-auto hidden md:block"
               />
               <img
-                src="http://miamo.com.ar/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
+                src="/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
                 alt="Logo Mobile"
                 className="h-16 w-auto md:hidden"
               />
             </a>
           </div>
           <div>
-
-          {/* mobile menu button */}
-          <button
-            className="md:hidden text-gray-800"
-            onClick={() => setMobileOpen(!mobileOpen)}
+            {/* mobile menu button */}
+            <button
+              className="md:hidden text-gray-800"
+              onClick={() => setMobileOpen(!mobileOpen)}
             >
-            <MenuIcon size={36}></MenuIcon>
-          </button>
-            </div>
+              <MenuIcon size={36}></MenuIcon>
+            </button>
+          </div>
         </div>
       </div>
       <div>
@@ -117,7 +175,7 @@ const Header: React.FC = () => {
                 return (
                   <li
                     key={cat.id}
-                    className="relative"
+                    className=""
                     onMouseEnter={() => handleMouseEnter(cat.slug)}
                     onMouseLeave={handleMouseLeave}
                   >
@@ -129,30 +187,130 @@ const Header: React.FC = () => {
                     </Link>
 
                     {subCats.length > 0 && openDropdown === cat.slug && (
-                      <ul className="absolute left-0 top-full mt-1 bg-white shadow-lg z-50 min-w-[200px]">
-                        {subCats.map((sub) => (
-                          <li key={sub.id}>
-                            <Link
-                              to={`/categoria/${sub.slug}`}
-                              className="block px-4 py-2 hover:bg-gray-100"
-                            >
-                              {sub.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
+                      <>
+                        {/* BACKDROP */}
+                        <div
+                          className="fixed inset-0 bg-gray-800/50"
+                          onClick={() => setOpenDropdown(null)} // cerrar al hacer click afuera
+                        ></div>
+
+                        {/* MEGA MENÚ */}
+                        {/* MEGA MENÚ */}
+                        <div className="absolute left-0 right-0 mt-5 bg-transparent z-50">
+                          <div className="max-w-10/12 mx-auto grid grid-cols-8 gap-2">
+                            {/* COLUMNA DESTACADOS */}
+                            <div className="col-span-2 bg-black text-white rounded-2xl shadow-sm shadow-gray-400 flex flex-col p-4">
+                              <h3 className="text-left text-sm font-bold mb-2">
+                                Destacados
+                              </h3>
+                              <ul className="text-md font-extralight space-y-3">
+                                <li>test</li>
+                                <li>test</li>
+                                <li>test</li>
+                                <li>test</li>
+                                <li>test</li>
+                              </ul>
+                            </div>
+
+                            {/* SECCIÓN PRINCIPAL: subcategorías */}
+                            <div className="col-span-4 bg-white rounded-2xl shadow-sm shadow-gray-400 p-6">
+                              <div className="grid grid-cols-4 gap-4 h-60">
+                                {subCats.map((sub) => (
+                                  <div
+                                    key={sub.id}
+                                    className="p-2 rounded-md bg-white"
+                                  >
+                                    <Link
+                                      to={`/categoria/${sub.slug}`}
+                                      className="block text-gray-700 transition font-medium hover:text-pink-600"
+                                    >
+                                      <div className="flex justify-center mt-2">
+                                        {/* imagen si querés */}
+                                      </div>
+                                      <h3 className="text-center text-sm mt-2">
+                                        {sub.name}
+                                      </h3>
+                                    </Link>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* SECCIÓN LATERAL */}
+                            <div className="col-span-2 rounded-2xl shadow-sm shadow-gray-400 flex items-center justify-center relative">
+                              <div
+                                className="text-center text-gray-600 w-full h-full rounded-2xl"
+                                style={{
+                                  backgroundImage: `url(https://juleriaque.vtexassets.com/unsafe/320x0/center/middle/https%3A%2F%2Fjuleriaque.vtexassets.com/assets%2Fvtex.file-manager-graphql%2Fimages%2F7bf082ec-8df4-4d82-968e-2c54ba0015f3___ade26d23b93570dce56c18683706fe9b.jpg)`,
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                  backgroundRepeat: "no-repeat",
+                                }}
+                              ></div>
+                            </div>
+
+                            {/* SECCIÓN LATERAL */}
+                            <div className="col-span-2 rounded-2xl shadow-sm shadow-gray-400 flex items-center justify-center relative z-50">
+                              <div
+                                className="text-center text-gray-600 w-full h-full rounded-2xl "
+                                style={{
+                                  backgroundImage: `url(https://juleriaque.vtexassets.com/unsafe/320x0/center/middle/https%3A%2F%2Fjuleriaque.vtexassets.com%2Fassets%2Fvtex.file-manager-graphql%2Fimages%2F7bf082ec-8df4-4d82-968e-2c54ba0015f3___ade26d23b93570dce56c18683706fe9b.jpg)`,
+                                  backgroundSize: "cover",
+                                  backgroundPosition: "center",
+                                  backgroundRepeat: "no-repeat",
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* SECCIÓN EXTRA (ejemplo: marcas) */}
+                          <div className="max-w-10/12 bg-white rounded-2xl p-4 shadow-sm shadow-gray-400 m-auto grid grid-cols-8 gap-2 relative z-50">
+                            <div className="flex items-center">
+                              <h3 className="text-4xl font-sans font-extrabold">
+                                Marcas
+                              </h3>
+                            </div>
+                            {BRANDS[cat.slug]?.map((brand, idx) => (
+                              <div
+                                key={idx}
+                                className="flex flex-col items-center"
+                              >
+                                <img
+                                  src={brand.image}
+                                  alt={brand.name}
+                                  className="h-full w-full rounded-md object-cover"
+                                />
+                                <span className="text-xs mt-1">
+                                  {brand.name}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
                     )}
                   </li>
                 );
               })}
+
               <li>
-                <Link to="/contacto/" className="hover:text-pink-600">
-                  CONTACTO
+                <Link to="/about" className="hover:text-pink-600">
+                  NOSOTROS
                 </Link>
               </li>
               <li>
-                <Link to="/carro/" className=" text-black hover:text-pink-600">
-                  <ShoppingCart size={16} />
+                <Link to="/account" className="hover:text-pink-600" aria-label="Mi Cuenta">
+                   <User size={20} />
+                </Link>
+              </li>
+              <li>
+                <Link to="/cart" className="text-black hover:text-pink-600 relative">
+                  <ShoppingCart size={20} />
+                  {itemsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                      {itemsCount}
+                    </span>
+                  )}
                 </Link>
               </li>
               <li>

@@ -8,6 +8,12 @@
 @source "../node_modules/flowbite";
 
 body {
-  @apply bg-orange-50;
+  @apply bg-white text-gray-900;
+  font-family: 'Outfit', sans-serif;
+}
+
+/* Forzar que no haya estilos oscuros residuales */
+:root {
+  color-scheme: light;
 }
 
