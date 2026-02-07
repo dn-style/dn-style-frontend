@@ -1,5 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import type { Product } from "../types";
 import { useCartStore } from "../store/cartStore";
 import { toast } from "react-toastify";
@@ -228,7 +231,7 @@ const ProductPage = () => {
              {/* Resumen de Valoración */}
              <div className="flex items-center gap-3 mb-6">
                 <StarRating rating={parseFloat(product.average_rating)} />
-                <span className="text-sm font-bold text-gray-400">({product.rating_count} reseñas)</span>
+                <span className="text-sm font-bold text-gray-400">({reviews.length} reseñas)</span>
              </div>
              
              <div className="flex flex-col mb-8">
@@ -323,8 +326,8 @@ const ProductPage = () => {
           </div>
         )}
 
-        {/* RESEÑAS */}
-        <div className="mt-24 max-w-4xl mx-auto">
+        {/* RESEÑAS (CARRUSEL) */}
+        <div className="mt-24 max-w-7xl mx-auto">
           <h3 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100 uppercase tracking-tight flex items-center gap-4">
             Reseñas del Producto
             <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-black">{reviews.length}</span>
@@ -335,33 +338,53 @@ const ProductPage = () => {
               <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Aún no hay reseñas para este producto</p>
             </div>
           ) : (
-            <div className="space-y-10">
-              {reviews.map((rev) => (
-                <div key={rev.id} className="flex gap-6">
-                  <div className="flex-shrink-0">
-                    <img 
-                      src={rev.reviewer_avatar_urls['96']} 
-                      alt={rev.reviewer} 
-                      className="w-14 h-14 rounded-2xl bg-gray-100 border border-gray-100" 
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap justify-between items-center mb-2">
-                      <h4 className="font-bold text-gray-900">{rev.reviewer}</h4>
-                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                        {new Date(rev.date_created).toLocaleDateString()}
-                      </span>
+            <div className="px-4">
+              <Slider 
+                dots={true}
+                infinite={false}
+                speed={500}
+                slidesToShow={reviews.length < 3 ? reviews.length : 3}
+                slidesToScroll={1}
+                responsive={[
+                  { breakpoint: 1024, settings: { slidesToShow: 2 } },
+                  { breakpoint: 600, settings: { slidesToShow: 1 } }
+                ]}
+              >
+                {reviews.map((rev) => (
+                  <div key={rev.id} className="px-2 pb-8">
+                    <div className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100 h-full min-h-[250px] flex flex-col justify-between hover:shadow-lg transition-shadow">
+                      <div>
+                        <div className="flex items-center gap-4 mb-6">
+                          <img 
+                            src={rev.reviewer_avatar_urls['96']} 
+                            alt={rev.reviewer} 
+                            className="w-12 h-12 rounded-full border-2 border-white shadow-sm" 
+                          />
+                          <div>
+                            <h4 className="font-bold text-gray-900 text-sm uppercase tracking-tight">{rev.reviewer}</h4>
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                              {new Date(rev.date_created).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mb-4">
+                          <StarRating rating={rev.rating} />
+                        </div>
+                        <div 
+                          className="text-gray-600 leading-relaxed text-sm font-medium italic line-clamp-4"
+                          dangerouslySetInnerHTML={{ __html: rev.review }}
+                        />
+                      </div>
+                      <div className="mt-6 pt-4 border-t border-gray-200/50">
+                         <span className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1">
+                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                           Compra Verificada
+                         </span>
+                      </div>
                     </div>
-                    <div className="mb-3">
-                      <StarRating rating={rev.rating} />
-                    </div>
-                    <div 
-                      className="text-gray-600 leading-relaxed text-sm italic"
-                      dangerouslySetInnerHTML={{ __html: rev.review }}
-                    />
                   </div>
-                </div>
-              ))}
+                ))}
+              </Slider>
             </div>
           )}
         </div>

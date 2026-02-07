@@ -301,6 +301,21 @@ app.get('/wc/products/:id/reviews', async (req: Request, res: Response) => {
   }
 });
 
+// Verificar si un usuario ya calificó un producto
+app.get('/wc/reviews/check', async (req: Request, res: Response) => {
+  const { product_id, email } = req.query;
+  try {
+    const response = await api._request('GET', 'products/reviews', { 
+      product: [product_id],
+      reviewer_email: email
+    });
+    // Si hay al menos una reseña, devolvemos true
+    res.json({ hasReviewed: Array.isArray(response.data) && response.data.length > 0 });
+  } catch (err) {
+    res.json({ hasReviewed: false });
+  }
+});
+
 app.get('/wc/categories', async (req: Request, res: Response) => {
   try {
     const params: Record<string, any> = {};
