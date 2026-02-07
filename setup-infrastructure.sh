@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Configuración básica
-SITE_URL="http://localhost:8086"
+SITE_URL="https://test.system4us.com"
 SITE_TITLE="DN Style Store"
 ADMIN_USER="admin"
 ADMIN_PASSWORD="Ds12345678!"
 ADMIN_EMAIL="admin@example.com"
 
-echo "=== INICIANDO SETUP DE INFRAESTRUCTURA ==="
+echo "=== INICIANDO SETUP DE INFRAESTRUCTURA (PRODUCCIÓN) ==="
 
 echo "Esperando a que la base de datos esté lista..."
 sleep 5
@@ -16,36 +16,80 @@ sleep 5
 if docker-compose run --rm wp-cli wp --allow-root core is-installed --quiet; then
   echo "✅ WordPress ya está instalado."
 else
-  echo "⚙️ Instalando WordPress Core..."
+  echo "⚙️ Instalando WordPress Core en $SITE_URL..."
   docker-compose run --rm wp-cli wp --allow-root core install --url="$SITE_URL" --title="$SITE_TITLE" --admin_user="$ADMIN_USER" --admin_password="$ADMIN_PASSWORD" --admin_email="$ADMIN_EMAIL" --skip-email
   echo "✅ WordPress instalado."
 fi
 
 # 2. PLUGINS
 echo "⚙️ Instalando/Verificando plugins..."
-PLUGINS="woocommerce woocommerce-mercadopago jwt-authentication-for-wp-rest-api"
+PLUGINS="woocommerce woocommerce-mercadopago jwt-authentication-for-wp-rest-api amazon-s3-and-cloudfront"
 for plugin in $PLUGINS; do
     if ! docker-compose run --rm wp-cli wp --allow-root plugin is-installed $plugin; then
         docker-compose run --rm wp-cli wp --allow-root plugin install $plugin --activate --force
         echo "✅ Plugin $plugin instalado."
     else
-        # Asegurar que esté activo
         docker-compose run --rm wp-cli wp --allow-root plugin activate $plugin
         echo "✅ Plugin $plugin ya instalado."
     fi
 done
 
-# 3. CONFIGURACIÓN WOOCOMMERCE
-echo "⚙️ Configurando moneda y país..."
+# 3. CONFIGURACIÓN S3 & STORAGE TOGGLE
+echo "⚙️ Configurando Almacenamiento (S3/R2)..."
+docker-compose run --rm wp-cli wp --allow-root eval "
+    update_option( 'as3cf_settings', array(
+        'provider'           => 'aws',
+        'bucket'             => 'products',
+        'region'             => 'us-east-1',
+        'copy-to-s3'         => 1,
+        'serve-from-s3'      => 1,
+        'delivery-domain'    => 'test.system4us.com/images',
+        'enable-delivery-domain' => 1,
+        'force-https'        => 1,
+        'use-yearmonth-folders'  => 1,
+        'object-prefix'      => 'uploads/'
+    ) );
+    
+    \$mu_dir = ABSPATH . 'wp-content/mu-plugins';
+    if ( ! is_dir( \$mu_dir ) ) { mkdir( \$mu_dir, 0755, true ); }
+    \$content = '<?php
+    add_filter( \"as3cf_aws_s3_client_args\", function( \$args ) {
+        \$provider = getenv(\"STORAGE_PROVIDER\") ?: \"minio\";
+        if ( \$provider === \"r2\" ) {
+            \$account_id = getenv(\"R2_ACCOUNT_ID\");
+            \$args[\"endpoint\"] = \"https://\" . \$account_id . \".r2.cloudflarestorage.com\";
+            \$args[\"region\"] = \"auto\";
+            \$args[\"use_path_style_endpoint\"] = false;
+            \$args[\"credentials\"] = [\"key\" => getenv(\"R2_ACCESS_KEY_ID\"), \"secret\" => getenv(\"R2_SECRET_ACCESS_KEY\")];
+        } else {
+            \$args[\"endpoint\"] = \"http://host.docker.internal:9000\";
+            \$args[\"use_path_style_endpoint\"] = true;
+            \$args[\"credentials\"] = [\"key\" => \"minioadmin\", \"secret\" => \"minioadmin\"];
+        }
+        return \$args;
+    } );
+    add_filter( \"as3cf_get_attachment_url\", function( \$url ) {
+        if ( strpos( \$url, \"cloudflarestorage.com\" ) !== false || strpos( \$url, \"amazonaws.com\" ) !== false ) {
+            \$parts = parse_url( \$url );
+            return \"https://test.system4us.com/images\" . \$parts[\"path\"];
+        }
+        return \$url;
+    } );';
+    file_put_contents( \$mu_dir . '/storage-config.php', \$content );
+"
+
+# 4. CONFIGURACIÓN WOOCOMMERCE
+echo "⚙️ Configurando WooCommerce..."
 docker-compose run --rm wp-cli wp --allow-root option update woocommerce_default_country "AR"
 docker-compose run --rm wp-cli wp --allow-root option update woocommerce_currency "USD"
+docker-compose run --rm wp-cli wp --allow-root rewrite structure "/%postname%/" --hard
 
-# 4. CONFIGURACIÓN JWT
+# 5. CONFIGURACIÓN JWT
 echo "⚙️ Configurando JWT..."
 docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_SECRET_KEY "$(openssl rand -base64 64)" --type=constant --quiet 2>/dev/null || echo "JWT Secret ya configurado."
 docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_CORS_ENABLE true --raw --type=constant --quiet 2>/dev/null || echo "JWT CORS ya configurado."
 
-# 5. GENERACIÓN DE API KEYS (Solo si no existen)
+# 6. GENERACIÓN DE API KEYS
 echo "⚙️ Verificando API Keys..."
 docker-compose run --rm wp-cli wp --allow-root eval '
   global $wpdb;

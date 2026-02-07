@@ -61,7 +61,7 @@ const Header: React.FC = () => {
         {/* Top Bar */}
         <div className="bg-black text-white text-[9px] font-black uppercase tracking-[0.2em] py-2.5 px-6">
           <div className="max-w-7xl mx-auto flex justify-between items-center">
-            <span>Fabricado en Buenos Aires 🇦🇷</span>
+            <span>De Brandsen a 🇦🇷</span>
             <span className="hidden md:block">Envíos a todo el país</span>
           </div>
         </div>

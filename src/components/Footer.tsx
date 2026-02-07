@@ -51,11 +51,11 @@ const Footer = () => {
           <ul className="space-y-4 text-sm">
             <li className="flex items-start gap-3">
               <MapPin size={18} className="text-blue-500 shrink-0" />
-              <span>Av. Libertador 1234, CABA, Argentina</span>
+              <span>Av. Mitre 420, Cnel Brandsen, Argentina</span>
             </li>
             <li className="flex items-center gap-3">
               <Phone size={18} className="text-blue-500 shrink-0" />
-              <span>+54 11 1234-5678</span>
+              <span>+54 221 4542421</span>
             </li>
             <li className="flex items-center gap-3">
               <Mail size={18} className="text-blue-500 shrink-0" />
@@ -68,7 +68,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs uppercase tracking-tighter">
         <p>© 2026 DN STYLE. TODOS LOS DERECHOS RESERVADOS.</p>
         <div className="flex gap-6">
-           <span>Fabricado en Buenos Aires 🇦🇷</span>
+           <span>De Brandsen a 🇦🇷</span>
         </div>
       </div>
     </footer>

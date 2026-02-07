@@ -86,8 +86,18 @@ const sendEmail = async (to: string, subject: string, templateName: string, cont
   }
 };
 
-// --- Configuración MinIO / S3 ---
-const s3Client = new S3Client({
+// --- Configuración Storage (MinIO o Cloudflare R2) ---
+const STORAGE_PROVIDER = process.env.STORAGE_PROVIDER || 'minio'; // 'minio' o 'r2'
+
+const s3Config = STORAGE_PROVIDER === 'r2' ? {
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  },
+  forcePathStyle: false,
+} : {
   region: process.env.S3_REGION || 'us-east-1',
   endpoint: process.env.S3_ENDPOINT || 'http://host.docker.internal:9000',
   credentials: {
@@ -95,40 +105,77 @@ const s3Client = new S3Client({
     secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || 'minioadmin',
   },
   forcePathStyle: true, 
-});
+};
 
-const BUCKET_NAME = 'pagos';
+const s3Client = new S3Client(s3Config);
 
-// Inicializar Bucket
-const initBucket = async () => {
+const BUCKET_NAME = process.env.STORAGE_BUCKET_PAYMENTS || 'pagos';
+const PRODUCTS_BUCKET = process.env.STORAGE_BUCKET_PRODUCTS || 'products';
+
+// Inicializar Buckets (Solo si es MinIO)
+const initBucket = async (bucketName: string) => {
+  if (STORAGE_PROVIDER !== 'minio') return;
   try {
-    await s3Client.send(new HeadBucketCommand({ Bucket: BUCKET_NAME }));
-    console.log(`Bucket '${BUCKET_NAME}' existe.`);
+    await s3Client.send(new HeadBucketCommand({ Bucket: bucketName }));
+    console.log(`Bucket '${bucketName}' existe.`);
   } catch (error: any) {
     if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
       try {
-        console.log(`Creando bucket '${BUCKET_NAME}'...`);
-        await s3Client.send(new CreateBucketCommand({ Bucket: BUCKET_NAME }));
-        console.log(`Bucket '${BUCKET_NAME}' creado exitosamente.`);
+        console.log(`Creando bucket '${bucketName}'...`);
+        await s3Client.send(new CreateBucketCommand({ Bucket: bucketName }));
+        console.log(`Bucket '${bucketName}' creado exitosamente.`);
       } catch (err) {
-        console.error("Error creando el bucket:", err);
+        console.error(`Error creando el bucket ${bucketName}:`, err);
       }
     } else {
-      console.error("Error verificando el bucket:", error);
+      console.error(`Error verificando el bucket ${bucketName}:`, error);
     }
   }
 };
-initBucket();
+
+initBucket(BUCKET_NAME);
+initBucket(PRODUCTS_BUCKET);
 
 // Multer en memoria para pasar el buffer a S3
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.use(cors(
   {
-    origin: ['http://localhost:3001', "http://10.10.0.3:3001", 'http://miamo.com.ar', 'http://localhost:3000', 'http://localhost:6000'],
+    origin: ['http://localhost:3001', "http://10.10.0.3:3001", 'http://miamo.com.ar', 'http://localhost:3000', 'http://localhost:6000', 'https://test.system4us.com'],
     credentials: true,
   }
 ));
+
+// --- PROXY DE IMÁGENES DE PRODUCTOS ---
+// URL ejemplo: https://test.system4us.com/images/uploads/2026/02/zapatilla.jpg
+app.get('/images/:key*', async (req: Request, res: Response) => {
+  // Con :key*, Express captura el resto del path en req.params.key + req.params[0]
+  // O más simple en versiones nuevas: req.params.key + (req.params[0] || "")
+  const key = req.params.key + (req.params[0] || ""); 
+
+  try {
+    const command = new GetObjectCommand({
+      Bucket: PRODUCTS_BUCKET,
+      Key: key,
+    });
+
+    const response = await s3Client.send(command);
+    
+    if (response.ContentType) {
+        res.setHeader('Content-Type', response.ContentType);
+    }
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache 1 año
+    
+    const body = response.Body as any;
+    body.pipe(res);
+  } catch (error: any) {
+    // Si no es un error de "no encontrado", loguearlo
+    if (error.name !== 'NoSuchKey') {
+        console.error(`Error sirviendo imagen ${key}:`, error);
+    }
+    res.status(404).send('Imagen no encontrada');
+  }
+});
 
 const WP_URL = process.env.WP_HOST || process.env.WC_BASE || 'http://wordpress/';
 

@@ -3,10 +3,10 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-wordpress}
+      MYSQL_USER: ${DB_USER:-wpuser}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-wppassword}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
     volumes:
       - db_data:/var/lib/mysql
     networks:
@@ -17,18 +17,28 @@ services:
       - db
     image: wordpress:latest
     restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
-      - "8082:80"
+      - "${WP_PORT:-8082}:80"
     environment:
-      WORDPRESS_DB_HOST: ${DB_HOST}:3306
-      WORDPRESS_DB_USER: ${DB_USER}
-      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
-      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: ${DB_USER:-wpuser}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wppassword}
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
       JWT_AUTH_SECRET_KEY: ${JWT_AUTH_SECRET_KEY}
+      # Configuración Almacenamiento Dinámico
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-minio}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      S3_UPLOADS_BUCKET: ${STORAGE_BUCKET_PRODUCTS:-products}
+      S3_UPLOADS_REGION: ${S3_REGION:-us-east-1}
+      # URLs de producción
+      SITE_URL: ${SITE_URL:-https://test.system4us.com}
       WORDPRESS_CONFIG_EXTRA: |
-        define('WP_HOME', 'http://' . $$_SERVER['HTTP_HOST']);
-        define('WP_SITEURL', 'http://' . $$_SERVER['HTTP_HOST']);
-        define('JWT_AUTH_SECRET_KEY', getenv('JWT_AUTH_SECRET_KEY'));
+        define('WP_HOME', '${SITE_URL:-https://test.system4us.com}');
+        define('WP_SITEURL', '${SITE_URL:-https://test.system4us.com}');
         define('JWT_AUTH_CORS_ENABLE', true);
     volumes:
       - wp_data:/var/www/html
@@ -41,10 +51,17 @@ services:
     volumes:
       - wp_data:/var/www/html
     environment:
-      WORDPRESS_DB_HOST: ${DB_HOST}:3306
-      WORDPRESS_DB_USER: ${DB_USER}
-      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD}
-      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: ${DB_USER:-wpuser}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wppassword}
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      # Pasar variables para los scripts de setup
+      SITE_URL: ${SITE_URL:-https://test.system4us.com}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-minio}
+      R2_ACCOUNT_ID: ${R2_ACCOUNT_ID:-}
+      R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      STORAGE_BUCKET_PRODUCTS: ${STORAGE_BUCKET_PRODUCTS:-products}
     depends_on:
       - db
       - wordpress
@@ -57,18 +74,28 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "6001:4000"
+      - "${BACKEND_PORT:-4000}:4000"
     environment:
       - WP_HOST=http://wordpress
       - WC_BASE=http://wordpress/
       - WC_KEY=${WC_KEY}
       - WC_SECRET=${WC_SECRET}
+      # Email
       - SMTP_HOST=${SMTP_HOST}
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
       - EMAIL_FROM=${EMAIL_FROM}
-      - REDIS_URL=redis://host.docker.internal:6380
+      # Redis
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6380}
+      # Almacenamiento
+      - STORAGE_PROVIDER=${STORAGE_PROVIDER:-minio}
+      - R2_ACCOUNT_ID=${R2_ACCOUNT_ID}
+      - R2_ACCESS_KEY_ID=${R2_ACCESS_KEY_ID}
+      - R2_SECRET_ACCESS_KEY=${R2_SECRET_ACCESS_KEY}
+      - STORAGE_BUCKET_PAYMENTS=${STORAGE_BUCKET_PAYMENTS:-pagos}
+      - STORAGE_BUCKET_PRODUCTS=${STORAGE_BUCKET_PRODUCTS:-products}
+      - S3_ENDPOINT=${S3_ENDPOINT:-http://host.docker.internal:9000}
     depends_on:
       - wordpress
     networks:
@@ -78,7 +105,7 @@ services:
     build: .
     restart: always
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:80"
     depends_on:
       - backend
     networks:
