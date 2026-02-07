@@ -167,12 +167,12 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
                     
                     <div className="flex flex-col flex-grow justify-between">
                       <div>
-                        <h3 className="text-base font-semibold text-gray-900  line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
-                          {product.name}
-                        </h3>
-                        <p className="text-xs text-gray-500  line-clamp-2" dangerouslySetInnerHTML={{__html: product.description?.replace(/<[^>]*>?/gm, '') || ''}}></p>
-                      </div>
-                      <div className="mt-4 pt-3 border-t border-gray-100  flex items-center text-blue-600 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <h3 className="text-base font-semibold text-gray-900 line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
+                                                  {product.name}
+                                                </h3>
+                                                <div className="text-xs text-gray-500 line-clamp-2 min-h-[2.5em]" dangerouslySetInnerHTML={{__html: product.short_description || ''}}></div>
+                                              </div>
+                                              <div className="mt-4 pt-3 border-t border-gray-100 flex items-center text-blue-600 font-medium text-sm opacity-0 group-hover:opacity-100 transition-opacity">
                         Ver Detalles
                         <svg className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                       </div>

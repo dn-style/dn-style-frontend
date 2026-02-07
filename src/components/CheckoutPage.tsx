@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useCartStore } from "../store/cartStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import type { CustomerAddress } from "../types";
 import { toast } from "react-toastify";
+import { useUserStore } from "../store/userStore";
+import { MapPin, User as UserIcon, Gift } from "lucide-react";
 
 interface PaymentGateway {
   id: string;
@@ -11,18 +13,24 @@ interface PaymentGateway {
   description: string;
   settings?: {
     instructions?: { value: string };
-    account_details?: { value: any[] }; // BACS details usually come here but might be complex structure
+    account_details?: { value: any[] };
   };
 }
 
 const CheckoutPage = () => {
   const { items, cartTotal, clearCart } = useCartStore();
+  const { user } = useUserStore();
   const navigate = useNavigate();
+  
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'bacs' | 'woo-mercado-pago-basic' | 'card'>('bacs');
   const [gateways, setGateways] = useState<PaymentGateway[]>([]);
-  const { register, handleSubmit, formState: { errors } } = useForm<CustomerAddress>();
-  const [file, setFile] = useState<File | null>(null);
+  const [useSavedAddress, setUseSavedAddress] = useState(false);
+
+  const [isGift, setIsGift] = useState(false);
+
+  // Formulario react-hook-form
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CustomerAddress>();
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -30,30 +38,62 @@ const CheckoutPage = () => {
       .then(res => res.json())
       .then(data => {
         setGateways(data);
-        // Auto-select first available or fallback to bacs
         if (data.length > 0) setPaymentMethod(data[0].id);
       })
       .catch(console.error);
   }, []);
+
+  // Efecto para detectar si hay dirección guardada y usarla por defecto
+  useEffect(() => {
+    if (user?.billing?.address_1) {
+      setUseSavedAddress(true);
+    } else {
+      setUseSavedAddress(false);
+    }
+  }, [user?.id, user?.billing?.address_1]);
 
   if (items.length === 0) {
     navigate('/cart');
     return null;
   }
 
-  const onSubmit = async (data: CustomerAddress) => {
+  const handleToggleSavedAddress = (val: boolean) => {
+    setUseSavedAddress(val);
+    if (!val) {
+      setIsGift(true);
+      reset({}); // Limpiar formulario para datos nuevos
+    } else {
+      setIsGift(false);
+    }
+  };
+
+  const onSubmit = async (formData: CustomerAddress) => {
     setLoading(true);
+
+    // Determinar qué datos usar: los guardados o los del formulario
+    let finalBillingData: CustomerAddress;
+
+    if (useSavedAddress && user?.billing?.address_1) {
+      finalBillingData = user.billing;
+    } else {
+      finalBillingData = {
+        ...formData,
+        country: formData.country || 'AR',
+      };
+    }
 
     const orderData = {
       payment_method: paymentMethod,
-      set_paid: paymentMethod === 'card' || paymentMethod === 'woo-mercado-pago-basic', // Simplificación
-      customer: data,
-      items: items.map(item => ({
+      payment_method_title: paymentMethod === 'bacs' ? 'Transferencia Bancaria' : 'Mercado Pago',
+      set_paid: paymentMethod === 'woo-mercado-pago-basic', 
+      billing: finalBillingData,
+      shipping: finalBillingData, 
+      line_items: items.map(item => ({
         product_id: item.id,
         quantity: item.quantity
       })),
-      // Añadimos una nota con el archivo adjunto simulado
-      note: file ? `Comprobante adjunto: ${file.name}` : undefined
+      customer_note: isGift ? `PEDIDO PARA REGALO.` : undefined,
+      customer_id: user?.id || 0
     };
 
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -64,11 +104,12 @@ const CheckoutPage = () => {
         body: JSON.stringify(orderData)
       });
 
-      if (!response.ok) {
-        throw new Error('Error al procesar el pedido');
-      }
-
       const result = await response.json();
+
+      if (!response.ok) {
+        const errorMessage = result.details?.message || result.error || 'Error al procesar el pedido';
+        throw new Error(errorMessage);
+      }
       
       if (paymentMethod === 'bacs') {
         toast.success('¡Pedido recibido! Por favor envía tu comprobante.');
@@ -78,9 +119,9 @@ const CheckoutPage = () => {
       
       clearCart();
       navigate('/');
-    } catch (error) {
-      console.error(error);
-      toast.error('Hubo un problema al procesar tu pedido. Intenta nuevamente.');
+    } catch (error: any) {
+      console.error('Error en checkout:', error);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -88,67 +129,121 @@ const CheckoutPage = () => {
 
   const getGatewayInstructions = (id: string) => {
     const gw = gateways.find(g => g.id === id);
-    // Limpiamos etiquetas HTML básicas para mostrar texto plano si es necesario, o usamos dangerouslySetInnerHTML
     return gw?.description || "";
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Finalizar Compra</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-gray-900">
+      <h1 className="text-3xl font-bold mb-8 text-center uppercase tracking-tight">Finalizar Compra</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Formulario de Facturación */}
+        {/* Columna Izquierda: Datos de Envío */}
         <div>
            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
-             <h2 className="text-xl font-bold mb-6 text-gray-900 flex items-center gap-2">
-               <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm">1</span>
-               Detalles de Facturación
+             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+               <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-sans">1</span>
+               Detalles de Envío
              </h2>
-             
-             <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-                    <input {...register("first_name", { required: true })} className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Juan" />
-                    {errors.first_name && <span className="text-red-500 text-xs">Requerido</span>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
-                    <input {...register("last_name", { required: true })} className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Pérez" />
-                    {errors.last_name && <span className="text-red-500 text-xs">Requerido</span>}
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input {...register("email", { required: true, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="juan@ejemplo.com" />
-                   {errors.email && <span className="text-red-500 text-xs">Email inválido</span>}
-                </div>
-                
-                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
-                  <input {...register("address_1", { required: true })} className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Calle Falsa 123" />
-                   {errors.address_1 && <span className="text-red-500 text-xs">Requerido</span>}
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+             {/* Opción de usar dirección guardada */}
+             <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+               <div className="flex items-center justify-between mb-2">
+                 <div className="flex items-center gap-3">
+                   <div className="p-2 bg-white rounded-full text-blue-600 shadow-sm"><UserIcon size={20} /></div>
                    <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
-                    <input {...register("city", { required: true })} className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" />
-                     {errors.city && <span className="text-red-500 text-xs">Requerido</span>}
+                     <p className="font-bold text-sm text-gray-900">
+                       {user?.billing?.address_1 ? "Mis Datos Guardados" : "Enviar a mi dirección"}
+                     </p>
+                     <p className="text-xs text-gray-500">
+                       {user?.billing?.address_1 ? "Usar mi perfil para el envío" : "Completa el formulario para tu primer envío"}
+                     </p>
+                   </div>
+                 </div>
+                 {user?.billing?.address_1 && (
+                   <label className="relative inline-flex items-center cursor-pointer">
+                     <input 
+                       type="checkbox" 
+                       checked={useSavedAddress} 
+                       onChange={() => handleToggleSavedAddress(!useSavedAddress)} 
+                       className="sr-only peer" 
+                     />
+                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                   </label>
+                 )}
+               </div>
+
+               {useSavedAddress && user?.billing?.address_1 && (
+                 <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-600 space-y-1 pl-2 border-l-4 border-blue-500 animate-fadeIn">
+                   <p className="font-bold text-gray-900">{user.billing.first_name} {user.billing.last_name}</p>
+                   <p>{user.billing.address_1}</p>
+                   <p>{user.billing.city}, {user.billing.state} ({user.billing.postcode})</p>
+                   <p>{user.billing.email} • {user.billing.phone}</p>
+                 </div>
+               )}
+             </div>
+             
+             {/* Formulario (visible si NO se usa la dirección guardada o no hay datos) */}
+             <div className={`transition-all duration-500 ease-in-out overflow-hidden ${useSavedAddress ? 'max-h-0' : 'max-h-[1000px]'}`}>
+               <div className="flex items-center gap-2 mb-6 p-3 bg-blue-50 text-blue-700 rounded-xl border border-blue-100">
+                 <Gift size={18} />
+                 <p className="text-xs font-bold uppercase tracking-wider">
+                   {user?.billing?.address_1 ? "Estás comprando para otra persona (Regalo)" : "Completa los datos para el envío"}
+                 </p>
+               </div>
+
+               <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                      <input {...register("first_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Juan" />
+                      {errors.first_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Apellido</label>
+                      <input {...register("last_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Pérez" />
+                      {errors.last_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Código Postal</label>
-                    <input {...register("postcode", { required: true })} className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" />
-                     {errors.postcode && <span className="text-red-500 text-xs">Requerido</span>}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                      <input {...register("email", { required: !useSavedAddress, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="juan@ejemplo.com" />
+                      {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVÁLIDO</span>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                      <input {...register("phone", { required: !useSavedAddress })} type="tel" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="11 1234 5678" />
+                      {errors.phone && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                    </div>
                   </div>
-                </div>
-             </form>
+                  
+                   <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección</label>
+                    <input {...register("address_1", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Calle Falsa 123" />
+                     {errors.address_1 && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                     <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ciudad</label>
+                      <input {...register("city", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" />
+                       {errors.city && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Código Postal</label>
+                      <input {...register("postcode", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" />
+                       {errors.postcode && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                    </div>
+                  </div>
+               </form>
+             </div>
            </div>
         </div>
 
         {/* Resumen de Pedido y Pago */}
         <div>
+           {/* ... Resto del componente igual (Resumen pedido, Métodos de pago, Botón) ... */}
            <div className="bg-gray-50 p-8 rounded-2xl border border-gray-200 sticky top-24">
               <h2 className="text-xl font-bold mb-6 text-gray-900">Tu Pedido</h2>
               <ul className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -178,7 +273,6 @@ const CheckoutPage = () => {
               <div className="mb-6">
                 <h3 className="font-bold mb-3 text-gray-900">Método de Pago</h3>
                 <div className="flex gap-3 mb-4 flex-wrap">
-                  {/* Siempre mostramos BACS y añadimos MP si está detectado o como opción hardcodeada para demo */}
                   <button 
                     type="button"
                     onClick={() => setPaymentMethod('bacs')}
@@ -187,7 +281,6 @@ const CheckoutPage = () => {
                     <span className="text-sm font-medium">Transferencia</span>
                   </button>
                   
-                  {/* Opción de Tarjeta (simulada o MP) */}
                   <button 
                     type="button"
                     onClick={() => setPaymentMethod('card')}
@@ -205,14 +298,13 @@ const CheckoutPage = () => {
                     </div>
                     
                     <div className="mt-4 pt-4 border-t border-blue-200">
-                      <label className="block font-bold mb-2">Adjuntar Comprobante</label>
-                      <input 
-                        type="file" 
-                        accept="image/*,.pdf"
-                        onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                        className="block w-full text-sm text-blue-900 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200"
-                      />
-                      {file && <p className="mt-2 text-xs text-green-600 font-bold">✓ Archivo seleccionado: {file.name}</p>}
+                      <p className="text-xs font-medium text-blue-700">
+                        * Podrás subir tu comprobante de pago luego desde la sección{" "}
+                        <Link to="/account" className="font-bold underline hover:text-blue-900 transition-colors">
+                          Mis Pedidos
+                        </Link>{" "}
+                        en tu perfil.
+                      </p>
                     </div>
                   </div>
                 )}
@@ -220,7 +312,6 @@ const CheckoutPage = () => {
                 {paymentMethod === 'card' && (
                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 animate-fadeIn">
                       <p className="text-sm text-gray-600 mb-2">Serás redirigido a Mercado Pago para completar tu pago de forma segura.</p>
-                      {/* Aquí iría la integración real de MP Bricks */}
                       <div className="h-12 bg-blue-500 rounded flex items-center justify-center text-white font-bold cursor-pointer">
                          Pagar con Mercado Pago
                       </div>
@@ -228,9 +319,11 @@ const CheckoutPage = () => {
                 )}
               </div>
 
+              {/* Botón de envío que maneja ambos casos (Saved vs Form) */}
               <button 
-                type="submit" 
-                form="checkout-form"
+                onClick={useSavedAddress ? handleSubmit(() => onSubmit({} as CustomerAddress)) : undefined}
+                type={useSavedAddress ? 'button' : 'submit'}
+                form={useSavedAddress ? undefined : 'checkout-form'}
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
               >

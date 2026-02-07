@@ -34,6 +34,17 @@ export interface Product {
   images: ProductImage[];
   attributes: ProductAttribute[];
   categories: { id: number; name: string; slug: string }[];
+  average_rating: string;
+  rating_count: number;
+}
+
+export interface Review {
+  id: number;
+  date_created: string;
+  review: string;
+  rating: number;
+  reviewer: string;
+  reviewer_avatar_urls: Record<string, string>;
 }
 
 export interface CartItem extends Product {

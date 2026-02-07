@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f9f9f9; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; }
+    .header { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+    .order-info { background-color: #f8f8f8; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .table th { text-align: left; border-bottom: 2px solid #ddd; padding: 10px; }
+    .table td { border-bottom: 1px solid #eee; padding: 10px; }
+    .total { text-align: right; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>¡Gracias por tu compra!</h1>
+    </div>
+    
+    <p>Hola {{name}},</p>
+    <p>Tu pedido ha sido recibido y se está procesando.</p>
+    
+    <div class="order-info">
+      <p><strong>Pedido:</strong> #{{order_id}}</p>
+      <p><strong>Fecha:</strong> {{date}}</p>
+    </div>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cantidad</th>
+          <th>Precio</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td>{{name}}</td>
+          <td>{{quantity}}</td>
+          <td>${{total}}</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <div class="total">
+      Total: ${{total}}
+    </div>
+    
+    <p style="margin-top: 30px;">Te notificaremos cuando tu pedido sea enviado.</p>
+  </div>
+</body>
+</html>

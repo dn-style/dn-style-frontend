@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ShoppingCart, Search, MenuIcon, User } from "lucide-react";
 import { useCategoriesStore } from "../store/categoriesStore";
 import { useCartStore } from "../store/cartStore";
+import BentoMegaMenu from "./BentoMegaMenu";
+
 // const API_URL = import.meta.env.VITE_API_URL;
 
 interface Category {
@@ -59,12 +61,12 @@ const BRANDS: Record<string, Brand[]> = {
     },
   ],
   electronica: [
-    { name: "Samsung", image: "https://via.placeholder.com/150" },
-    { name: "Sony", image: "https://via.placeholder.com/150" },
+    { name: "Samsung", image: "https://images.unsplash.com/photo-1610945661096-5124a83d477a?w=150&h=150&fit=crop" },
+    { name: "Sony", image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=150&h=150&fit=crop" },
   ],
   iphone: [
-    { name: "Apple", image: "https://via.placeholder.com/150" },
-    { name: "Beats", image: "https://via.placeholder.com/150" },
+    { name: "Apple", image: "https://images.unsplash.com/photo-1616348436168-de43ad0db179?w=150&h=150&fit=crop" },
+    { name: "Beats", image: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=150&h=150&fit=crop" },
   ],
 };
   const fetchCategories = async (): Promise<Category[]> => {
@@ -108,11 +110,13 @@ const Header: React.FC = () => {
   const handleMouseLeave = () => {
     closeTimeout.current = setTimeout(() => setOpenDropdown(null), 300);
   };
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí podrías redirigir a la búsqueda o filtrar productos
     console.log("Buscando:", searchTerm);
   };
+
   return (
     <header className="shadow-md w-full relative z-50 mb-10">
       {/* top bar */}
@@ -131,12 +135,12 @@ const Header: React.FC = () => {
           <div>
             <a href="/" className="flex items-center">
               <img
-                src="/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
+                src={`${apiUrl}/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg`}
                 alt="Logo"
                 className="h-16 w-auto hidden md:block"
               />
               <img
-                src="/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg"
+                src={`${apiUrl}/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg`}
                 alt="Logo Mobile"
                 className="h-16 w-auto md:hidden"
               />
@@ -186,108 +190,14 @@ const Header: React.FC = () => {
                       {cat.name.toUpperCase()}
                     </Link>
 
-                    {subCats.length > 0 && openDropdown === cat.slug && (
-                      <>
-                        {/* BACKDROP */}
-                        <div
-                          className="fixed inset-0 bg-gray-800/50"
-                          onClick={() => setOpenDropdown(null)} // cerrar al hacer click afuera
-                        ></div>
-
-                        {/* MEGA MENÚ */}
-                        {/* MEGA MENÚ */}
-                        <div className="absolute left-0 right-0 mt-5 bg-transparent z-50">
-                          <div className="max-w-10/12 mx-auto grid grid-cols-8 gap-2">
-                            {/* COLUMNA DESTACADOS */}
-                            <div className="col-span-2 bg-black text-white rounded-2xl shadow-sm shadow-gray-400 flex flex-col p-4">
-                              <h3 className="text-left text-sm font-bold mb-2">
-                                Destacados
-                              </h3>
-                              <ul className="text-md font-extralight space-y-3">
-                                <li>test</li>
-                                <li>test</li>
-                                <li>test</li>
-                                <li>test</li>
-                                <li>test</li>
-                              </ul>
-                            </div>
-
-                            {/* SECCIÓN PRINCIPAL: subcategorías */}
-                            <div className="col-span-4 bg-white rounded-2xl shadow-sm shadow-gray-400 p-6">
-                              <div className="grid grid-cols-4 gap-4 h-60">
-                                {subCats.map((sub) => (
-                                  <div
-                                    key={sub.id}
-                                    className="p-2 rounded-md bg-white"
-                                  >
-                                    <Link
-                                      to={`/categoria/${sub.slug}`}
-                                      className="block text-gray-700 transition font-medium hover:text-pink-600"
-                                    >
-                                      <div className="flex justify-center mt-2">
-                                        {/* imagen si querés */}
-                                      </div>
-                                      <h3 className="text-center text-sm mt-2">
-                                        {sub.name}
-                                      </h3>
-                                    </Link>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* SECCIÓN LATERAL */}
-                            <div className="col-span-2 rounded-2xl shadow-sm shadow-gray-400 flex items-center justify-center relative">
-                              <div
-                                className="text-center text-gray-600 w-full h-full rounded-2xl"
-                                style={{
-                                  backgroundImage: `url(https://juleriaque.vtexassets.com/unsafe/320x0/center/middle/https%3A%2F%2Fjuleriaque.vtexassets.com/assets%2Fvtex.file-manager-graphql%2Fimages%2F7bf082ec-8df4-4d82-968e-2c54ba0015f3___ade26d23b93570dce56c18683706fe9b.jpg)`,
-                                  backgroundSize: "cover",
-                                  backgroundPosition: "center",
-                                  backgroundRepeat: "no-repeat",
-                                }}
-                              ></div>
-                            </div>
-
-                            {/* SECCIÓN LATERAL */}
-                            <div className="col-span-2 rounded-2xl shadow-sm shadow-gray-400 flex items-center justify-center relative z-50">
-                              <div
-                                className="text-center text-gray-600 w-full h-full rounded-2xl "
-                                style={{
-                                  backgroundImage: `url(https://juleriaque.vtexassets.com/unsafe/320x0/center/middle/https%3A%2F%2Fjuleriaque.vtexassets.com%2Fassets%2Fvtex.file-manager-graphql%2Fimages%2F7bf082ec-8df4-4d82-968e-2c54ba0015f3___ade26d23b93570dce56c18683706fe9b.jpg)`,
-                                  backgroundSize: "cover",
-                                  backgroundPosition: "center",
-                                  backgroundRepeat: "no-repeat",
-                                }}
-                              ></div>
-                            </div>
-                          </div>
-
-                          {/* SECCIÓN EXTRA (ejemplo: marcas) */}
-                          <div className="max-w-10/12 bg-white rounded-2xl p-4 shadow-sm shadow-gray-400 m-auto grid grid-cols-8 gap-2 relative z-50">
-                            <div className="flex items-center">
-                              <h3 className="text-4xl font-sans font-extrabold">
-                                Marcas
-                              </h3>
-                            </div>
-                            {BRANDS[cat.slug]?.map((brand, idx) => (
-                              <div
-                                key={idx}
-                                className="flex flex-col items-center"
-                              >
-                                <img
-                                  src={brand.image}
-                                  alt={brand.name}
-                                  className="h-full w-full rounded-md object-cover"
-                                />
-                                <span className="text-xs mt-1">
-                                  {brand.name}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </>
+                    {/* Nuevo Componente Bento MegaMenu - Ahora siempre se muestra al hacer hover */}
+                    {openDropdown === cat.slug && (
+                      <BentoMegaMenu
+                        category={cat}
+                        subCategories={subCats}
+                        brands={BRANDS[cat.slug] || []}
+                        onClose={() => setOpenDropdown(null)}
+                      />
                     )}
                   </li>
                 );
@@ -339,32 +249,44 @@ const Header: React.FC = () => {
 
         {/* mobile nav */}
         {mobileOpen && (
-          <div className="md:hidden bg-white border-t shadow-md px-4 py-2">
-            <ul className="flex flex-col space-y-2">
+          <div className="md:hidden bg-white border-t shadow-xl px-6 py-8 animate-fadeIn">
+            <ul className="flex flex-col space-y-6">
               <li>
-                <a href="/" className="hover:text-pink-600">
-                  INICIO
-                </a>
+                <Link 
+                  to="/" 
+                  className="text-lg font-black uppercase tracking-widest text-gray-900"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Inicio
+                </Link>
               </li>
               {topCategories.map((cat) => (
                 <li key={cat.id}>
-                  <a
-                    href={`categorias/${cat.link}`}
-                    className="hover:text-pink-600"
+                  <Link
+                    to={`/categoria/${cat.slug}`}
+                    className="text-lg font-bold uppercase tracking-widest text-gray-600 hover:text-blue-600"
+                    onClick={() => setMobileOpen(false)}
                   >
                     {cat.name}
-                  </a>
+                  </Link>
                 </li>
               ))}
-              <li>
-                <a href="/contacto/" className="hover:text-pink-600">
-                  CONTACTO
-                </a>
+              <li className="pt-4 border-t border-gray-100">
+                <Link to="/about" className="text-sm font-bold uppercase tracking-widest text-gray-400" onClick={() => setMobileOpen(false)}>Nosotros</Link>
               </li>
               <li>
-                <a href="/carro/" className=" text-black hover:text-pink-600">
-                  <ShoppingCart size={16} />
-                </a>
+                <Link to="/support" className="text-sm font-bold uppercase tracking-widest text-gray-400" onClick={() => setMobileOpen(false)}>Asistencia</Link>
+              </li>
+              <li className="pt-4 flex gap-6">
+                <Link to="/account" onClick={() => setMobileOpen(false)} className="text-gray-900"><User size={24} /></Link>
+                <Link to="/cart" onClick={() => setMobileOpen(false)} className="text-gray-900 relative">
+                  <ShoppingCart size={24} />
+                  {itemsCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">
+                      {itemsCount}
+                    </span>
+                  )}
+                </Link>
               </li>
             </ul>
           </div>

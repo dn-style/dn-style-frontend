@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import Navbar from "./components/nav";
 import Footer from "./components/Footer";
 import "./App.css";
@@ -19,16 +20,34 @@ import TermsPage from "./components/TermsPage";
 import PrivacyPage from "./components/PrivacyPage";
 import TrackingPage from "./components/TrackingPage";
 import WhatsAppButton from "./components/WhatsAppButton";
+import LoadingScreen from "./components/LoadingScreen";
+import ScrollToTop from "./components/ScrollToTop";
+import FloatingCart from "./components/FloatingCart";
 
 const queryClient = new QueryClient();
 
 function App() {
+  const [isAppLoading, setIsAppLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulamos un pequeño retraso para asegurar que los assets pesados 
+    // y React terminen de inicializarse bien visualmente.
+    const timer = setTimeout(() => {
+      setIsAppLoading(false);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
+      {isAppLoading && <LoadingScreen />}
       <BrowserRouter>
+        <ScrollToTop />
         <div className="flex flex-col min-h-screen">
           <Navbar />
           <WhatsAppButton />
+          <FloatingCart />
           <main className="flex-grow">
             <ToastContainer position="bottom-right" autoClose={3000} />
             <Routes>

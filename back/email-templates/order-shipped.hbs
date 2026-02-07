@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; border-left: 5px solid #25D366; }
+    .tracking-box { background-color: #f0f0f0; padding: 20px; text-align: center; border-radius: 5px; margin: 20px 0; }
+    .tracking-code { font-size: 24px; font-weight: bold; color: #333; letter-spacing: 2px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>¡Tu pedido está en camino! 🚚</h2>
+    <p>Hola {{name}},</p>
+    <p>Buenas noticias. Tu pedido <strong>#{{order_id}}</strong> ha sido despachado y está en ruta hacia tu dirección.</p>
+    
+    {{#if tracking_number}}
+    <div class="tracking-box">
+      <p>Tu número de seguimiento:</p>
+      <div class="tracking-code">{{tracking_number}}</div>
+      {{#if tracking_url}}
+        <br/>
+        <a href="{{tracking_url}}" style="color: #007cba; text-decoration: none;">Seguir envío</a>
+      {{/if}}
+    </div>
+    {{else}}
+    <p>Tu pedido llegará pronto.</p>
+    {{/if}}
+    
+    <p>Gracias por confiar en DN Style Store.</p>
+  </div>
+</body>
+</html>
