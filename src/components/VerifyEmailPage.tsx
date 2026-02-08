@@ -17,7 +17,7 @@ const VerifyEmailPage = () => {
       return;
     }
 
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    const apiUrl = import.meta.env.VITE_API_URL || "";
     fetch(`${apiUrl}/auth/verify-email`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

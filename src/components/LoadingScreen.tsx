@@ -1,7 +1,7 @@
 import React from "react";
 
 const LoadingScreen: React.FC = () => {
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const apiUrl = import.meta.env.VITE_API_URL || "";
 
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white">

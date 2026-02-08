@@ -49,7 +49,7 @@ const CategoryPage: React.FC = () => {
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const apiUrl = import.meta.env.VITE_API_URL || "";
 
   // --- FETCH DE PRODUCTOS CON CACHÉ (React Query) ---
   const fetchProducts = async ({ pageParam = 1 }) => {

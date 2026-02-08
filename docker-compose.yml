@@ -72,6 +72,7 @@ services:
       - VERBOSE_DEBUG=true
     volumes:
       - frontend_dist:/app/public_html:ro
+      - wp_data:/app/wp_uploads:ro
     depends_on:
       - wordpress
     networks:

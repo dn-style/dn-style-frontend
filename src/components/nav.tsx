@@ -21,7 +21,7 @@ const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+  const apiUrl = import.meta.env.VITE_API_URL || "";
 
   const fetchCategories = async (): Promise<Category[]> => {
     const res = await fetch(`${apiUrl}/wc/categories`);

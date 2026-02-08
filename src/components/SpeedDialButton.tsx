@@ -16,7 +16,7 @@ const SpeedDialButton: React.FC = () => {
 
   useEffect(() => {
     if (isChatOpen && !socket) {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+      const apiUrl = import.meta.env.VITE_API_URL || "";
       const newSocket = io(apiUrl);
       
       newSocket.on('connect', () => {

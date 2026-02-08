@@ -3,29 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import type { Product } from "../types";
+import type { Product, Review } from "../types";
 import { useCartStore } from "../store/cartStore";
 import { toast } from "react-toastify";
 import { Star, StarHalf } from "lucide-react";
-import type { Review } from "../types";
-
-const StarRating = ({ rating }: { rating: number }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
-  return (
-    <div className="flex items-center text-yellow-400">
-      {[...Array(fullStars)].map((_, i) => (
-        <Star key={`full-${i}`} size={16} fill="currentColor" stroke="none" />
-      ))}
-      {hasHalfStar && <StarHalf size={16} fill="currentColor" stroke="none" />}
-      {[...Array(emptyStars)].map((_, i) => (
-        <Star key={`empty-${i}`} size={16} className="text-gray-200" fill="currentColor" stroke="none" />
-      ))}
-    </div>
-  );
-};
+import SEO from "./SEO";
 
 interface Variation {
   id: number;
@@ -39,7 +21,25 @@ interface Variation {
   image?: { src: string };
 }
 
-import SEO from "./SEO";
+const StarRating = ({ rating }: { rating: number }) => {
+  // Asegurar que rating sea un número válido entre 0 y 5
+  const safeRating = isNaN(rating) ? 0 : Math.min(5, Math.max(0, rating));
+  const fullStars = Math.floor(safeRating);
+  const hasHalfStar = safeRating % 1 >= 0.5;
+  const emptyStars = Math.max(0, 5 - fullStars - (hasHalfStar ? 1 : 0));
+
+  return (
+    <div className="flex items-center text-yellow-400">
+      {[...Array(fullStars)].map((_, i) => (
+        <Star key={`full-${i}`} size={16} fill="currentColor" stroke="none" />
+      ))}
+      {hasHalfStar && <StarHalf size={16} fill="currentColor" stroke="none" />}
+      {[...Array(emptyStars)].map((_, i) => (
+        <Star key={`empty-${i}`} size={16} className="text-gray-200" fill="currentColor" stroke="none" />
+      ))}
+    </div>
+  );
+};
 
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -58,72 +58,60 @@ const ProductPage = () => {
   const [zoomStyle, setZoomStyle] = useState({ display: 'none', backgroundPosition: '0% 0%', backgroundImage: '' });
   const imgContainerRef = useRef<HTMLDivElement>(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
-
-  // Preparar datos estructurados para Google (SERP)
-  const structuredData = product ? {
-    "@context": "https://schema.org/",
-    "@type": "Product",
-    "name": product.name,
-    "image": product.images.map(img => img.src),
-    "description": (product.short_description || "").replace(/<[^>]*>?/gm, ''),
-    "brand": {
-      "@type": "Brand",
-      "name": "DN Style"
-    },
-    "offers": {
-      "@type": "Offer",
-      "url": window.location.href,
-      "priceCurrency": "USD",
-      "price": currentVariation ? currentVariation.price : product.price,
-      "availability": (currentVariation ? currentVariation.stock_status : product.stock_status) === 'outofstock' 
-        ? "https://schema.org/OutOfStock" 
-        : "https://schema.org/InStock"
-    },
-    "aggregateRating": reviews.length > 0 ? {
-      "@type": "AggregateRating",
-      "ratingValue": product.average_rating,
-      "reviewCount": reviews.length
-    } : undefined
-  } : null;
+  const apiUrl = import.meta.env.VITE_API_URL || "";
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
+    console.log(`[ProductPage] 🛠️ Cargando producto ${id}...`);
     
-    // Fetch producto, variaciones y reseñas en paralelo
-    Promise.all([
-      fetch(`${apiUrl}/wc/products/${id}`).then(res => res.json()),
-      fetch(`${apiUrl}/wc/products/${id}/variations`).then(res => res.json()),
-      fetch(`${apiUrl}/wc/products/${id}/reviews`).then(res => res.json())
-    ]).then(([productData, vars, reviewsData]) => {
-      setProduct(productData);
-      setVariations(vars);
-      setReviews(reviewsData);
-      setLoading(false);
-    }).catch(() => {
-      setError(true);
-      setLoading(false);
-    });
+    // Cargamos el producto individualmente primero para garantizar que se vea algo cuanto antes
+    fetch(`${apiUrl}/wc/products/${id}`)
+      .then(res => res.ok ? res.json() : Promise.reject("Error en API"))
+      .then(data => {
+        if (!data || data.error || !data.id) throw new Error("Producto inválido");
+        setProduct(data);
+        setError(false);
+        
+        // Una vez tenemos el producto, cargamos lo demás en segundo plano sin bloquear si fallan
+        fetch(`${apiUrl}/wc/products/${id}/variations`).then(r => r.json()).then(v => setVariations(Array.isArray(v) ? v : [])).catch(() => {});
+        fetch(`${apiUrl}/wc/products/${id}/reviews`).then(r => r.json()).then(r => setReviews(Array.isArray(r) ? r : [])).catch(() => {});
+        
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("[ProductPage] ❌ Fallo crítico:", err);
+        setError(true);
+        setLoading(false);
+      });
   }, [id, apiUrl]);
 
-  // Efecto para determinar la variación actual
   useEffect(() => {
     if (!product || product.type !== 'variable' || variations.length === 0) return;
-
+    
     const match = variations.find(v => {
-      return v.attributes.every(attr => {
-        return selectedAttributes[attr.name] === attr.option;
+      return v.attributes.every(vAttr => {
+        // Buscamos en el estado del usuario una llave que coincida (ignorando mayúsculas)
+        const userSelectedOption = Object.entries(selectedAttributes).find(
+          ([name]) => name.toLowerCase() === vAttr.name.toLowerCase()
+        )?.[1];
+        return userSelectedOption === vAttr.option;
       });
     });
 
     setCurrentVariation(match || null);
-
+    
     if (match && match.image?.src) {
+       console.log("[ProductPage] 📸 Cambio de imagen detectado por variación:", match.image.src);
        const imgIndex = product.images.findIndex(img => img.src === match.image?.src);
-       if (imgIndex !== -1) setSelectedImage(imgIndex);
+       if (imgIndex !== -1) {
+         setSelectedImage(imgIndex);
+       } else {
+         // Si la imagen de la variación no está en la galería principal, la forzamos temporalmente
+         // aunque lo ideal es que esté en la galería.
+         setZoomStyle(prev => ({ ...prev, backgroundImage: `url(${match.image?.src})` }));
+       }
     }
-
   }, [selectedAttributes, variations, product]);
 
   const handleAttributeSelect = (name: string, option: string) => {
@@ -131,37 +119,24 @@ const ProductPage = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imgContainerRef.current) return;
+    if (!imgContainerRef.current || !product?.images[selectedImage]) return;
     const { left, top, width, height } = imgContainerRef.current.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
-    
-    const currentImgSrc = product?.images[selectedImage]?.src;
     setZoomStyle({
       display: 'block',
       backgroundPosition: `${x}% ${y}%`,
-      backgroundImage: `url(${currentImgSrc})`
+      backgroundImage: `url(${product.images[selectedImage].src})`
     });
   };
 
-  const handleMouseLeave = () => {
-    setZoomStyle(prev => ({ ...prev, display: 'none' }));
-  };
+  const handleMouseLeave = () => setZoomStyle(prev => ({ ...prev, display: 'none' }));
 
   const handleAddToCart = () => {
     if (!product) return;
-
     if (product.type === 'variable') {
-      if (!currentVariation) {
-        toast.error("Por favor selecciona todas las opciones.");
-        return;
-      }
-      
-      if (currentVariation.stock_status === 'outofstock') {
-        toast.error("Lo sentimos, esta combinación no tiene stock disponible.");
-        return;
-      }
-
+      if (!currentVariation) return toast.error("Selecciona opciones");
+      if (currentVariation.stock_status === 'outofstock') return toast.error("Sin stock");
       addItem({
         ...product,
         id: currentVariation.id,
@@ -170,10 +145,7 @@ const ProductPage = () => {
         images: currentVariation.image ? [currentVariation.image] : product.images 
       }, 1, selectedAttributes);
     } else {
-      if (product.stock_status === 'outofstock') {
-        toast.error("Producto sin stock.");
-        return;
-      }
+      if (product.stock_status === 'outofstock') return toast.error("Sin stock");
       addItem(product);
     }
   };
@@ -187,18 +159,19 @@ const ProductPage = () => {
   if (error || !product) return (
     <div className="text-center py-20 min-h-screen flex flex-col items-center justify-center">
       <h2 className="text-2xl font-bold mb-4 text-gray-900">Producto no disponible</h2>
-      <button onClick={() => navigate('/')} className="text-blue-600 hover:underline font-bold uppercase text-xs tracking-widest">Volver al inicio</button>
+      <p className="text-gray-500 mb-8">No pudimos encontrar la información del producto solicitado.</p>
+      <button onClick={() => navigate('/')} className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl uppercase text-xs tracking-widest hover:bg-blue-600 transition-colors">Volver al inicio</button>
     </div>
   );
 
   const displayPrice = currentVariation ? currentVariation.price : product.price;
   const displayRegularPrice = currentVariation ? currentVariation.regular_price : product.regular_price;
   const isOnSale = currentVariation ? currentVariation.on_sale : product.on_sale;
-  
-  // Determinamos si hay stock de la selección actual
   const isOutOfStock = product.type === 'variable' 
     ? (currentVariation && currentVariation.stock_status === 'outofstock')
     : product.stock_status === 'outofstock';
+
+  console.log("[ProductPage] ✨ Renderizando producto:", product.name);
 
   return (
     <div className="bg-white min-h-screen pb-20">
@@ -206,8 +179,7 @@ const ProductPage = () => {
         title={product.name}
         description={(product.short_description || "").replace(/<[^>]*>?/gm, '').substring(0, 160)}
         ogType="product"
-        ogImage={product.images[0]?.src}
-        structuredData={structuredData || undefined}
+        ogImage={product.images?.[0]?.src}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -220,7 +192,7 @@ const ProductPage = () => {
               onMouseLeave={handleMouseLeave}
               ref={imgContainerRef}
             >
-              {product.images.length > 0 ? (
+              {product.images?.length > 0 ? (
                  <img 
                    src={product.images[selectedImage]?.src} 
                    alt={product.name}
@@ -231,23 +203,19 @@ const ProductPage = () => {
               )}
               <div 
                 className="absolute inset-0 z-20 pointer-events-none bg-no-repeat"
-                style={{
-                  ...zoomStyle,
-                  backgroundSize: '200%',
-                  backgroundColor: 'white'
-                }}
+                style={{ ...zoomStyle, backgroundSize: '200%', backgroundColor: 'white' }}
               />
             </div>
 
-            {product.images.length > 1 && (
+            {product.images?.length > 1 && (
               <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                 {product.images.map((img, idx) => (
                   <button
-                    key={img.id}
+                    key={img.id || idx}
                     onClick={() => setSelectedImage(idx)}
                     className={`flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all p-2 bg-gray-50 ${selectedImage === idx ? 'border-blue-600 ring-2 ring-blue-100' : 'border-transparent hover:border-gray-200'}`}
                   >
-                    <img src={img.src} alt={img.alt} className="w-full h-full object-contain" />
+                    <img src={img.src} alt={img.alt || product.name} className="w-full h-full object-contain" />
                   </button>
                 ))}
               </div>
@@ -259,14 +227,13 @@ const ProductPage = () => {
              <nav className="text-[10px] font-bold text-gray-400 mb-6 uppercase tracking-widest flex items-center gap-2">
               <span className="cursor-pointer hover:text-blue-600 transition-colors" onClick={() => navigate('/')}>Inicio</span> 
               <span>/</span> 
-              <span className="text-gray-900">{product.categories[0]?.name || 'Producto'}</span>
+              <span className="text-gray-900">{product.categories?.[0]?.name || 'Producto'}</span>
              </nav>
 
              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 leading-tight tracking-tight">{product.name}</h1>
              
-             {/* Resumen de Valoración */}
              <div className="flex items-center gap-3 mb-6">
-                <StarRating rating={parseFloat(product.average_rating)} />
+                <StarRating rating={parseFloat(product.average_rating || "0")} />
                 <span className="text-sm font-bold text-gray-400">({reviews.length} reseñas)</span>
              </div>
              
@@ -281,7 +248,6 @@ const ProductPage = () => {
                   )}
                 </div>
                 
-                {/* Indicador de Stock */}
                 {currentVariation || product.type !== 'variable' ? (
                   <div className={`mt-2 flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${isOutOfStock ? 'text-red-500' : 'text-green-600'}`}>
                     <div className={`w-2 h-2 rounded-full ${isOutOfStock ? 'bg-red-500' : 'bg-green-600'}`}></div>
@@ -293,11 +259,11 @@ const ProductPage = () => {
              </div>
 
              {/* VARIACIONES */}
-             {product.type === 'variable' && product.attributes.map(attr => (
-               <div key={attr.id} className="mb-6">
+             {product.type === 'variable' && product.attributes?.map(attr => (
+               <div key={attr.id || attr.name} className="mb-6">
                  <h3 className="text-xs font-bold text-gray-900 uppercase tracking-widest mb-3">{attr.name}: <span className="text-blue-600">{selectedAttributes[attr.name]}</span></h3>
                  <div className="flex flex-wrap gap-2">
-                   {attr.options.map(option => (
+                   {attr.options?.map(option => (
                      <button
                        key={option}
                        onClick={() => handleAttributeSelect(attr.name, option)}
@@ -314,11 +280,7 @@ const ProductPage = () => {
                </div>
              ))}
 
-             {/* Descripción Corta */}
-             <div 
-               className="text-gray-600 text-lg leading-relaxed mb-8 font-light"
-               dangerouslySetInnerHTML={{ __html: product.short_description }} 
-             />
+             <div className="text-gray-600 text-lg leading-relaxed mb-8 font-light" dangerouslySetInnerHTML={{ __html: product.short_description || '' }} />
 
              <div className="flex flex-col sm:flex-row gap-4 mb-12">
                <button
@@ -335,34 +297,17 @@ const ProductPage = () => {
                     : isOutOfStock ? 'Agotado' : 'Añadir al Carrito'}
                </button>
              </div>
-
-             <div className="mt-auto border-t border-gray-100 pt-8">
-                <div className="flex items-center gap-6 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                    Pago Seguro
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                    Cuotas sin Interés
-                  </div>
-                </div>
-             </div>
           </div>
         </div>
 
-        {/* DESCRIPCIÓN LARGA */}
         {product.description && (
           <div className="mt-24 max-w-4xl mx-auto">
             <h3 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100 uppercase tracking-tight">Descripción Detallada</h3>
-            <div 
-              className="prose prose-lg prose-blue max-w-none text-gray-600 prose-headings:font-bold prose-img:rounded-3xl prose-img:shadow-lg"
-              dangerouslySetInnerHTML={{ __html: product.description }} 
-            />
+            <div className="prose prose-lg prose-blue max-w-none text-gray-600" dangerouslySetInnerHTML={{ __html: product.description }} />
           </div>
         )}
 
-        {/* RESEÑAS (CARRUSEL) */}
+        {/* RESEÑAS */}
         <div className="mt-24 max-w-7xl mx-auto">
           <h3 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100 uppercase tracking-tight flex items-center gap-4">
             Reseñas del Producto
@@ -371,51 +316,24 @@ const ProductPage = () => {
           
           {reviews.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-              <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Aún no hay reseñas para este producto</p>
+              <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Aún no hay reseñas</p>
             </div>
           ) : (
             <div className="px-4">
-              <Slider 
-                dots={true}
-                infinite={false}
-                speed={500}
-                slidesToShow={reviews.length < 3 ? reviews.length : 3}
-                slidesToScroll={1}
-                responsive={[
-                  { breakpoint: 1024, settings: { slidesToShow: 2 } },
-                  { breakpoint: 600, settings: { slidesToShow: 1 } }
-                ]}
-              >
+              <Slider dots infinite={false} speed={500} slidesToShow={Math.min(reviews.length, 3)} slidesToScroll={1}>
                 {reviews.map((rev) => (
                   <div key={rev.id} className="px-2 pb-8">
-                    <div className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100 h-full min-h-[250px] flex flex-col justify-between hover:shadow-lg transition-shadow">
+                    <div className="bg-gray-50 rounded-[2rem] p-8 border border-gray-100 h-full min-h-[250px] flex flex-col justify-between">
                       <div>
                         <div className="flex items-center gap-4 mb-6">
-                          <img 
-                            src={rev.reviewer_avatar_urls['96']} 
-                            alt={rev.reviewer} 
-                            className="w-12 h-12 rounded-full border-2 border-white shadow-sm" 
-                          />
+                          <img src={rev.reviewer_avatar_urls?.['96'] || ''} alt={rev.reviewer} className="w-12 h-12 rounded-full border-2 border-white shadow-sm" />
                           <div>
                             <h4 className="font-bold text-gray-900 text-sm uppercase tracking-tight">{rev.reviewer}</h4>
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                              {new Date(rev.date_created).toLocaleDateString()}
-                            </span>
+                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{new Date(rev.date_created).toLocaleDateString()}</span>
                           </div>
                         </div>
-                        <div className="mb-4">
-                          <StarRating rating={rev.rating} />
-                        </div>
-                        <div 
-                          className="text-gray-600 leading-relaxed text-sm font-medium italic line-clamp-4"
-                          dangerouslySetInnerHTML={{ __html: rev.review }}
-                        />
-                      </div>
-                      <div className="mt-6 pt-4 border-t border-gray-200/50">
-                         <span className="text-[10px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1">
-                           <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
-                           Compra Verificada
-                         </span>
+                        <div className="mb-4"><StarRating rating={rev.rating} /></div>
+                        <div className="text-gray-600 text-sm font-medium italic line-clamp-4" dangerouslySetInnerHTML={{ __html: rev.review }} />
                       </div>
                     </div>
                   </div>

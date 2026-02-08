@@ -31,7 +31,7 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
     setLoading(true);
     setError(false);
 
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    const apiUrl = import.meta.env.VITE_API_URL || "";
     fetch(`${apiUrl}/wc/products?category=${categoryId}`)
       .then((res) => {
         if (!res.ok) throw new Error("Error al obtener productos");

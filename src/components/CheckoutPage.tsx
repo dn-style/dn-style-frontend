@@ -33,7 +33,7 @@ const CheckoutPage = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CustomerAddress>();
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    const apiUrl = import.meta.env.VITE_API_URL || "";
     fetch(`${apiUrl}/wc/payment-gateways`)
       .then(res => res.json())
       .then(data => {
@@ -96,7 +96,7 @@ const CheckoutPage = () => {
       customer_id: user?.id || 0
     };
 
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+    const apiUrl = import.meta.env.VITE_API_URL || "";
     try {
       const response = await fetch(`${apiUrl}/checkout`, {
         method: 'POST',
