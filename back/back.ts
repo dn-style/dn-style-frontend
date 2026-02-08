@@ -215,6 +215,17 @@ const api = new WooCommerceRestApi({
   }
 });
 
+// Helper para reescribir URLs de imágenes
+const rewriteUrls = (data: any) => {
+  if (!data) return data;
+  const stringified = JSON.stringify(data);
+  // Reemplazamos rastro de hosts internos por el dominio público
+  const proxied = stringified.replace(/http:\/\/localhost:8086/g, 'https://test.system4us.com')
+                             .replace(/https:\/\/localhost:8086/g, 'https://test.system4us.com')
+                             .replace(/http:\/\/wordpress/g, 'https://test.system4us.com')
+                             .replace(/https:\/\/wordpress/g, 'https://test.system4us.com');
+  return JSON.parse(proxied);
+};
 
 // Supongamos que guardamos los atributos globales en memoria
 const ATTRIBUTES: { id: number; name: string; slug: string; options: { id: number; name: string }[] }[] = [];
@@ -356,7 +367,7 @@ app.get('/wc/products', async (req: Request, res: Response) => {
       res.setHeader('Access-Control-Expose-Headers', 'X-WP-Total'); // Importante para CORS
     }
 
-    res.json(response.data);
+    res.json(rewriteUrls(response.data));
   } catch (err: any) {
     console.error('Error obteniendo productos:', err.response?.data || err.message);
     res.status(err.response?.status || 500).json({ error: 'Error obteniendo productos' });
@@ -367,7 +378,7 @@ app.get('/wc/products/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const response = await api.getProduct(Number(id));
-    res.json(response.data);
+    res.json(rewriteUrls(response.data));
   } catch (err: any) {
     console.error(`Error obteniendo producto ${req.params.id}:`, err.response?.data || err.message);
     res.status(err.response?.status || 404).json({ error: 'Producto no encontrado' });
@@ -437,7 +448,7 @@ app.get('/wc/categories', async (req: Request, res: Response) => {
       image: cat.image ? cat.image.src : null,
     }));
 
-    res.json(categories);
+    res.json(rewriteUrls(categories));
   } catch (err: any) {
     console.error('Error obteniendo categorías:', err.response?.data || err.message);
     res.status(err.response?.status || 500).json({ error: 'Error obteniendo categorías' });
