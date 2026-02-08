@@ -94,7 +94,7 @@ echo "⚙️ Verificando API Keys..."
 docker-compose run --rm wp-cli wp --allow-root eval '
   global $wpdb;
   $table_name = $wpdb->prefix . "woocommerce_api_keys";
-  $exists = $wpdb->get_var("SELECT id FROM $table_name WHERE description = "Frontend Proxy" LIMIT 1");
+  $exists = $wpdb->get_var("SELECT id FROM $table_name WHERE description = \"Frontend Proxy\" LIMIT 1");
   
   if (!$exists) {
       if ( ! defined( "WC_PLUGIN_FILE" ) ) { include_once WP_PLUGIN_DIR . "/woocommerce/woocommerce.php"; }
@@ -111,16 +111,11 @@ docker-compose run --rm wp-cli wp --allow-root eval '
           "truncated_key" => substr($consumer_key, -7),
       ]);
       
-      echo "
-Keys Generadas. AÑADIR A back/.env:
-";
-      echo "WC_KEY=$consumer_key
-";
-      echo "WC_SECRET=$consumer_secret
-";
+      echo "\nSUCCESS_KEYS\n";
+      echo "WC_KEY=$consumer_key\n";
+      echo "WC_SECRET=$consumer_secret\n";
   } else {
-      echo "✅ API Keys ya existen (No se sobrescriben).
-";
+      echo "✅ API Keys ya existen.\n";
   }
 '
 

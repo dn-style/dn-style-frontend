@@ -148,10 +148,9 @@ app.use(cors(
 
 // --- PROXY DE IMÁGENES DE PRODUCTOS ---
 // URL ejemplo: https://test.system4us.com/images/uploads/2026/02/zapatilla.jpg
-app.get('/images/:key*', async (req: Request, res: Response) => {
-  // Con :key*, Express captura el resto del path en req.params.key + req.params[0]
-  // O más simple en versiones nuevas: req.params.key + (req.params[0] || "")
-  const key = req.params.key + (req.params[0] || ""); 
+app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
+  // Al usar Regex, el grupo capturado (.*) está en req.params[0]
+  const key = req.params[0]; 
 
   try {
     const command = new GetObjectCommand({
@@ -198,12 +197,22 @@ app.use('/wp-json/wp/v2', createProxyMiddleware({
 
 app.use(express.json());
 
+console.log('--- VERIFICACIÓN DE CREDENCIALES ---');
+console.log('WC_KEY:', process.env.WC_KEY);
+console.log('WC_SECRET:', process.env.WC_SECRET?.substring(0, 5) + '...');
+console.log('WC_BASE:', process.env.WC_BASE);
+
 const api = new WooCommerceRestApi({
-  url: process.env.WC_BASE!,
+  url: 'http://wordpress/',
   consumerKey: process.env.WC_KEY!,
   consumerSecret: process.env.WC_SECRET!,
   version: 'wc/v3',
-  queryStringAuth: true,
+  queryStringAuth: false,
+  axiosConfig: {
+    headers: {
+      'Authorization': 'Basic ' + Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64')
+    }
+  }
 });
 
 
@@ -408,8 +417,18 @@ app.get('/wc/categories', async (req: Request, res: Response) => {
     const { parent } = req.query;
     if (parent !== undefined) params.parent = Number(parent);
 
+    console.log('--- DEBUG CATEGORÍAS START ---');
     const response = await api._request('GET', 'products/categories', params);
+    console.log('Respuesta Status:', response.status);
+    console.log('Respuesta Headers:', JSON.stringify(response.headers));
     
+    if (!response.data || !Array.isArray(response.data)) {
+      console.log('Data (No es array):', typeof response.data, response.data);
+      return res.json([]);
+    }
+
+    console.log('Data Count:', response.data.length);
+
     const categories = response.data.map((cat: any) => ({
       id: cat.id,
       name: cat.name,
