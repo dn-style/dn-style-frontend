@@ -69,6 +69,9 @@ services:
       - WP_HOST=http://wordpress
       - WC_BASE=http://wordpress/
       - REDIS_URL=redis://host.docker.internal:6380
+      - VERBOSE_DEBUG=true
+    volumes:
+      - frontend_dist:/app/public_html:ro
     depends_on:
       - wordpress
     networks:
@@ -79,6 +82,8 @@ services:
     restart: always
     ports:
       - "3000:80"
+    volumes:
+      - frontend_dist:/usr/share/nginx/html
     depends_on:
       - backend
     networks:
@@ -91,3 +96,4 @@ networks:
 volumes:
   db_data:
   wp_data:
+  frontend_dist:

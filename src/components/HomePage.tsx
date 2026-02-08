@@ -2,6 +2,7 @@ import HeroSection from "./HeroSection";
 import Divitions from "./Divitions";
 import FeaturesSection from "./FeaturesSection";
 import { useCategoriesStore } from "../store/categoriesStore";
+import SEO from "./SEO";
 
 const HomePage = () => {
   const slugToId = useCategoriesStore((state) => state.slugToId);
@@ -11,21 +12,24 @@ const HomePage = () => {
   // Esto previene el parpadeo pero permite mostrar la página si las categorías fallan o están vacías
   const isInitializing = categories.length === 0;
 
-  // Si queremos mostrar un esqueleto mientras carga el primer fetch
-  // Pero si ya hay categorías (aunque no sean las hardcodeadas), renderizamos
-  if (isInitializing && Object.keys(slugToId).length === 0) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-500 font-medium font-sans">DN Style Store</p>
-        </div>
-      </div>
-    );
-  }
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "url": "https://test.system4us.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://test.system4us.com/search?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
 
   return (
     <div className="bg-white min-h-screen">
+      <SEO 
+        title="Inicio"
+        description="DN Style Store - Fragancias Premium, lo último en Electrónica y Tecnología Apple. Envíos a todo el país desde Brandsen."
+        structuredData={structuredData}
+      />
       
       {/* SECCIÓN 1: Hero Principal (Fragancias) */}
       <section className="relative">

@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCategoriesStore } from "../store/categoriesStore";
+import SEO from "./SEO";
 
 export interface Product {
   id: number;
@@ -147,6 +148,10 @@ const CategoryPage: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 text-gray-900">
+      <SEO 
+        title={currentCategory?.name}
+        description={`Explora nuestra colección de ${currentCategory?.name}. Los mejores productos con envío a todo el país.`}
+      />
       <div className="flex flex-col md:flex-row gap-8">
         
         {/* Sidebar */}

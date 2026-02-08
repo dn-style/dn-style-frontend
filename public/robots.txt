@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /cart
+Allow: /checkout
+Disallow: /account
+Disallow: /wp-admin
+Disallow: /wp-login.php
+
+Sitemap: https://test.system4us.com/sitemap.xml

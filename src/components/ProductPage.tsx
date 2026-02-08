@@ -39,6 +39,8 @@ interface Variation {
   image?: { src: string };
 }
 
+import SEO from "./SEO";
+
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -57,6 +59,33 @@ const ProductPage = () => {
   const imgContainerRef = useRef<HTMLDivElement>(null);
 
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+
+  // Preparar datos estructurados para Google (SERP)
+  const structuredData = product ? {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "image": product.images.map(img => img.src),
+    "description": (product.short_description || "").replace(/<[^>]*>?/gm, ''),
+    "brand": {
+      "@type": "Brand",
+      "name": "DN Style"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": window.location.href,
+      "priceCurrency": "USD",
+      "price": currentVariation ? currentVariation.price : product.price,
+      "availability": (currentVariation ? currentVariation.stock_status : product.stock_status) === 'outofstock' 
+        ? "https://schema.org/OutOfStock" 
+        : "https://schema.org/InStock"
+    },
+    "aggregateRating": reviews.length > 0 ? {
+      "@type": "AggregateRating",
+      "ratingValue": product.average_rating,
+      "reviewCount": reviews.length
+    } : undefined
+  } : null;
 
   useEffect(() => {
     if (!id) return;
@@ -173,6 +202,13 @@ const ProductPage = () => {
 
   return (
     <div className="bg-white min-h-screen pb-20">
+      <SEO 
+        title={product.name}
+        description={(product.short_description || "").replace(/<[^>]*>?/gm, '').substring(0, 160)}
+        ogType="product"
+        ogImage={product.images[0]?.src}
+        structuredData={structuredData || undefined}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           

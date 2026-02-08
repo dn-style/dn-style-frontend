@@ -205,6 +205,8 @@ const rewriteUrls = (data: any) => {
   const stringified = JSON.stringify(data);
   const proxied = stringified.replace(/http:\/\/localhost:8086/gi, 'https://test.system4us.com')
                              .replace(/https:\/\/localhost:8086/gi, 'https://test.system4us.com')
+                             .replace(/http:\/\/wordpress\/wp-content\/uploads/gi, 'https://test.system4us.com/images/uploads')
+                             .replace(/https:\/\/test\.system4us\.com\/wp-content\/uploads/gi, 'https://test.system4us.com/images/uploads')
                              .replace(/http:\/\/wordpress/gi, 'https://test.system4us.com')
                              .replace(/https:\/\/wordpress/gi, 'https://test.system4us.com')
                              .replace(/http:\/\/10\.10\.0\.3:8086/gi, 'https://test.system4us.com');
@@ -246,34 +248,47 @@ const initialize = async () => {
   await loadAttributes();
 };
 
+// --- CONFIGURACIÓN DEBUG ---
+const isVerbose = process.env.VERBOSE_DEBUG === 'true' || process.argv.includes('--debug');
+
 // --- HELPER DE CACHÉ INTELIGENTE ---
 const getCache = async (key: string) => {
+  if (isVerbose) console.log(`[Redis] 🔍 Consultando caché: ${key}`);
   try {
     const data = await redisClient.get(key);
-    return data ? JSON.parse(data.toString()) : null;
+    if (data) {
+      if (isVerbose) console.log(`[Redis] ✅ HIT - Clave encontrada: ${key}`);
+      return JSON.parse(data.toString());
+    }
+    if (isVerbose) console.log(`[Redis] ❌ MISS - Clave no encontrada: ${key}`);
+    return null;
   } catch (err) {
-    console.error('Redis Get Error:', err);
+    console.error('[Redis] ⚠️ Error Get:', err);
     return null;
   }
 };
 
-const setCache = async (key: string, data: any, ttl = 3600) => {
+const setCache = async (key: string, data: any, ttl = 60) => {
+  if (isVerbose) console.log(`[Redis] 💾 Guardando en caché: ${key} (TTL: ${ttl}s)`);
   try {
     await redisClient.set(key, JSON.stringify(data), { EX: ttl });
   } catch (err) {
-    console.error('Redis Set Error:', err);
+    console.error('[Redis] ⚠️ Error Set:', err);
   }
 };
 
 const clearCacheByPattern = async (pattern: string) => {
+  if (isVerbose) console.log(`[Redis] 🧹 Intentando limpiar patrón: ${pattern}`);
   try {
     const keys = await redisClient.keys(pattern);
     if (keys.length > 0) {
       await redisClient.del(keys);
-      console.log(`Caché limpiada para patrón: ${pattern}`);
+      if (isVerbose) console.log(`[Redis] ✨ Limpiadas ${keys.length} claves para el patrón: ${pattern}`);
+    } else if (isVerbose) {
+      console.log(`[Redis] ℹ️ No se encontraron claves para el patrón: ${pattern}`);
     }
   } catch (err) {
-    console.error('Redis Clear Error:', err);
+    console.error('[Redis] ⚠️ Error Clear:', err);
   }
 };
 
@@ -563,5 +578,82 @@ app.post('/webhooks/order-updated', async (req: Request, res: Response) => {
 export { app, httpServer };
 
 if (process.env.NODE_ENV !== 'test') {
-  httpServer.listen(4000, () => console.log('Servidor (HTTP + Socket.IO) corriendo en puerto 4000'));
+  // --- SERVIR FRONTEND CON SEO INYECTADO ---
+const serveWithSEO = async (req: Request, res: Response, seoData: { title: string, description: string, image: string }) => {
+  try {
+    const indexPath = path.join(__dirname, 'public_html', 'index.html');
+    if (!fs.existsSync(indexPath)) {
+      return res.status(500).send('Frontend build not found');
+    }
+
+    let html = fs.readFileSync(indexPath, 'utf8');
+
+    // Inyectar etiquetas
+    const fullTitle = `${seoData.title} | DN STYLE`;
+    html = html.replace(/<title>.*?<\/title>/g, `<title>${fullTitle}</title>`);
+    
+    // Inyectar Meta Tags (si no existen, los ponemos antes del </head>)
+    const metaTags = `
+      <meta name="description" content="${seoData.description}" />
+      <meta property="og:title" content="${fullTitle}" />
+      <meta property="og:description" content="${seoData.description}" />
+      <meta property="og:image" content="${seoData.image}" />
+      <meta property="og:url" content="https://test.system4us.com${req.originalUrl}" />
+      <meta property="og:type" content="website" />
+      <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:image" content="${seoData.image}" />
+    `;
+    
+    html = html.replace('</head>', `${metaTags}</head>`);
+
+    res.send(html);
+  } catch (err) {
+    console.error('Error inyectando SEO:', err);
+    res.sendFile(path.join(__dirname, 'public_html', 'index.html'));
+  }
+};
+
+app.get('/producto/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const cacheKey = `product:${id}`;
+    let product = await getCache(cacheKey);
+
+    if (!product) {
+      const response = await api.getProduct(Number(id));
+      product = response.data;
+      await setCache(cacheKey, product);
+    }
+
+    const cleanDescription = (product.short_description || "").replace(/<[^>]*>?/gm, '').substring(0, 160);
+    const images = product.images || [];
+    // Asegurarse de usar la URL de nuestro proxy para la imagen
+    const rawImg = images[0]?.src || "";
+    const proxiedImg = rawImg.replace(/http:\/\/wordpress\/wp-content\/uploads/gi, 'https://test.system4us.com/images/uploads');
+
+    await serveWithSEO(req, res, {
+      title: product.name,
+      description: cleanDescription,
+      image: proxiedImg
+    });
+  } catch (err) {
+    res.sendFile(path.join(__dirname, 'public_html', 'index.html'));
+  }
+});
+
+app.get('/categoria/:slug', async (req: Request, res: Response) => {
+  try {
+    const { slug } = req.params;
+    // Por simplicidad, SEO genérico para categoría, o podrías buscarla en el caché
+    await serveWithSEO(req, res, {
+      title: `Colección ${slug.toUpperCase()}`,
+      description: `Explora lo mejor de ${slug} en DN Style.`,
+      image: 'https://test.system4us.com/og-image.jpg'
+    });
+  } catch (err) {
+    res.sendFile(path.join(__dirname, 'public_html', 'index.html'));
+  }
+});
+
+httpServer.listen(4000, () => console.log('Servidor (HTTP + Socket.IO) corriendo en puerto 4000'));
 }

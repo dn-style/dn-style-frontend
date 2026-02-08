@@ -23,12 +23,13 @@ fi
 
 # 2. PLUGINS
 echo "⚙️ Instalando/Verificando plugins..."
-PLUGINS="woocommerce woocommerce-mercadopago jwt-authentication-for-wp-rest-api amazon-s3-and-cloudfront"
+PLUGINS="woocommerce woocommerce-mercadopago jwt-authentication-for-wp-rest-api amazon-s3-and-cloudfront cloudflare-flexible-ssl"
 for plugin in $PLUGINS; do
     if ! docker-compose run --rm wp-cli wp --allow-root plugin is-installed $plugin; then
         docker-compose run --rm wp-cli wp --allow-root plugin install $plugin --activate --force
         echo "✅ Plugin $plugin instalado."
     else
+        # Asegurar que esté activo
         docker-compose run --rm wp-cli wp --allow-root plugin activate $plugin
         echo "✅ Plugin $plugin ya instalado."
     fi
@@ -49,33 +50,6 @@ docker-compose run --rm wp-cli wp --allow-root eval "
         'use-yearmonth-folders'  => 1,
         'object-prefix'      => 'uploads/'
     ) );
-    
-    \$mu_dir = ABSPATH . 'wp-content/mu-plugins';
-    if ( ! is_dir( \$mu_dir ) ) { mkdir( \$mu_dir, 0755, true ); }
-    \$content = '<?php
-    add_filter( \"as3cf_aws_s3_client_args\", function( \$args ) {
-        \$provider = getenv(\"STORAGE_PROVIDER\") ?: \"minio\";
-        if ( \$provider === \"r2\" ) {
-            \$account_id = getenv(\"R2_ACCOUNT_ID\");
-            \$args[\"endpoint\"] = \"https://\" . \$account_id . \".r2.cloudflarestorage.com\";
-            \$args[\"region\"] = \"auto\";
-            \$args[\"use_path_style_endpoint\"] = false;
-            \$args[\"credentials\"] = [\"key\" => getenv(\"R2_ACCESS_KEY_ID\"), \"secret\" => getenv(\"R2_SECRET_ACCESS_KEY\")];
-        } else {
-            \$args[\"endpoint\"] = \"http://host.docker.internal:9000\";
-            \$args[\"use_path_style_endpoint\"] = true;
-            \$args[\"credentials\"] = [\"key\" => \"minioadmin\", \"secret\" => \"minioadmin\"];
-        }
-        return \$args;
-    } );
-    add_filter( \"as3cf_get_attachment_url\", function( \$url ) {
-        if ( strpos( \$url, \"cloudflarestorage.com\" ) !== false || strpos( \$url, \"amazonaws.com\" ) !== false ) {
-            \$parts = parse_url( \$url );
-            return \"https://test.system4us.com/images\" . \$parts[\"path\"];
-        }
-        return \$url;
-    } );';
-    file_put_contents( \$mu_dir . '/storage-config.php', \$content );
 "
 
 # 4. CONFIGURACIÓN WOOCOMMERCE
@@ -84,10 +58,11 @@ docker-compose run --rm wp-cli wp --allow-root option update woocommerce_default
 docker-compose run --rm wp-cli wp --allow-root option update woocommerce_currency "USD"
 docker-compose run --rm wp-cli wp --allow-root rewrite structure "/%postname%/" --hard
 
-# 5. CONFIGURACIÓN JWT
-echo "⚙️ Configurando JWT..."
-docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_SECRET_KEY "$(openssl rand -base64 64)" --type=constant --quiet 2>/dev/null || echo "JWT Secret ya configurado."
-docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_CORS_ENABLE true --raw --type=constant --quiet 2>/dev/null || echo "JWT CORS ya configurado."
+# 5. CONFIGURACIÓN SEGURIDAD Y SSL (Cloudflare Flex)
+echo "⚙️ Configurando Seguridad y SSL..."
+docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_SECRET_KEY "$(openssl rand -base64 64)" --type=constant --quiet 2>/dev/null
+docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_CORS_ENABLE true --raw --type=constant --quiet 2>/dev/null
+docker-compose run --rm wp-cli wp --allow-root config set FORCE_SSL_ADMIN true --raw --type=constant --quiet 2>/dev/null
 
 # 6. GENERACIÓN DE API KEYS
 echo "⚙️ Verificando API Keys..."
