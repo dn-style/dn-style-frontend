@@ -1,0 +1,47 @@
+---
+interface Props {
+  text?: string;
+  backgroundColor?: string;
+  color?: string;
+  paddingX?: number;
+  paddingY?: number;
+  borderRadius?: number;
+  fullWidth?: boolean;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  shadow?: string;
+}
+
+const {
+  text = 'Click Aquí',
+  backgroundColor = '#111827',
+  color = '#ffffff',
+  paddingX = 24,
+  paddingY = 12,
+  borderRadius = 12,
+  fullWidth = false,
+  marginTop = 0,
+  marginBottom = 0,
+  marginLeft = 0,
+  marginRight = 0,
+  shadow = 'none',
+} = Astro.props;
+
+const style = {
+  backgroundColor,
+  color,
+  padding: `${paddingY}px ${paddingX}px`,
+  borderRadius: `${borderRadius}px`,
+  marginTop: `${marginTop}px`,
+  marginBottom: `${marginBottom}px`,
+  marginLeft: `${marginLeft}px`,
+  marginRight: `${marginRight}px`,
+  boxShadow: shadow === 'none' ? 'none' : shadow,
+};
+---
+
+<button class={`transition-all font-bold uppercase text-[10px] tracking-widest ${fullWidth ? 'w-full' : ''}`} style={style}>
+  {text}
+</button>

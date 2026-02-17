@@ -1,0 +1,37 @@
+---
+interface Props {
+  url?: string;
+  width?: string;
+  borderRadius?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  shadow?: string;
+}
+
+const {
+  url = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000&auto=format&fit=crop',
+  width = '100%',
+  borderRadius = 16,
+  marginTop = 0,
+  marginBottom = 0,
+  marginLeft = 0,
+  marginRight = 0,
+  shadow = 'none',
+} = Astro.props;
+
+const style = {
+  borderRadius: `${borderRadius}px`,
+  width,
+  marginTop: `${marginTop}px`,
+  marginBottom: `${marginBottom}px`,
+  marginLeft: `${marginLeft}px`,
+  marginRight: `${marginRight}px`,
+  boxShadow: shadow === 'none' ? 'none' : shadow,
+};
+---
+
+<div class="inline-block overflow-hidden transition-all" style={style}>
+  <img src={url} alt="User upload" class="w-full h-auto block" />
+</div>

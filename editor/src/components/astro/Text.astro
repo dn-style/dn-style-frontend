@@ -1,0 +1,48 @@
+---
+interface Props {
+  text?: string;
+  fontSize?: number;
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
+  color?: string;
+  fontWeight?: string;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  shadow?: string;
+}
+
+const {
+  text = 'Haz clic para editar este texto',
+  fontSize = 16,
+  textAlign = 'left',
+  color = '#000000',
+  fontWeight = 'normal',
+  marginTop = 0,
+  marginBottom = 0,
+  marginLeft = 0,
+  marginRight = 0,
+  shadow = 'none',
+} = Astro.props;
+
+const style = {
+  marginTop: `${marginTop}px`,
+  marginBottom: `${marginBottom}px`,
+  marginLeft: `${marginLeft}px`,
+  marginRight: `${marginRight}px`,
+  textShadow: shadow === 'none' ? 'none' : shadow,
+};
+
+const textStyle = {
+  fontSize: `${fontSize}px`,
+  textAlign: textAlign,
+  color,
+  fontWeight: fontWeight as any,
+};
+---
+
+<div class="inline-block w-full overflow-hidden break-words" style={style}>
+  <p style={textStyle}>
+    {text}
+  </p>
+</div>

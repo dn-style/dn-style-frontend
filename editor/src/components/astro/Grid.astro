@@ -1,0 +1,38 @@
+---
+interface Props {
+  columns?: number;
+  gap?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  borderRadius?: number;
+  shadow?: string;
+}
+
+const {
+  columns = 2,
+  gap = 20,
+  marginTop = 0,
+  marginBottom = 0,
+  marginLeft = 0,
+  marginRight = 0,
+  borderRadius = 0,
+  shadow = 'none',
+} = Astro.props;
+
+const style = {
+  gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+  gap: `${gap}px`,
+  marginTop: `${marginTop}px`,
+  marginBottom: `${marginBottom}px`,
+  marginLeft: `${marginLeft}px`,
+  marginRight: `${marginRight}px`,
+  borderRadius: `${borderRadius}px`,
+  boxShadow: shadow === 'none' ? 'none' : shadow,
+};
+---
+
+<div class="grid w-full transition-all min-h-[50px] relative overflow-hidden" style={style}>
+  <slot />
+</div>

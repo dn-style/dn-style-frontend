@@ -1,0 +1,41 @@
+---
+import { DataTable } from '../../DataTable';
+
+interface Props {
+  datasourceId?: string;
+  tableId?: string;
+  rowsPerPage?: number;
+  enableCreate?: boolean;
+  enableEdit?: boolean;
+  enableDelete?: boolean;
+  visibleColumns?: string;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  shadow?: string;
+  borderRadius?: number;
+}
+
+const { 
+  datasourceId, tableId, rowsPerPage = 5, enableCreate = true, enableEdit = true, enableDelete = true, visibleColumns,
+  marginTop = 0, marginBottom = 0, marginLeft = 0, marginRight = 0, shadow = 'sm', borderRadius = 12
+} = Astro.props;
+---
+
+<DataTable 
+    client:load 
+    datasourceId={datasourceId} 
+    tableId={tableId} 
+    rowsPerPage={rowsPerPage} 
+    enableCreate={enableCreate}
+    enableEdit={enableEdit}
+    enableDelete={enableDelete}
+    visibleColumns={visibleColumns}
+    marginTop={marginTop}
+    marginBottom={marginBottom}
+    marginLeft={marginLeft}
+    marginRight={marginRight}
+    shadow={shadow}
+    borderRadius={borderRadius}
+/>

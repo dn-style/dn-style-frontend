@@ -1,0 +1,30 @@
+---
+interface Props {
+  color?: string;
+  thickness?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+}
+
+const {
+  color = '#e5e7eb',
+  thickness = 1,
+  marginTop = 20,
+  marginBottom = 20,
+  marginLeft = 0,
+  marginRight = 0,
+} = Astro.props;
+
+const style = {
+  height: `${thickness}px`,
+  backgroundColor: color,
+  marginTop: `${marginTop}px`,
+  marginBottom: `${marginBottom}px`,
+  marginLeft: `${marginLeft}px`,
+  marginRight: `${marginRight}px`,
+};
+---
+
+<div class="w-full transition-all" style={style} />

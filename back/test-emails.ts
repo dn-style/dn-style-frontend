@@ -9,7 +9,7 @@ const mockData = {
   date: '07 de Febrero, 2026',
   total: '1599.00',
   year: 2026,
-  reset_link: 'http://localhost:3000/reset-password?token=abc',
+  reset_link: 'http://localhost:3010/reset-password?token=abc',
   tracking_number: 'AR-987654321',
   items: [
     { name: 'iPhone 15 Pro Max - Titanio', quantity: 1, price: '1199.00' },

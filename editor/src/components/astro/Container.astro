@@ -1,0 +1,56 @@
+---
+interface Props {
+  backgroundColor?: string;
+  padding?: number;
+  display?: 'flex' | 'block';
+  flexDirection?: 'column' | 'row';
+  alignItems?: 'flex-start' | 'center' | 'flex-end';
+  justifyContent?: 'flex-start' | 'center' | 'flex-end' | 'space-between';
+  gap?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  shadow?: string;
+  borderRadius?: number;
+  borderColor?: string;
+  borderWidth?: number;
+  className?: string;
+  isFullWidth?: boolean;
+  maxWidth?: number;
+  height?: string;
+  minHeight?: number;
+}
+
+const {
+  backgroundColor, padding = 40, display = 'flex', flexDirection = 'column', alignItems = 'flex-start', justifyContent = 'flex-start', gap = 16,
+  marginTop = 0, marginBottom = 0, marginLeft = 0, marginRight = 0,
+  shadow = 'none', borderRadius = 0, borderColor = '#e5e7eb', borderWidth = 0,
+  className = '', isFullWidth = false, maxWidth = 1000, height = 'auto', minHeight = 200
+} = Astro.props;
+
+const style = {
+  backgroundColor,
+  padding: `${padding}px`,
+  display,
+  flexDirection: display === 'flex' ? flexDirection : undefined,
+  alignItems: display === 'flex' ? alignItems : undefined,
+  justifyContent: display === 'flex' ? justifyContent : undefined,
+  gap: display === 'flex' ? `${gap}px` : undefined,
+  marginTop: `${marginTop}px`,
+  marginBottom: `${marginBottom}px`,
+  marginLeft: isFullWidth ? `${marginLeft}px` : 'auto',
+  marginRight: isFullWidth ? `${marginRight}px` : 'auto',
+  boxShadow: shadow === 'none' ? 'none' : shadow,
+  borderRadius: `${borderRadius}px`,
+  border: borderWidth ? `${borderWidth}px solid ${borderColor}` : undefined,
+  width: isFullWidth ? '100%' : `${maxWidth}px`,
+  maxWidth: '100%',
+  height: height === 'auto' ? undefined : height,
+  minHeight: `${minHeight}px`,
+};
+---
+
+<div class={`break-words relative overflow-hidden ${className}`} style={style}>
+  <slot />
+</div>

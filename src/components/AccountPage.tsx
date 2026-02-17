@@ -31,6 +31,11 @@ const AccountPage = () => {
 
   const apiUrl = import.meta.env.VITE_API_URL || "";
 
+  const stripHtml = (html: string) => {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || "";
+  };
+
   useEffect(() => {
     if (user) {
       setActiveTab('orders');
@@ -75,7 +80,7 @@ const AccountPage = () => {
       const res = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: data.email, password: data.password })
+        body: JSON.stringify({ username: data.email.trim(), password: data.password })
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Error al iniciar sesión');
@@ -92,20 +97,27 @@ const AccountPage = () => {
       toast.success(`¡Hola!`);
       if (redirectPath === 'checkout') navigate('/checkout');
       else { setActiveTab('orders'); fetchOrders(result.user_email); fetchFullProfile(result.user_email); }
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(stripHtml(err.message)); }
   };
 
   const handleRegister = async (data: any) => {
     try {
+      const sanitizedData = {
+        email: data.email.trim(),
+        password: data.password,
+        first_name: data.first_name.trim(),
+        last_name: data.last_name.trim()
+      };
       const res = await fetch(`${apiUrl}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+        body: JSON.stringify(sanitizedData)
       });
-      if (!res.ok) throw new Error('Error al registrarse');
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || 'Error al registrarse');
       toast.success('Registro exitoso. Ya puedes entrar.');
       setActiveTab('login');
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(stripHtml(err.message)); }
   };
 
   const handleForgotPassword = async (data: any) => {
@@ -117,7 +129,7 @@ const AccountPage = () => {
       });
       if (res.ok) { toast.success("Enlace enviado por email."); setActiveTab('login'); }
       else throw new Error("Email no encontrado.");
-    } catch (err: any) { toast.error(err.message); }
+    } catch (err: any) { toast.error(stripHtml(err.message)); }
   };
 
   const handleLogout = () => { logout(); setActiveTab('login'); toast.info("Sesión cerrada"); navigate('/account'); };
@@ -135,7 +147,7 @@ const AccountPage = () => {
       const updated = await res.json();
       updateUser(updated);
       toast.success("Perfil actualizado");
-    } catch (err: any) { toast.error(err.message); } finally { setLoadingProfile(false); }
+    } catch (err: any) { toast.error(stripHtml(err.message)); } finally { setLoadingProfile(false); }
   };
 
   const handleUploadReceipt = async (orderId: number) => {

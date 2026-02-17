@@ -82,7 +82,7 @@ services:
     build: .
     restart: always
     ports:
-      - "3000:80"
+      - "3010:80"
     volumes:
       - frontend_dist:/usr/share/nginx/html
     depends_on:

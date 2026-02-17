@@ -1,0 +1,35 @@
+---
+import { DynamicForm } from '../../DynamicForm';
+
+interface Props {
+  dataSourceId: string;
+  tableId: string;
+  columns?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+}
+
+const { 
+  dataSourceId, tableId, columns = 1,
+  marginTop = 0, marginBottom = 0, marginLeft = 0, marginRight = 0
+} = Astro.props;
+
+const style = {
+  marginTop: `${marginTop}px`,
+  marginBottom: `${marginBottom}px`,
+  marginLeft: `${marginLeft}px`,
+  marginRight: `${marginRight}px`,
+};
+---
+
+<div class="p-4 border border-slate-300 rounded-lg bg-white relative" style={style}>
+    <DynamicForm 
+        client:load 
+        dataSourceId={dataSourceId} 
+        tableId={tableId} 
+        columns={columns}
+        onSubmit={(data) => console.log("Form Submitted", data)}
+    />
+</div>
