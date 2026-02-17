@@ -7,8 +7,11 @@ services:
       MYSQL_USER: wordpress
       MYSQL_PASSWORD: wordpress_password
       MYSQL_ROOT_PASSWORD: root_password
+      TZ: America/Argentina/Buenos_Aires
     volumes:
       - db_data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
     networks:
       - app-network
 
@@ -18,7 +21,7 @@ services:
     image: wordpress:latest
     restart: always
     ports:
-      - "8086:80"
+      - "127.0.0.1:8086:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
@@ -36,6 +39,7 @@ services:
         define('CONCATENATE_SCRIPTS', false);
         define('JWT_AUTH_CORS_ENABLE', true);
         define('WP_DEBUG', false);
+      TZ: America/Argentina/Buenos_Aires
     volumes:
       - wp_data:/var/www/html
     networks:
@@ -51,6 +55,7 @@ services:
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress_password
       WORDPRESS_DB_NAME: wordpress
+      TZ: America/Argentina/Buenos_Aires
     depends_on:
       - db
       - wordpress
@@ -63,13 +68,14 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "4000:4000"
+      - "127.0.0.1:4000:4000"
     env_file: .env
     environment:
-      - WP_HOST=http://wordpress
-      - WC_BASE=http://wordpress/
-      - REDIS_URL=redis://host.docker.internal:6380
-      - VERBOSE_DEBUG=true
+      WP_HOST: http://wordpress
+      WC_BASE: http://wordpress/
+      REDIS_URL: redis://host.docker.internal:6380
+      VERBOSE_DEBUG: true
+      TZ: America/Argentina/Buenos_Aires
     volumes:
       - frontend_dist:/app/public_html:ro
       - wp_data:/app/wp_uploads:ro
@@ -82,13 +88,15 @@ services:
     build: .
     restart: always
     ports:
-      - "3010:80"
+      - "127.0.0.1:3010:80"
     volumes:
       - frontend_dist:/usr/share/nginx/html
     depends_on:
       - backend
     networks:
       - app-network
+    environment:
+      TZ: America/Argentina/Buenos_Aires
 
 networks:
   app-network:
