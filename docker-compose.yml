@@ -7,7 +7,6 @@ services:
       MYSQL_USER: wordpress
       MYSQL_PASSWORD: wordpress_password
       MYSQL_ROOT_PASSWORD: root_password
-      TZ: America/Argentina/Buenos_Aires
     volumes:
       - db_data:/var/lib/mysql
     ports:
@@ -39,7 +38,6 @@ services:
         define('CONCATENATE_SCRIPTS', false);
         define('JWT_AUTH_CORS_ENABLE', true);
         define('WP_DEBUG', false);
-      TZ: America/Argentina/Buenos_Aires
     volumes:
       - wp_data:/var/www/html
     networks:
@@ -55,7 +53,6 @@ services:
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress_password
       WORDPRESS_DB_NAME: wordpress
-      TZ: America/Argentina/Buenos_Aires
     depends_on:
       - db
       - wordpress
@@ -75,7 +72,6 @@ services:
       WC_BASE: http://wordpress/
       REDIS_URL: redis://host.docker.internal:6380
       VERBOSE_DEBUG: true
-      TZ: America/Argentina/Buenos_Aires
     volumes:
       - frontend_dist:/app/public_html:ro
       - wp_data:/app/wp_uploads:ro
@@ -95,8 +91,6 @@ services:
       - backend
     networks:
       - app-network
-    environment:
-      TZ: America/Argentina/Buenos_Aires
 
 networks:
   app-network:
