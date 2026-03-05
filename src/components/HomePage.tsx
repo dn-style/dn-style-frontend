@@ -5,6 +5,7 @@ import { useCategoriesStore } from "../store/categoriesStore";
 import SEO from "./SEO";
 
 const HomePage = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || "";
   const slugToId = useCategoriesStore((state) => state.slugToId);
   const categories = useCategoriesStore((state) => state.categories);
 
@@ -34,10 +35,11 @@ const HomePage = () => {
       {/* SECCIÓN 1: Hero Principal (Fragancias) */}
       <section className="relative">
         <HeroSection
-          title="Esencia & Elegancia"
-          subtitle="Descubre las fragancias que definen tu estilo personal."
-          backgroundImage="https://fotografias.larazon.es/clipping/cmsimages02/2021/11/21/2633ECE9-F91A-4734-8A8E-E77EFD5B1B02/98.jpg?crop=5184,2917,x0,y270&width=1900&height=1069&optimize=low&format=webply"
-          slug="fragancias"
+          title="Compra tus airpod pro 2 y participa por tu IPHONE 15 sellado!"
+          subtitle=""
+          backgroundImage={`${apiUrl}/wp-content/uploads/2026/03/3_50.png`}
+          backgroundImageMobile={`${apiUrl}/wp-content/uploads/2026/03/Gemini_Generated_Image_uw8l8uw8l8uw8l8u_401x760.png`}
+          slug="promo-airpods"
           align="left"
         />
       </section>
@@ -54,11 +56,7 @@ const HomePage = () => {
           </div>
           <Divitions categoryId={slugToId["fragancias"]} />
         </section>
-      ) : (
-        <div className="py-12 text-center text-gray-400 text-sm italic">
-          Crea la categoría "fragancias" en WooCommerce para ver esta sección.
-        </div>
-      )}
+      ) : null}
 
       {/* SECCIÓN 4: Hero Secundario (Electrónica) */}
       <section className="relative mt-12">

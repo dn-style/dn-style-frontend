@@ -10,7 +10,15 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     ports:
-      - "127.0.0.1:3306:3306"
+      - "3306:3306"
+    networks:
+      - app-network
+
+  redis:
+    image: redis:alpine
+    restart: always
+    ports:
+      - "6379:6379"
     networks:
       - app-network
 
@@ -20,7 +28,7 @@ services:
     image: wordpress:latest
     restart: always
     ports:
-      - "127.0.0.1:8086:80"
+      - "8086:80"
     environment:
       WORDPRESS_DB_HOST: db:3306
       WORDPRESS_DB_USER: wordpress
@@ -65,18 +73,20 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "127.0.0.1:4000:4000"
-    env_file: .env
+      - "4000:4000"
+    env_file: ./back/.env
     environment:
+      NODE_ENV: development
       WP_HOST: http://wordpress
       WC_BASE: http://wordpress/
-      REDIS_URL: redis://host.docker.internal:6380
+      REDIS_URL: redis://redis:6379
       VERBOSE_DEBUG: true
     volumes:
       - frontend_dist:/app/public_html:ro
       - wp_data:/app/wp_uploads:ro
     depends_on:
       - wordpress
+      - redis
     networks:
       - app-network
 
@@ -84,11 +94,46 @@ services:
     build: .
     restart: always
     ports:
-      - "127.0.0.1:3010:80"
+      - "3010:80"
     volumes:
       - frontend_dist:/usr/share/nginx/html
+    command: /bin/sh -c "echo 'Refreshing frontend assets...' && cp -rf /app/build_backup/. /usr/share/nginx/html/ && nginx -g 'daemon off;'"
     depends_on:
       - backend
+    networks:
+      - app-network
+
+  minio:
+    image: minio/minio
+    restart: always
+    ports:
+      - "9010:9000"
+      - "9011:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - app-network
+
+  mc:
+    image: minio/mc
+    depends_on:
+      - minio
+    volumes:
+      - wp_data:/wp_data:ro
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set local http://minio:9000 minioadmin minioadmin) do echo '...waiting for minio...' && sleep 1; done;
+      /usr/bin/mc mb --ignore-existing local/products;
+      /usr/bin/mc anonymous set public local/products;
+      echo '🔄 Sincronizando media inicial...';
+      /usr/bin/mc mirror --overwrite /wp_data/wp-content/uploads local/products/uploads;
+      echo '✅ Media sincronizada.';
+      exit 0;
+      "
     networks:
       - app-network
 
@@ -100,3 +145,4 @@ volumes:
   db_data:
   wp_data:
   frontend_dist:
+  minio_data:

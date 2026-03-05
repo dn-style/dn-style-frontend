@@ -21,18 +21,45 @@ const isVerbose = process.env.VERBOSE_DEBUG === 'true' || process.argv.includes(
 // --- CONFIGURACIÓN REDIS ---
 const isTest = process.env.NODE_ENV === 'test';
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://host.docker.internal:6380'
+  url: process.env.REDIS_URL || 'redis://host.docker.internal:6379'
 });
 
 if (!isTest) {
   redisClient.on('error', (err) => console.error('Redis Client Error', err));
-  redisClient.connect().then(() => console.log('✅ Conectado a Redis')).catch(console.error);
+  redisClient.connect().then(() => console.log('✅ Conectado a Redis')).catch(() => {
+    console.error('❌ Error conexión Redis. ¿Está el servicio arriba?');
+  });
 }
+
+// --- CONFIGURACIÓN CORS ---
+const allowedOrigins = [
+  'https://test.system4us.com',
+  'http://test.system4us.com',
+  'https://dnstyle.com.ar',
+  'http://dnstyle.com.ar',
+  'http://10.10.0.3:3001',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
+
+const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    // Permitir peticiones sin origen (como apps móviles o curl) o que estén en la whitelist
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
 
 export const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: "*", methods: ["GET", "POST"] }
+  cors: corsOptions
 });
 
 // --- SOCKET.IO ---
@@ -56,11 +83,29 @@ const setCache = async (key: string, data: any, ttl = 60) => {
 // --- REWRITE URLS ---
 const rewriteUrls = (data: any) => {
   if (!data) return data;
+
+  // Si SITE_URL es un array, tomamos el primero como base canónica para las urls internas
+  // Si es un string vacío (relativo), se queda como vacío.
+  let siteUrlBase = '';
+  const envSiteUrl = process.env.SITE_URL;
+
+  if (envSiteUrl !== undefined) {
+    siteUrlBase = Array.isArray(envSiteUrl) ? envSiteUrl[0] : envSiteUrl;
+  } else {
+    // Fallback por defecto si no hay variable de entorno
+    siteUrlBase = 'https://test.system4us.com';
+  }
+
   let s = JSON.stringify(data);
-  const uploadsPattern = /https?:(\/\/|\\\/\\\/)(wordpress|localhost|10\.10\.0\.3|test\.system4us\.com)(:[0-9]+)?(\/|\\\/)wp-content(\/|\\\/)uploads/gi;
-  s = s.replace(uploadsPattern, 'https://test.system4us.com/images/uploads');
+
+  // Capturar cualquier dominio que tenga wp-content/uploads y redirigirlo a nuestro proxy de imágenes
+  const uploadsPattern = /https?:(\/\/|\\\/\\\/)[^"'\s]+?(\/|\\\/)wp-content(\/|\\\/)uploads/gi;
+  s = s.replace(uploadsPattern, `${siteUrlBase}/images/uploads`);
+
+  // Reemplazar hosts conocidos por nuestra SITE_URL para otros endpoints
   const hostPattern = /https?:(\/\/|\\\/\\\/)(wordpress|localhost|10\.10\.0\.3)(:[0-9]+)?/gi;
-  s = s.replace(hostPattern, 'https://test.system4us.com');
+  s = s.replace(hostPattern, siteUrlBase);
+
   return JSON.parse(s);
 };
 
@@ -89,7 +134,7 @@ const api = new WooCommerceRestApi({
 });
 
 // --- MIDDLEWARES ---
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // --- LOGGING MIDDLEWARE ---
@@ -118,10 +163,10 @@ app.post('/auth/register', async (req: Request, res: Response) => {
   try {
     const { email, password, first_name, last_name } = req.body;
     const cleanEmail = email.trim();
-    
+
     // Auth básica para WooCommerce API
     const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
-    
+
     const response = await axios.post('http://wordpress/wp-json/wc/v3/customers', {
       email: cleanEmail,
       password,
@@ -131,7 +176,7 @@ app.post('/auth/register', async (req: Request, res: Response) => {
     }, {
       headers: { 'Authorization': `Basic ${auth}` }
     });
-    
+
     res.json(response.data);
   } catch (err: any) {
     console.error('[Register Error Full]', err.response?.data || err);
@@ -198,27 +243,64 @@ app.post('/orders/upload-receipt', upload.single('file'), async (req: Request, r
 
 app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
   const key = req.params[0];
+
+  // Limpiar cualquier cabecera previa que pudiera inyectar Nginx o Middlewares
+  res.removeHeader('X-Frame-Options');
+  res.removeHeader('Content-Security-Policy');
+
+  // Forzar políticas laxas para evitar ORB (Opaque Response Blocking)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  res.setHeader('Timing-Allow-Origin', '*');
+
   try {
     const response = await s3Client.send(new GetObjectCommand({ Bucket: PRODUCTS_BUCKET, Key: key }));
-    console.log(`[Proxy] ☁️ SIRVIENDO DESDE MINIO/R2: ${key}`);
-    if (response.ContentType) res.setHeader('Content-Type', response.ContentType);
+
+    let contentType = response.ContentType;
+    if (!contentType || contentType === 'application/octet-stream') {
+      const ext = path.extname(key).toLowerCase();
+      const mimeMap: any = {
+        '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png',
+        '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml'
+      };
+      contentType = mimeMap[ext] || 'image/jpeg'; // Default a jpeg si no se sabe
+    }
+
+    if (isVerbose) console.log(`[Proxy] ☁️ S3 OK (${contentType}): ${key}`);
+
+    res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=31536000');
     return (response.Body as any).pipe(res);
-  } catch {
-    const localPath = path.join(__dirname, 'wp_uploads', 'wp-content', key);
-    if (fs.existsSync(localPath)) {
-      console.log(`[Proxy] 🏠 SIRVIENDO DESDE LOCAL (FALLBACK): ${key}`);
-      return res.sendFile(localPath);
+  } catch (err) {
+    if (isVerbose) console.log(`[Proxy] ⚠️ S3 FAIL: ${key}, reintentando local...`);
+
+    const pathsToTry = [
+      path.join(__dirname, 'wp_uploads', 'wp-content', key),
+      path.join(__dirname, 'wp_uploads', key),
+      path.join(__dirname, 'wp_uploads', key.replace(/^uploads\//, ''))
+    ];
+
+    for (const localPath of pathsToTry) {
+      if (fs.existsSync(localPath) && !fs.lstatSync(localPath).isDirectory()) {
+        if (isVerbose) console.log(`[Proxy] 🏠 LOCAL OK: ${localPath}`);
+        // Intentar inferir content type también para local
+        const ext = path.extname(localPath).toLowerCase();
+        const mimeMap: any = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
+        if (mimeMap[ext]) res.setHeader('Content-Type', mimeMap[ext]);
+        return res.sendFile(localPath);
+      }
     }
-    console.log(`[Proxy] ❌ IMAGEN NO ENCONTRADA: ${key}`);
-    res.status(404).send('Not Found');
+
+    if (isVerbose) console.log(`[Proxy] ❌ NOT FOUND: ${key}`);
+    // Píxel transparente para evitar error ORB de consola
+    res.status(404).setHeader('Content-Type', 'image/png').send(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'));
   }
 });
 
 app.get('/wc/products/:id/reviews', async (req: Request, res: Response) => {
   try {
     const response = await api._request('GET', 'products/reviews', { product: [req.params.id] });
-    res.json(response.data);
+    res.json(rewriteUrls(response.data));
   } catch { res.json([]); }
 });
 

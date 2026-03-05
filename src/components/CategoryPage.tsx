@@ -4,6 +4,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCategoriesStore } from "../store/categoriesStore";
 import SEO from "./SEO";
+import { PriceDisplay } from "../utils/priceUtils";
 
 export interface Product {
   id: number;
@@ -12,6 +13,7 @@ export interface Product {
   price?: string | number;
   short_description?: string;
   attributes?: { id: number; name: string; slug: string; options: string[] }[];
+  categories: { id: number; name: string; slug: string; parent?: number }[];
 }
 
 export interface Category {
@@ -218,7 +220,14 @@ const CategoryPage: React.FC = () => {
                       <div className="relative aspect-[4/5] bg-gray-50 rounded-3xl overflow-hidden mb-4 flex items-center justify-center p-6">
                         <img src={product.images?.[0]?.src || "/placeholder.png"} alt={product.name} className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110" />
                         {product.price && (
-                          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-sm font-black text-blue-600">${product.price}</div>
+                          <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl shadow-sm">
+                            <PriceDisplay 
+                              price={product.price} 
+                              categories={product.categories} 
+                              usdClassName="font-black text-blue-600"
+                              arsClassName="text-[10px] font-bold text-gray-500"
+                            />
+                          </div>
                         )}
                       </div>
                       <h2 className="text-lg font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors truncate">{product.name}</h2>

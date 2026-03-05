@@ -9,14 +9,14 @@ const LoadingScreen: React.FC = () => {
         {/* Logo con efecto de pulso */}
         <div className="relative z-10 animate-pulse">
           <img
-            src={`${apiUrl}/wp-content/uploads/2025/08/390a25d5-d704-4638-8371-7745f58f5b28.svg`}
+            src={`${apiUrl}/wp-content/uploads/2026/03/logodnstyle.png`}
             alt="Loading..."
             className="h-24 w-auto"
           />
         </div>
         
         {/* Spinner animado alrededor del logo (opcional, decorativo) */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-4 border-pink-100 border-t-pink-500 rounded-full animate-spin"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border-4 border-blue-100 border-t-blue-500 rounded-full animate-spin"></div>
       </div>
       
       {/* Texto de carga */}
@@ -25,7 +25,7 @@ const LoadingScreen: React.FC = () => {
           DN Style
         </p>
         <div className="mt-2 w-48 h-1 bg-slate-100 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-pink-500 to-rose-600 animate-progress origin-left"></div>
+          <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 animate-progress origin-left"></div>
         </div>
       </div>
 

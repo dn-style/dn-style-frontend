@@ -2,11 +2,24 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CartItem, Product } from '../types';
 import { toast } from 'react-toastify';
+import { isIphoneCategory } from '../utils/priceUtils';
+
+// Helper para obtener el rate actual fuera de un hook (para el store)
+const fetchDolarBlueRate = async (): Promise<number | null> => {
+  try {
+    const res = await fetch('https://dolarapi.com/v1/dolares/blue');
+    const data = await res.json();
+    return data?.venta || null;
+  } catch (error) {
+    console.error('Error fetching dollar rate for cart:', error);
+    return null;
+  }
+};
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
-  addItem: (product: Product, quantity?: number, attributes?: Record<string, string>) => void;
+  addItem: (product: Product, quantity?: number, attributes?: Record<string, string>) => Promise<void>;
   removeItem: (cartId: string) => void;
   updateQuantity: (cartId: string, quantity: number) => void;
   clearCart: () => void;
@@ -21,10 +34,20 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
 
-      addItem: (product, quantity = 1, attributes = {}) => {
+      addItem: async (product, quantity = 1, attributes = {}) => {
         const { items } = get();
-        // Generar un ID único basado en producto y atributos (para diferenciar variantes)
-        // Por simplicidad en este MVP, usaremos el ID del producto + string de atributos
+        
+        // Conversión de precio si es categoría iPhone (USD -> ARS)
+        let finalPrice = product.price;
+        if (isIphoneCategory(product.categories || [])) {
+          const rate = await fetchDolarBlueRate();
+          if (rate) {
+            const numericPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+            finalPrice = (numericPrice * rate).toString();
+          }
+        }
+
+        // Generar un ID único basado en producto y atributos
         const attrKey = Object.values(attributes).sort().join('-');
         const cartId = `${product.id}-${attrKey}`;
 
@@ -43,7 +66,13 @@ export const useCartStore = create<CartState>()(
           set({
             items: [
               ...items,
-              { ...product, cartId, quantity, selectedAttributes: attributes },
+              { 
+                ...product, 
+                price: finalPrice, // Guardamos el precio ya convertido a pesos
+                cartId, 
+                quantity, 
+                selectedAttributes: attributes 
+              },
             ],
           });
           toast.success(`${product.name} agregado al carrito`);

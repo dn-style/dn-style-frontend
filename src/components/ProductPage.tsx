@@ -8,6 +8,7 @@ import { useCartStore } from "../store/cartStore";
 import { toast } from "react-toastify";
 import { Star, StarHalf } from "lucide-react";
 import SEO from "./SEO";
+import { PriceDisplay } from "../utils/priceUtils";
 
 interface Variation {
   id: number;
@@ -18,7 +19,7 @@ interface Variation {
   stock_status: 'instock' | 'outofstock' | 'onbackorder';
   purchasable: boolean;
   attributes: { id: number; name: string; option: string }[];
-  image?: { src: string };
+  image?: { id?: number; src: string; name?: string; alt?: string };
 }
 
 const StarRating = ({ rating }: { rating: number }) => {
@@ -53,6 +54,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [variationImageOverride, setVariationImageOverride] = useState<string | null>(null);
   
   const addItem = useCartStore((state) => state.addItem);
   const [zoomStyle, setZoomStyle] = useState({ display: 'none', backgroundPosition: '0% 0%', backgroundImage: '' });
@@ -106,11 +108,13 @@ const ProductPage = () => {
        const imgIndex = product.images.findIndex(img => img.src === match.image?.src);
        if (imgIndex !== -1) {
          setSelectedImage(imgIndex);
+         setVariationImageOverride(null);
        } else {
-         // Si la imagen de la variación no está en la galería principal, la forzamos temporalmente
-         // aunque lo ideal es que esté en la galería.
-         setZoomStyle(prev => ({ ...prev, backgroundImage: `url(${match.image?.src})` }));
+         // Si la imagen de la variación no está en la galería principal, la usamos como override
+         setVariationImageOverride(match.image.src);
        }
+    } else {
+       setVariationImageOverride(null);
     }
   }, [selectedAttributes, variations, product]);
 
@@ -119,14 +123,17 @@ const ProductPage = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imgContainerRef.current || !product?.images[selectedImage]) return;
+    if (!imgContainerRef.current || (!product?.images[selectedImage] && !variationImageOverride)) return;
     const { left, top, width, height } = imgContainerRef.current.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
+    
+    const currentSrc = variationImageOverride || product?.images[selectedImage]?.src;
+    
     setZoomStyle({
       display: 'block',
       backgroundPosition: `${x}% ${y}%`,
-      backgroundImage: `url(${product.images[selectedImage].src})`
+      backgroundImage: `url(${currentSrc})`
     });
   };
 
@@ -142,7 +149,12 @@ const ProductPage = () => {
         id: currentVariation.id,
         name: `${product.name} - ${Object.values(selectedAttributes).join(', ')}`,
         price: currentVariation.price,
-        images: currentVariation.image ? [currentVariation.image] : product.images 
+        images: currentVariation.image ? [{
+          id: currentVariation.image.id || currentVariation.id,
+          src: currentVariation.image.src,
+          name: currentVariation.image.name || product.name,
+          alt: currentVariation.image.alt || product.name
+        }] : product.images 
       }, 1, selectedAttributes);
     } else {
       if (product.stock_status === 'outofstock') return toast.error("Sin stock");
@@ -167,9 +179,9 @@ const ProductPage = () => {
   const displayPrice = currentVariation ? currentVariation.price : product.price;
   const displayRegularPrice = currentVariation ? currentVariation.regular_price : product.regular_price;
   const isOnSale = currentVariation ? currentVariation.on_sale : product.on_sale;
-  const isOutOfStock = product.type === 'variable' 
+  const isOutOfStock = !!(product.type === 'variable' 
     ? (currentVariation && currentVariation.stock_status === 'outofstock')
-    : product.stock_status === 'outofstock';
+    : product.stock_status === 'outofstock');
 
   console.log("[ProductPage] ✨ Renderizando producto:", product.name);
 
@@ -192,9 +204,9 @@ const ProductPage = () => {
               onMouseLeave={handleMouseLeave}
               ref={imgContainerRef}
             >
-              {product.images?.length > 0 ? (
+              {product.images?.length > 0 || variationImageOverride ? (
                  <img 
-                   src={product.images[selectedImage]?.src} 
+                   src={variationImageOverride || product.images[selectedImage]?.src} 
                    alt={product.name}
                    className="w-full h-full object-contain p-8 transition-transform duration-500 group-hover:scale-105"
                  />
@@ -212,8 +224,11 @@ const ProductPage = () => {
                 {product.images.map((img, idx) => (
                   <button
                     key={img.id || idx}
-                    onClick={() => setSelectedImage(idx)}
-                    className={`flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all p-2 bg-gray-50 ${selectedImage === idx ? 'border-blue-600 ring-2 ring-blue-100' : 'border-transparent hover:border-gray-200'}`}
+                    onClick={() => {
+                      setSelectedImage(idx);
+                      setVariationImageOverride(null);
+                    }}
+                    className={`flex-shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-2 transition-all p-2 bg-gray-50 ${selectedImage === idx && !variationImageOverride ? 'border-blue-600 ring-2 ring-blue-100' : 'border-transparent hover:border-gray-200'}`}
                   >
                     <img src={img.src} alt={img.alt || product.name} className="w-full h-full object-contain" />
                   </button>
@@ -239,12 +254,17 @@ const ProductPage = () => {
              
              <div className="flex flex-col mb-8">
                 <div className="flex items-center gap-4">
-                  <span className="text-3xl font-black text-blue-600 tracking-tight">${displayPrice}</span>
+                  <PriceDisplay 
+                    price={displayPrice} 
+                    categories={product.categories} 
+                    usdClassName="text-3xl font-black text-blue-600 tracking-tight"
+                    arsClassName="text-sm font-bold text-gray-500 mt-1"
+                  />
                   {displayRegularPrice && displayRegularPrice !== displayPrice && (
-                    <span className="text-xl text-gray-400 line-through font-bold">${displayRegularPrice}</span>
+                    <span className="text-xl text-gray-400 line-through font-bold self-start mt-2">${displayRegularPrice}</span>
                   )}
                   {isOnSale && (
-                    <span className="bg-red-50 text-red-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100">Oferta</span>
+                    <span className="bg-red-50 text-red-500 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 self-start mt-2">Oferta</span>
                   )}
                 </div>
                 

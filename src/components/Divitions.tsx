@@ -3,14 +3,17 @@ import Slider, { type Settings } from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { Link } from "react-router-dom";
+import { PriceDisplay } from "../utils/priceUtils";
 
 type Product = {
   id: number;
   name: string;
   description: string;
+  short_description?: string;
   featured: boolean;
   price: string;
   images: { src: string }[];
+  categories: { id: number; name: string; slug: string; parent?: number }[];
 };
 
 interface DivitionsProps {
@@ -159,8 +162,13 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
                        
                        {/* Badge for price */}
                       {product.price && (
-                        <div className="absolute bottom-2 right-2 bg-black/80 backdrop-blur-sm text-white text-sm font-bold px-3 py-1 rounded-full shadow-sm">
-                          ${product.price}
+                        <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">
+                          <PriceDisplay 
+                            price={product.price} 
+                            categories={product.categories} 
+                            usdClassName="text-sm font-black text-blue-600"
+                            arsClassName="text-[9px] font-bold text-gray-500 leading-none"
+                          />
                         </div>
                       )}
                     </div>

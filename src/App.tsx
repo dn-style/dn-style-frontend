@@ -26,6 +26,7 @@ import SearchPage from "./components/SearchPage";
 import ResetPasswordPage from "./components/ResetPasswordPage";
 import VerifyEmailPage from "./components/VerifyEmailPage";
 import ThankYouPage from "./components/ThankYouPage";
+import PromoLandingPage from "./components/PromoLandingPage";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ function App() {
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/tracking" element={<TrackingPage />} />
+              <Route path="/promo/:slug" element={<PromoLandingPage />} />
               <Route path="/categoria/:slug" element={<CategoryPage />} />
               <Route path="/producto/:id" element={<ProductPage />} />
               <Route path="/cart" element={<CartPage />} />

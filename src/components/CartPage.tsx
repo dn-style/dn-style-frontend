@@ -1,6 +1,7 @@
 import { useCartStore } from "../store/cartStore";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { isIphoneCategory, formatPrice } from "../utils/priceUtils";
 
 const CartPage = () => {
   const { items, removeItem, updateQuantity, cartTotal, clearCart } = useCartStore();
@@ -71,8 +72,13 @@ const CartPage = () => {
                       +
                     </button>
                   </div>
-                  <div className="text-xl font-extrabold text-blue-600">
-                    ${(parseFloat(item.price) * item.quantity).toFixed(2)}
+                  <div className="flex flex-col items-end">
+                    <div className="text-xl font-extrabold text-blue-600">
+                      ${formatPrice(parseFloat(item.price) * item.quantity)}
+                    </div>
+                    {isIphoneCategory(item.categories || []) && (
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Dólar Blue</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -90,15 +96,20 @@ const CartPage = () => {
             <div className="space-y-4 mb-8 text-gray-600">
               <div className="flex justify-between">
                 <span className="text-sm">Subtotal</span>
-                <span className="font-bold text-gray-900">${cartTotal().toFixed(2)}</span>
+                <span className="font-bold text-gray-900">${formatPrice(cartTotal())}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm">Envío estimado</span>
                 <span className="text-green-600 font-bold uppercase text-[10px] bg-green-50 px-2 py-1 rounded">Gratis</span>
               </div>
-              <div className="border-t border-gray-100 pt-4 flex justify-between font-extrabold text-2xl text-gray-900">
-                <span>Total</span>
-                <span className="text-blue-600">${cartTotal().toFixed(2)}</span>
+              <div className="border-t border-gray-100 pt-4 flex flex-col items-end gap-1">
+                <div className="flex justify-between w-full font-extrabold text-2xl text-gray-900">
+                  <span>Total</span>
+                  <span className="text-blue-600">${formatPrice(cartTotal())}</span>
+                </div>
+                {items.some(i => isIphoneCategory(i.categories || [])) && (
+                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest italic">Cotización Dólar Blue aplicada</span>
+                )}
               </div>
             </div>
 

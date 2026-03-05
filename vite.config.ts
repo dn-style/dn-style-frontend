@@ -6,6 +6,7 @@ import path from "path";
 
 export default defineConfig({
   plugins: [react(), flowbiteReact()],
+  publicDir: 'public',
   server: {
     port: 3001,
     host: "0.0.0.0",
@@ -16,29 +17,30 @@ export default defineConfig({
     // },
     hmr: {
       host: '10.10.0.3',
-       path: "/",
+      path: "/",
     },
-    allowedHosts:[
+    allowedHosts: [
       '10.10.0.3',
     ],
-    // proxy: {
-    //   "/api": {
-    //     target: "http://localhost:4001",
-    //     changeOrigin: true,
-    //     secure: false,
-    //     ws: true,
-    //     configure: (proxy, options) => {
-    //       // Removed invalid property 'withCredentials'
-    //       return proxy;
-    //     },
-    //   },
-    // }
+    proxy: {
+      "/wc": {
+        target: "http://localhost:4000",
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+      },
+      "/images": {
+        target: "http://localhost:4000",
+        changeOrigin: true,
+        secure: false,
+      },
+    }
   },
-  
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '@components': path.resolve(__dirname,  'src/components'),
+      '@components': path.resolve(__dirname, 'src/components'),
       '@hooks': path.resolve(__dirname, 'src/hooks'),
       '@stores': path.resolve(__dirname, 'src/stores'),
       '@context': path.resolve(__dirname, 'src/context'),
@@ -71,4 +73,5 @@ export default defineConfig({
       },
     },
   },
+  assetsInclude: ['**/*.jpeg', '**/*.jpg', '**/*.png', '**/*.gif', '**/*.svg', '**/*.webp'],
 });
