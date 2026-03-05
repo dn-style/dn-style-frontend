@@ -50,6 +50,7 @@ export interface Review {
 export interface CartItem extends Product {
   cartId: string;
   quantity: number;
+  variationId?: number;
   selectedAttributes?: Record<string, string>;
 }
 

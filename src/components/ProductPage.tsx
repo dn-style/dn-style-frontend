@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import type { Product, Review } from "../types";
 import { useCartStore } from "../store/cartStore";
 import { toast } from "react-toastify";
-import { Star, StarHalf } from "lucide-react";
+import { Star, StarHalf, Mail, CreditCard } from "lucide-react";
 import SEO from "./SEO";
 import { PriceDisplay } from "../utils/priceUtils";
 
@@ -20,6 +20,16 @@ interface Variation {
   purchasable: boolean;
   attributes: { id: number; name: string; option: string }[];
   image?: { id?: number; src: string; name?: string; alt?: string };
+}
+
+interface PaymentGateway {
+  id: string;
+  title: string;
+  description: string;
+  enabled: boolean;
+  method_title: string;
+  method_description: string;
+  settings?: any;
 }
 
 const StarRating = ({ rating }: { rating: number }) => {
@@ -48,6 +58,7 @@ const ProductPage = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
   const [currentVariation, setCurrentVariation] = useState<Variation | null>(null);
   
@@ -78,6 +89,12 @@ const ProductPage = () => {
         // Una vez tenemos el producto, cargamos lo demás en segundo plano sin bloquear si fallan
         fetch(`${apiUrl}/wc/products/${id}/variations`).then(r => r.json()).then(v => setVariations(Array.isArray(v) ? v : [])).catch(() => {});
         fetch(`${apiUrl}/wc/products/${id}/reviews`).then(r => r.json()).then(r => setReviews(Array.isArray(r) ? r : [])).catch(() => {});
+        fetch(`${apiUrl}/wc/payment_gateways`).then(r => r.json()).then(gateways => {
+          if (Array.isArray(gateways)) {
+            // Filtramos solo los que son de transferencia (bacs es el ID estándar de WooCommerce para transferencia bancaria)
+            setPaymentGateways(gateways.filter(g => g.enabled && (g.id === 'bacs' || g.id.toLowerCase().includes('transferencia'))));
+          }
+        }).catch(() => {});
         
         setLoading(false);
       })
@@ -144,9 +161,11 @@ const ProductPage = () => {
     if (product.type === 'variable') {
       if (!currentVariation) return toast.error("Selecciona opciones");
       if (currentVariation.stock_status === 'outofstock') return toast.error("Sin stock");
+      // Mantenemos el ID original del producto base para WooCommerce, 
+      // pero pasamos el variationId para que se asocie correctamente.
       addItem({
         ...product,
-        id: currentVariation.id,
+        id: product.id, // ID del padre
         name: `${product.name} - ${Object.values(selectedAttributes).join(', ')}`,
         price: currentVariation.price,
         images: currentVariation.image ? [{
@@ -155,10 +174,10 @@ const ProductPage = () => {
           name: currentVariation.image.name || product.name,
           alt: currentVariation.image.alt || product.name
         }] : product.images 
-      }, 1, selectedAttributes);
+      }, 1, selectedAttributes, currentVariation.id);
     } else {
       if (product.stock_status === 'outofstock') return toast.error("Sin stock");
-      addItem(product);
+      addItem(product, 1);
     }
   };
 
@@ -302,11 +321,11 @@ const ProductPage = () => {
 
              <div className="text-gray-600 text-lg leading-relaxed mb-8 font-light" dangerouslySetInnerHTML={{ __html: product.short_description || '' }} />
 
-             <div className="flex flex-col sm:flex-row gap-4 mb-12">
+             <div className="flex flex-col sm:flex-row gap-4 mb-8">
                <button
                   onClick={handleAddToCart}
                   disabled={(product.type === 'variable' && !currentVariation) || isOutOfStock}
-                  className={`flex-1 font-bold py-5 px-8 rounded-2xl transition-all shadow-xl uppercase text-xs tracking-widest flex items-center justify-center gap-3 active:scale-95 ${
+                  className={`flex-[2] font-bold py-5 px-8 rounded-2xl transition-all shadow-xl uppercase text-xs tracking-widest flex items-center justify-center gap-3 active:scale-95 ${
                     ((product.type === 'variable' && !currentVariation) || isOutOfStock)
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed shadow-none' 
                       : 'bg-gray-900 hover:bg-blue-600 text-white hover:shadow-blue-500/30'
@@ -316,7 +335,38 @@ const ProductPage = () => {
                     ? 'Selecciona opciones' 
                     : isOutOfStock ? 'Agotado' : 'Añadir al Carrito'}
                </button>
+               
+               <a
+                  href={`https://wa.me/542223434403?text=${encodeURIComponent(`Hola, quiero consultar por el producto ${product.name}.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 font-bold py-5 px-8 rounded-2xl border-2 border-green-500 text-green-600 hover:bg-green-50 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-3"
+               >
+                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.483 8.411-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.308 1.657zm6.222-3.61c1.566.93 3.118 1.403 4.646 1.404 5.314 0 9.638-4.323 9.64-9.637 0-2.574-1.002-4.993-2.822-6.815-1.821-1.821-4.24-2.822-6.812-2.822-5.314 0-9.638 4.323-9.641 9.637-.001 1.666.425 3.287 1.232 4.708l-.995 3.633 3.752-.984zm11.332-6.541c-.31-.155-1.832-.904-2.112-1.006-.28-.101-.484-.155-.688.155-.204.31-.788 1.006-.966 1.213-.178.206-.356.233-.666.078-.31-.155-1.309-.483-2.493-1.538-.921-.822-1.543-1.838-1.724-2.148-.181-.31-.019-.477.136-.631.139-.139.31-.361.466-.543.155-.181.206-.31.31-.517.104-.206.052-.388-.026-.543-.078-.155-.688-1.655-.944-2.27-.249-.599-.501-.518-.688-.528-.178-.008-.382-.01-.585-.01s-.535.077-.815.388c-.28.31-1.07 1.045-1.07 2.549s1.096 2.95 1.25 3.155c.155.206 2.158 3.296 5.228 4.621.73.315 1.3.504 1.744.645.733.233 1.4.2 1.926.122.587-.087 1.832-.749 2.088-1.474.256-.724.256-1.344.179-1.474-.077-.13-.284-.206-.594-.361z"/></svg>
+                 WhatsApp
+               </a>
              </div>
+
+             <Link to="/envios" className="block text-center text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors mb-8">
+               Consultar Políticas de Envío y Garantía →
+             </Link>
+
+             {/* MEDIOS DE PAGO (Solo Transferencias) */}
+             {paymentGateways.length > 0 && (
+               <div className="mb-12 p-6 bg-blue-50/50 rounded-[2rem] border border-blue-100">
+                 <div className="flex items-center gap-3 mb-4 text-blue-600">
+                   <CreditCard size={20} />
+                   <h3 className="font-black uppercase text-xs tracking-widest">Medios de Pago</h3>
+                 </div>
+                 {paymentGateways.map(gateway => (
+                   <div key={gateway.id} className="space-y-2">
+                     <p className="text-sm font-bold text-gray-900">{gateway.title}</p>
+                     <p className="text-xs text-gray-500 leading-relaxed italic" dangerouslySetInnerHTML={{ __html: gateway.description || gateway.method_description || "" }} />
+                   </div>
+                 ))}
+                 <p className="mt-4 text-[10px] font-bold text-blue-500 uppercase tracking-widest">Aceptamos solo transferencias bancarias</p>
+               </div>
+             )}
           </div>
         </div>
 

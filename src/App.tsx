@@ -18,6 +18,7 @@ import SupportPage from "./components/SupportPage";
 import FAQPage from "./components/FAQPage";
 import TermsPage from "./components/TermsPage";
 import PrivacyPage from "./components/PrivacyPage";
+import ShippingPolicyPage from "./components/ShippingPolicyPage";
 import TrackingPage from "./components/TrackingPage";
 import SpeedDialButton from "./components/SpeedDialButton";
 import LoadingScreen from "./components/LoadingScreen";
@@ -27,21 +28,27 @@ import ResetPasswordPage from "./components/ResetPasswordPage";
 import VerifyEmailPage from "./components/VerifyEmailPage";
 import ThankYouPage from "./components/ThankYouPage";
 import PromoLandingPage from "./components/PromoLandingPage";
+import { useConfigStore } from "./store/configStore";
+import { useCategoriesStore } from "./store/categoriesStore";
 
 const queryClient = new QueryClient();
 
 function App() {
   const [isAppLoading, setIsAppLoading] = useState(true);
+  const fetchRate = useConfigStore(state => state.fetchRate);
+  const setCategories = useCategoriesStore(state => state.setCategories);
 
   useEffect(() => {
-    // Simulamos un pequeño retraso para asegurar que los assets pesados 
-    // y React terminen de inicializarse bien visualmente.
-    const timer = setTimeout(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
+    
+    // Inicializar datos globales una sola vez
+    Promise.all([
+      fetchRate(apiUrl),
+      fetch(`${apiUrl}/wc/categories`).then(r => r.json()).then(setCategories)
+    ]).finally(() => {
       setIsAppLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
+    });
+  }, [fetchRate, setCategories]);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -64,6 +71,7 @@ function App() {
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/envios" element={<ShippingPolicyPage />} />
               <Route path="/tracking" element={<TrackingPage />} />
               <Route path="/promo/:slug" element={<PromoLandingPage />} />
               <Route path="/categoria/:slug" element={<CategoryPage />} />

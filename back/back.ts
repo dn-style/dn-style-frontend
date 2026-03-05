@@ -15,6 +15,11 @@ import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
 
+// --- CONFIGURACIÓN DE RUTAS ---
+// Si estamos en la carpeta dist (producción), el root es un nivel arriba
+const ROOT_DIR = __dirname.endsWith('dist') ? path.join(__dirname, '..') : __dirname;
+const SITE_URL = process.env.SITE_URL || 'https://dnshop.com.ar'; // Default a producción
+
 // --- CONFIGURACIÓN DEBUG ---
 const isVerbose = process.env.VERBOSE_DEBUG === 'true' || process.argv.includes('--debug');
 
@@ -35,6 +40,10 @@ if (!isTest) {
 const allowedOrigins = [
   'https://test.system4us.com',
   'http://test.system4us.com',
+  'https://dnshop.com.ar',
+  'http://dnshop.com.ar',
+  'https://www.dnshop.com.ar',
+  'http://www.dnshop.com.ar',
   'https://dnstyle.com.ar',
   'http://dnstyle.com.ar',
   'http://10.10.0.3:3001',
@@ -84,18 +93,7 @@ const setCache = async (key: string, data: any, ttl = 60) => {
 const rewriteUrls = (data: any) => {
   if (!data) return data;
 
-  // Si SITE_URL es un array, tomamos el primero como base canónica para las urls internas
-  // Si es un string vacío (relativo), se queda como vacío.
-  let siteUrlBase = '';
-  const envSiteUrl = process.env.SITE_URL;
-
-  if (envSiteUrl !== undefined) {
-    siteUrlBase = Array.isArray(envSiteUrl) ? envSiteUrl[0] : envSiteUrl;
-  } else {
-    // Fallback por defecto si no hay variable de entorno
-    siteUrlBase = 'https://test.system4us.com';
-  }
-
+  const siteUrlBase = SITE_URL;
   let s = JSON.stringify(data);
 
   // Capturar cualquier dominio que tenga wp-content/uploads y redirigirlo a nuestro proxy de imágenes
@@ -110,9 +108,18 @@ const rewriteUrls = (data: any) => {
 };
 
 // --- STORAGE & EMAIL ---
+// Configuración optimizada para Brevo y otros proveedores modernos
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST, port: Number(process.env.SMTP_PORT), secure: process.env.SMTP_SECURE === 'true',
-  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: process.env.SMTP_SECURE === 'true', // false para puerto 587
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  },
+  tls: {
+    rejectUnauthorized: false // Ayuda con la compatibilidad de certificados en contenedores
+  }
 });
 
 const s3Client = new S3Client({
@@ -122,6 +129,28 @@ const s3Client = new S3Client({
   forcePathStyle: true,
 });
 const PRODUCTS_BUCKET = process.env.STORAGE_BUCKET_PRODUCTS || 'products';
+
+// --- ASEGURAR BUCKET ---
+const ensureBucketExists = async () => {
+  if (isTest) return;
+  try {
+    await s3Client.send(new HeadBucketCommand({ Bucket: PRODUCTS_BUCKET }));
+    console.log(`✅ Bucket "${PRODUCTS_BUCKET}" verificado.`);
+  } catch (err: any) {
+    if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
+      console.log(`🟡 Bucket "${PRODUCTS_BUCKET}" no existe. Creándolo...`);
+      try {
+        await s3Client.send(new CreateBucketCommand({ Bucket: PRODUCTS_BUCKET }));
+        console.log(`✅ Bucket "${PRODUCTS_BUCKET}" creado con éxito.`);
+      } catch (createErr: any) {
+        console.error(`❌ Error al crear bucket: ${createErr.message}`);
+      }
+    } else {
+      console.error(`❌ Error al verificar bucket: ${err.message}`);
+    }
+  }
+};
+ensureBucketExists();
 
 // --- WOOCOMMERCE API ---
 const api = new WooCommerceRestApi({
@@ -220,23 +249,180 @@ app.get('/auth/orders', async (req: Request, res: Response) => {
   }
 });
 
+app.post('/auth/orders', async (req: Request, res: Response) => {
+  try {
+    const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
+    const orderPayload = req.body;
+    
+    console.log('[Create Order] 🛒 Enviando a WooCommerce:', JSON.stringify(orderPayload, null, 2));
+    
+    const response = await axios.post('http://wordpress/wp-json/wc/v3/orders', orderPayload, {
+      headers: { 'Authorization': `Basic ${auth}` }
+    });
+    
+    console.log('[Create Order] ✅ WooCommerce respondió con Status:', response.status);
+    if (response.data && response.data.id) {
+      console.log('[Create Order] ID de la orden creada:', response.data.id);
+      console.log('[Create Order] Cantidad de ítems en la respuesta:', response.data.line_items?.length || 0);
+    } else {
+      console.log('[Create Order] ⚠️ Respuesta inesperada (sin ID):', JSON.stringify(response.data, null, 2));
+    }
+
+    res.json(rewriteUrls(response.data));
+  } catch (err: any) {
+    console.error('[Create Order Error] ❌ Error detallado:');
+    if (err.response) {
+      console.error('Status:', err.response.status);
+      console.error('Data:', JSON.stringify(err.response.data, null, 2));
+    } else {
+      console.error('Mensaje:', err.message);
+    }
+    res.status(err.response?.status || 500).json(err.response?.data || { message: 'Error al crear pedido' });
+  }
+});
+
+app.get('/wc/payment_gateways', async (req: Request, res: Response) => {
+  try {
+    const response = await api.get('payment_gateways');
+    res.json(rewriteUrls(response.data));
+  } catch { res.json([]); }
+});
+
+app.get('/wc/reviews/check', async (req: Request, res: Response) => {
+  try {
+    const { product_id, email } = req.query;
+    const response = await api.get('products/reviews', { 
+      product: [Number(product_id)],
+      reviewer_email: email as string
+    });
+    res.json({ hasReviewed: Array.isArray(response.data) && response.data.length > 0 });
+  } catch { res.json({ hasReviewed: false }); }
+});
+
+app.post('/wc/reviews', async (req: Request, res: Response) => {
+  try {
+    const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
+    const response = await axios.post('http://wordpress/wp-json/wc/v3/products/reviews', req.body, {
+      headers: { 'Authorization': `Basic ${auth}` }
+    });
+    res.json(response.data);
+  } catch (err: any) {
+    console.error('[Review Error]', err.response?.data || err.message);
+    res.status(err.response?.status || 500).json(err.response?.data || { message: 'Error al enviar reseña' });
+  }
+});
+
+app.get('/wc/rate', async (req: Request, res: Response) => {
+  const cacheKey = 'dolar_blue_rate';
+  const cached = await getCache(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const response = await axios.get('https://dolarapi.com/v1/dolares/blue');
+    const data = response.data;
+    if (data && data.venta) {
+      // Aplicar el 2% de recargo sobre el precio de venta
+      const rateWithMarkup = data.venta * 1.02;
+      const result = { rate: rateWithMarkup, original: data.venta, timestamp: new Date() };
+      
+      // Cachear por 30 minutos (1800 segundos)
+      await setCache(cacheKey, result, 1800);
+      return res.json(result);
+    }
+    res.status(500).json({ error: 'Invalid rate data' });
+  } catch (err) {
+    console.error('[Rate Error]', err);
+    res.status(500).json({ error: 'Error fetching rate' });
+  }
+});
+
 app.post('/auth/forgot-password', async (req: Request, res: Response) => {
-  res.json({ sent: true });
+  const { email } = req.body;
+  try {
+    const templatePath = path.join(ROOT_DIR, 'email-templates', 'reset-password.hbs');
+    if (!fs.existsSync(templatePath)) throw new Error('Template not found');
+
+    const source = fs.readFileSync(templatePath, 'utf8');
+    const template = hbs.compile(source);
+
+    // En un sistema real generaríamos un token único. 
+    // Por ahora simulamos el envío del enlace de recuperación.
+    const resetLink = `${SITE_URL}/reset-password?email=${encodeURIComponent(email)}&token=simulated-token`;
+
+    const html = template({
+      email,
+      reset_link: resetLink,
+      year: new Date().getFullYear()
+    });
+
+    await transporter.sendMail({
+      from: `"DN STYLE" <${process.env.SMTP_USER}>`,
+      to: email,
+      subject: 'Recuperar Contraseña - DN STYLE',
+      html
+    });
+
+    res.json({ sent: true });
+  } catch (err) {
+    console.error('[Forgot Password Error]', err);
+    res.status(500).json({ message: 'Error al enviar el correo' });
+  }
 });
 
 const upload = multer({ dest: '/tmp/' });
 app.post('/orders/upload-receipt', upload.single('file'), async (req: Request, res: Response) => {
   try {
     const { order_id } = req.body;
-    if (!req.file) return res.status(400).send('No file');
+    if (!req.file) {
+      console.error('[Upload Receipt] No se recibió ningún archivo');
+      return res.status(400).send('No file');
+    }
+    
+    console.log(`[Upload Receipt] 📂 Recibido archivo para orden ${order_id}: ${req.file.originalname}`);
+    
     const fileContent = fs.readFileSync(req.file.path);
     const key = `receipts/order-${order_id}-${Date.now()}-${req.file.originalname}`;
-    await s3Client.send(new PutObjectCommand({
-      Bucket: PRODUCTS_BUCKET, Key: key, Body: fileContent, ContentType: req.file.mimetype
-    }));
-    await api.post(`orders/${order_id}/notes`, { note: `Comprobante subido: ${key}`, customer_note: true });
+    
+    console.log(`[Upload Receipt] ☁️ Subiendo a S3: ${key}...`);
+    try {
+      await s3Client.send(new PutObjectCommand({
+        Bucket: PRODUCTS_BUCKET, 
+        Key: key, 
+        Body: fileContent, 
+        ContentType: req.file.mimetype
+      }));
+      console.log(`[Upload Receipt] ✅ Subida a S3 exitosa`);
+    } catch (s3Err: any) {
+      console.error('[Upload Receipt] ❌ Error en S3:', s3Err.message);
+      throw new Error(`Error al subir a almacenamiento: ${s3Err.message}`);
+    }
+
+    console.log(`[Upload Receipt] 📝 Actualizando orden ${order_id} a 'on-hold' y creando nota...`);
+    try {
+      const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
+      const noteContent = `Comprobante subido: ${SITE_URL}/images/${key}`;
+      
+      // 1. Actualizar estado a 'on-hold' (En espera de revisión)
+      await axios.put(`http://wordpress/wp-json/wc/v3/orders/${order_id}`, 
+        { status: 'on-hold' },
+        { headers: { 'Authorization': `Basic ${auth}` } }
+      );
+
+      // 2. Crear la nota para el cliente
+      await axios.post(`http://wordpress/wp-json/wc/v3/orders/${order_id}/notes`, 
+        { note: noteContent, customer_note: true },
+        { headers: { 'Authorization': `Basic ${auth}` } }
+      );
+      console.log(`[Upload Receipt] ✅ Orden actualizada y nota creada`);
+    } catch (wcErr: any) {
+      console.error('[Upload Receipt] ⚠️ Error al actualizar WC (pero el archivo se subió):', wcErr.response?.data || wcErr.message);
+    }
+
     res.json({ success: true, key });
-  } catch (err) { res.status(500).send('Error'); }
+  } catch (err: any) { 
+    console.error('[Upload Receipt Error] ❌ Fallo total:', err.message);
+    res.status(500).json({ error: err.message || 'Error interno del servidor' }); 
+  }
 });
 
 // --- 1. API ROUTES (MÁXIMA PRIORIDAD) ---
@@ -275,9 +461,9 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
     if (isVerbose) console.log(`[Proxy] ⚠️ S3 FAIL: ${key}, reintentando local...`);
 
     const pathsToTry = [
-      path.join(__dirname, 'wp_uploads', 'wp-content', key),
-      path.join(__dirname, 'wp_uploads', key),
-      path.join(__dirname, 'wp_uploads', key.replace(/^uploads\//, ''))
+      path.join(ROOT_DIR, 'wp_uploads', 'wp-content', key),
+      path.join(ROOT_DIR, 'wp_uploads', key),
+      path.join(ROOT_DIR, 'wp_uploads', key.replace(/^uploads\//, ''))
     ];
 
     for (const localPath of pathsToTry) {
@@ -358,7 +544,7 @@ app.get('/wc/categories', async (req: Request, res: Response) => {
 // --- 2. SSR ROUTES ---
 
 const serveWithSEO = async (req: Request, res: Response, seoData: { title: string, description: string, image: string }) => {
-  const indexPath = path.join(__dirname, 'public_html', 'index.html');
+  const indexPath = path.join(ROOT_DIR, 'public_html', 'index.html');
   if (!fs.existsSync(indexPath)) return res.status(500).send('Build not found');
   let html = fs.readFileSync(indexPath, 'utf8');
   const fullTitle = `${seoData.title} | DN STYLE`;
@@ -372,13 +558,91 @@ app.get('/producto/:id', async (req: Request, res: Response) => {
     const response = await api.getProduct(Number(req.params.id));
     const p = response.data;
     await serveWithSEO(req, res, { title: p.name, description: p.short_description || '', image: p.images?.[0]?.src || '' });
-  } catch { res.sendFile(path.join(__dirname, 'public_html', 'index.html')); }
+  } catch { res.sendFile(path.join(ROOT_DIR, 'public_html', 'index.html')); }
 });
 
 // --- 3. STATIC & FALLBACK (MÍNIMA PRIORIDAD) ---
-app.use(express.static(path.join(__dirname, 'public_html')));
+app.use(express.static(path.join(ROOT_DIR, 'public_html')));
 app.get(/^\/(?!wc|auth|images|orders).*/, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public_html', 'index.html'));
+  res.sendFile(path.join(ROOT_DIR, 'public_html', 'index.html'));
+});
+
+// --- HELPER: ENVIAR EMAILS DE PEDIDO ---
+const sendOrderEmail = async (orderData: any, templateName: string) => {
+  try {
+    const templatePath = path.join(ROOT_DIR, 'email-templates', `${templateName}.hbs`);
+    if (!fs.existsSync(templatePath)) {
+      console.error(`[Email] ❌ No existe el template: ${templatePath}`);
+      return;
+    }
+
+    const source = fs.readFileSync(templatePath, 'utf8');
+    const template = hbs.compile(source);
+
+    const html = template({
+      name: orderData.billing?.first_name || 'Cliente',
+      order_id: orderData.id,
+      total: orderData.total,
+      items: orderData.line_items.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.total
+      })),
+      year: new Date().getFullYear()
+    });
+
+    const subjects: any = {
+      'order-confirmation': `Pedido Recibido #${orderData.id} - DN STYLE`,
+      'order-preparing': `Estamos preparando tu pedido #${orderData.id} - DN STYLE`,
+      'order-cancelled': `Pedido Cancelado #${orderData.id} - DN STYLE`
+    };
+
+    const mailOptions = {
+      from: `"DN STYLE" <${process.env.SMTP_USER}>`,
+      to: orderData.billing?.email,
+      subject: subjects[templateName] || `Actualización de Pedido #${orderData.id}`,
+      html: html
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`[Email] ✅ Enviado "${templateName}" a ${orderData.billing?.email}`);
+  } catch (err) {
+    console.error('[Email Error] ❌ No se pudo enviar el correo:', err);
+  }
+};
+
+// --- WEBHOOKS WOOCOMMERCE ---
+app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
+  const topic = req.headers['x-wc-webhook-topic'] as string;
+  const data = req.body;
+
+  console.log(`[Webhook] 🔔 Evento recibido: ${topic} (Orden #${data.id}, Status: ${data.status})`);
+
+  try {
+    switch (topic) {
+      case 'order.created':
+        // Se envía confirmación inmediata al crear el pedido
+        await sendOrderEmail(data, 'order-confirmation');
+        break;
+      
+      case 'order.updated':
+        // Mapeo de estados a templates
+        if (data.status === 'processing') {
+          await sendOrderEmail(data, 'order-preparing');
+        } else if (data.status === 'cancelled') {
+          await sendOrderEmail(data, 'order-cancelled');
+        }
+        break;
+
+      default:
+        if (isVerbose) console.log(`[Webhook] Topic no manejado: ${topic}`);
+    }
+    
+    res.status(200).send('OK');
+  } catch (err) {
+    console.error('[Webhook Error] ❌ Error procesando evento:', err);
+    res.status(500).send('Error');
+  }
 });
 
 httpServer.listen(4000, () => console.log('Servidor 4000 listo'));

@@ -24,33 +24,34 @@ const CheckoutPage = () => {
   
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'bacs' | 'woo-mercado-pago-basic' | 'card'>('bacs');
-  const [gateways, setGateways] = useState<PaymentGateway[]>([]);
   const [useSavedAddress, setUseSavedAddress] = useState(false);
-
-  const [isGift, setIsGift] = useState(false);
 
   // Formulario react-hook-form
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CustomerAddress>();
 
-  useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || "";
-    fetch(`${apiUrl}/wc/payment-gateways`)
-      .then(res => res.json())
-      .then(data => {
-        setGateways(data);
-        if (data.length > 0) setPaymentMethod(data[0].id);
-      })
-      .catch(console.error);
-  }, []);
-
   // Efecto para detectar si hay dirección guardada y usarla por defecto
   useEffect(() => {
-    if (user?.billing?.address_1) {
-      setUseSavedAddress(true);
-    } else {
-      setUseSavedAddress(false);
+    if (user) {
+      // Pre-poblar el formulario con datos del perfil o de facturación previa
+      const defaultData: Partial<CustomerAddress> = {
+        first_name: user.billing?.first_name || user.first_name || '',
+        last_name: user.billing?.last_name || user.last_name || '',
+        email: user.billing?.email || user.email || '',
+        phone: user.billing?.phone || '',
+        address_1: user.billing?.address_1 || '',
+        city: user.billing?.city || '',
+        postcode: user.billing?.postcode || '',
+        state: user.billing?.state || '',
+        country: user.billing?.country || 'AR'
+      };
+      
+      reset(defaultData as CustomerAddress);
+
+      if (user.billing?.address_1) {
+        setUseSavedAddress(true);
+      }
     }
-  }, [user?.id, user?.billing?.address_1]);
+  }, [user, reset]);
 
   if (items.length === 0) {
     navigate('/cart');
@@ -60,10 +61,7 @@ const CheckoutPage = () => {
   const handleToggleSavedAddress = (val: boolean) => {
     setUseSavedAddress(val);
     if (!val) {
-      setIsGift(true);
       reset({}); // Limpiar formulario para datos nuevos
-    } else {
-      setIsGift(false);
     }
   };
 
@@ -73,32 +71,39 @@ const CheckoutPage = () => {
     // Determinar qué datos usar: los guardados o los del formulario
     let finalBillingData: CustomerAddress;
 
-    if (useSavedAddress && user?.billing?.address_1) {
-      finalBillingData = user.billing;
-    } else {
-      finalBillingData = {
-        ...formData,
-        country: formData.country || 'AR',
-      };
-    }
+    // Si useSavedAddress es true, intentamos usar los del perfil, 
+    // pero si el formulario fue editado o se pre-rellenó por reset(), 
+    // los datos ya están en formData si se usa handleSubmit.
+    
+    finalBillingData = {
+      ...formData,
+      country: formData.country || 'AR',
+    };
 
-    const orderData = {
+    const orderData: any = {
       payment_method: paymentMethod,
       payment_method_title: paymentMethod === 'bacs' ? 'Transferencia Bancaria' : 'Mercado Pago',
       set_paid: paymentMethod === 'woo-mercado-pago-basic', 
       billing: finalBillingData,
       shipping: finalBillingData, 
-      line_items: items.map(item => ({
-        product_id: item.id,
-        quantity: item.quantity
-      })),
-      customer_note: isGift ? `PEDIDO PARA REGALO.` : undefined,
-      customer_id: user?.id || 0
+      line_items: items.map(item => {
+        return {
+          product_id: Number(item.id),
+          variation_id: Number(item.variationId || 0),
+          quantity: Number(item.quantity)
+        };
+      }),
     };
+
+    if (user?.id && Number(user.id) > 0) {
+      orderData.customer_id = Number(user.id);
+    }
+
+    console.log('[Checkout] 🚀 Enviando orden:', JSON.stringify(orderData, null, 2));
 
     const apiUrl = import.meta.env.VITE_API_URL || "";
     try {
-      const response = await fetch(`${apiUrl}/checkout`, {
+      const response = await fetch(`${apiUrl}/auth/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)
@@ -125,11 +130,6 @@ const CheckoutPage = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getGatewayInstructions = (id: string) => {
-    const gw = gateways.find(g => g.id === id);
-    return gw?.description || "";
   };
 
   return (
@@ -184,23 +184,16 @@ const CheckoutPage = () => {
              
              {/* Formulario (visible si NO se usa la dirección guardada o no hay datos) */}
              <div className={`transition-all duration-500 ease-in-out overflow-hidden ${useSavedAddress ? 'max-h-0' : 'max-h-[1000px]'}`}>
-               <div className="flex items-center gap-2 mb-6 p-3 bg-blue-50 text-blue-700 rounded-xl border border-blue-100">
-                 <Gift size={18} />
-                 <p className="text-xs font-bold uppercase tracking-wider">
-                   {user?.billing?.address_1 ? "Estás comprando para otra persona (Regalo)" : "Completa los datos para el envío"}
-                 </p>
-               </div>
-
                <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
-                      <input {...register("first_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Juan" />
+                      <input {...register("first_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Juan" />
                       {errors.first_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Apellido</label>
-                      <input {...register("last_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Pérez" />
+                      <input {...register("last_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Pérez" />
                       {errors.last_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                   </div>
@@ -208,31 +201,31 @@ const CheckoutPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
-                      <input {...register("email", { required: !useSavedAddress, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="juan@ejemplo.com" />
+                      <input {...register("email", { required: !useSavedAddress, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="juan@ejemplo.com" />
                       {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVÁLIDO</span>}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
-                      <input {...register("phone", { required: !useSavedAddress })} type="tel" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="11 1234 5678" />
+                      <input {...register("phone", { required: !useSavedAddress })} type="tel" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="11 1234 5678" />
                       {errors.phone && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                   </div>
                   
                    <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección</label>
-                    <input {...register("address_1", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" placeholder="Calle Falsa 123" />
+                    <input {...register("address_1", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Calle Falsa 123" />
                      {errors.address_1 && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                      <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ciudad</label>
-                      <input {...register("city", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" />
+                      <input {...register("city", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
                        {errors.city && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Código Postal</label>
-                      <input {...register("postcode", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50" />
+                      <input {...register("postcode", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
                        {errors.postcode && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                   </div>
@@ -281,20 +274,24 @@ const CheckoutPage = () => {
                     <span className="text-sm font-medium">Transferencia</span>
                   </button>
                   
-                  <button 
+                  {/* <button 
                     type="button"
                     onClick={() => setPaymentMethod('card')}
                     className={`flex-1 py-3 px-2 rounded-lg border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'card' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}
                   >
                     <span className="text-sm font-medium">Tarjeta / MP</span>
-                  </button>
+                  </button> */}
                 </div>
 
                 {paymentMethod === 'bacs' && (
                   <div className="p-4 border border-blue-200 bg-blue-50 rounded-lg text-sm text-blue-800 animate-fadeIn">
                     <p className="font-bold mb-2">Instrucciones:</p>
                     <div className="opacity-90 mb-4 whitespace-pre-wrap">
-                      {getGatewayInstructions('bacs') || "Realiza tu transferencia a la cuenta:\nBanco: Santander\nCBU: 000000321321321\nAlias: DN.STYLE.STORE"}
+                      Realiza tu transferencia a la cuenta:
+                       Titular: Diego Armando Ariel Niz 
+                       Banco: Provincia
+                       CBU: 0140092203703152862397
+                       Alias: Dn.style.3
                     </div>
                     
                     <div className="mt-4 pt-4 border-t border-blue-200">

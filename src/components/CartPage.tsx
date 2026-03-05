@@ -2,14 +2,15 @@ import { useCartStore } from "../store/cartStore";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { isIphoneCategory, formatPrice } from "../utils/priceUtils";
+import { useUserStore } from "../store/userStore";
 
 const CartPage = () => {
   const { items, removeItem, updateQuantity, cartTotal, clearCart } = useCartStore();
   const navigate = useNavigate();
+  const { user } = useUserStore();
 
   const handleProceedToCheckout = () => {
-    const savedUser = localStorage.getItem('dn_user');
-    if (!savedUser) {
+    if (!user) {
       toast.info("Por favor, inicia sesión para finalizar tu compra");
       navigate('/account?redirect=checkout');
     } else {

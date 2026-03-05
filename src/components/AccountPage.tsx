@@ -3,7 +3,71 @@ import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import { Package, User, LogOut, Upload, CheckCircle, Save, Star, MessageSquare, ArrowRight } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useUserStore } from "../store/userStore";
+import { useUserStore, CustomerAddress, UserProfile } from "../store/userStore";
+
+const RatingSection = ({ 
+  item, 
+  orderId, 
+  user, 
+  apiUrl, 
+  ratedProducts, 
+  reviewingProduct, 
+  setReviewingProduct, 
+  handleSendReview,
+  submittingReview
+}: { 
+  item: any, 
+  orderId: number, 
+  user: any, 
+  apiUrl: string, 
+  ratedProducts: number[], 
+  reviewingProduct: any, 
+  setReviewingProduct: any,
+  handleSendReview: any,
+  submittingReview: boolean
+}) => {
+  const [hasReviewed, setHasReviewed] = useState<boolean | null>(null);
+  const [checking, setChecking] = useState(true);
+  const [localRating, setLocalRating] = useState(5);
+  const [localComment, setLocalComment] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    fetch(`${apiUrl}/wc/reviews/check?product_id=${item.product_id}&email=${user.email}`)
+      .then(r => r.json()).then(d => setHasReviewed(d.hasReviewed)).finally(() => setChecking(false));
+  }, [item.product_id, user, apiUrl]);
+
+  if (checking) return <div className="h-10 bg-slate-50 animate-pulse rounded-full w-24"></div>;
+
+  const isRated = hasReviewed || ratedProducts.includes(item.product_id);
+  const isCurrentlyReviewing = reviewingProduct?.productId === item.product_id;
+
+  return (
+    <div className="bg-white/80 p-4 rounded-2xl flex flex-col gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <span className="font-black text-xs text-slate-800 uppercase tracking-tight truncate max-w-full">{item.name}</span>
+        {isRated ? (
+          <span className="flex items-center gap-1 text-[9px] font-black text-green-500 uppercase tracking-widest bg-green-50 px-3 py-1.5 rounded-full border border-green-100"><CheckCircle size={10} /> Calificado</span>
+        ) : (
+          <button onClick={() => setReviewingProduct(isCurrentlyReviewing ? null : {orderId, productId: item.product_id})} className={`px-4 py-1.5 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-widest shadow-lg ${isCurrentlyReviewing ? 'bg-slate-400 shadow-none' : ''}`}>
+            {isCurrentlyReviewing ? 'Cerrar' : 'Calificar'}
+          </button>
+        )}
+      </div>
+      {isCurrentlyReviewing && !isRated && (
+        <div className="pt-4 animate-in zoom-in-95">
+          <div className="flex gap-2 mb-4">
+            {[1,2,3,4,5].map(s => (
+              <button key={s} onClick={() => setLocalRating(s)}><Star size={20} className={s <= localRating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"} /></button>
+            ))}
+          </div>
+          <textarea value={localComment} onChange={(e) => setLocalComment(e.target.value)} placeholder="Tu opinión..." className="w-full p-3 rounded-xl border-none bg-white text-sm mb-3 shadow-inner" rows={2} />
+          <button onClick={() => handleSendReview(item.product_id, localRating, localComment)} disabled={submittingReview} className="w-full bg-pink-600 text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest">{submittingReview ? 'Enviando...' : 'Publicar'}</button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AccountPage = () => {
   const [searchParams] = useSearchParams();
@@ -38,11 +102,15 @@ const AccountPage = () => {
 
   useEffect(() => {
     if (user) {
+      if (redirectPath === 'checkout') {
+        navigate('/checkout');
+        return;
+      }
       setActiveTab('orders');
       fetchOrders(user.email);
       fetchFullProfile(user.email);
     }
-  }, []);
+  }, [user?.email, redirectPath, navigate]);
 
   const fetchFullProfile = async (email: string) => {
     setLoadingProfile(true);
@@ -85,12 +153,13 @@ const AccountPage = () => {
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Error al iniciar sesión');
       
-      const basicUser = { 
+      const basicUser: UserProfile = { 
         id: result.user_id || 0,
         email: result.user_email, 
         first_name: result.user_display_name.split(' ')[0],
         last_name: result.user_display_name.split(' ')[1] || "",
-        billing: {} as any, shipping: {} as any
+        billing: {} as CustomerAddress, 
+        shipping: {} as CustomerAddress
       };
       
       login(basicUser, result.token);
@@ -157,63 +226,39 @@ const AccountPage = () => {
     formData.append('file', selectedFile);
     try {
       const res = await fetch(`${apiUrl}/orders/upload-receipt`, { method: 'POST', body: formData });
-      if (res.ok) { toast.success("Enviado!"); setSelectedFile(null); fetchOrders(user!.email); }
-    } catch (err) { toast.error("Error"); }
+      const result = await res.json();
+      if (res.ok) { 
+        toast.success("¡Comprobante enviado!"); 
+        setSelectedFile(null); 
+        fetchOrders(user!.email); 
+      } else {
+        throw new Error(result.error || "Error al subir el archivo");
+      }
+    } catch (err: any) { 
+      toast.error(err.message || "Error en la conexión"); 
+    }
   };
-
-  const handleSendReview = async (productId: number) => {
+  const handleSendReview = async (productId: number, rating: number, comment: string) => {
     if (!user) return;
     setSubmittingReview(true);
     try {
       const res = await fetch(`${apiUrl}/wc/reviews`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: productId, review: comment, reviewer: `${user.first_name} ${user.last_name}`, reviewer_email: user.email, rating })
+        body: JSON.stringify({ 
+          product_id: productId, 
+          review: comment, 
+          reviewer: `${user.first_name} ${user.last_name}`, 
+          reviewer_email: user.email, 
+          rating 
+        })
       });
-      if (res.ok) { toast.success("Gracias!"); setRatedProducts(p => [...p, productId]); setReviewingProduct(null); setComment(""); }
-    } catch (err) { toast.error("Error"); } finally { setSubmittingReview(false); }
-  };
-
-  const RatingSection = ({ item, orderId }: { item: any, orderId: number }) => {
-    const [hasReviewed, setHasReviewed] = useState<boolean | null>(null);
-    const [checking, setChecking] = useState(true);
-
-    useEffect(() => {
-      if (!user) return;
-      fetch(`${apiUrl}/wc/reviews/check?product_id=${item.product_id}&email=${user.email}`)
-        .then(r => r.json()).then(d => setHasReviewed(d.hasReviewed)).finally(() => setChecking(false));
-    }, [item.product_id, user]);
-
-    if (checking) return <div className="h-10 bg-slate-50 animate-pulse rounded-full w-24"></div>;
-
-    const isRated = hasReviewed || ratedProducts.includes(item.product_id);
-    const isCurrentlyReviewing = reviewingProduct?.productId === item.product_id;
-
-    return (
-      <div className="bg-white/80 p-4 rounded-2xl flex flex-col gap-3">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <span className="font-black text-xs text-slate-800 uppercase tracking-tight truncate max-w-full">{item.name}</span>
-          {isRated ? (
-            <span className="flex items-center gap-1 text-[9px] font-black text-green-500 uppercase tracking-widest bg-green-50 px-3 py-1.5 rounded-full border border-green-100"><CheckCircle size={10} /> Calificado</span>
-          ) : (
-            <button onClick={() => setReviewingProduct(isCurrentlyReviewing ? null : {orderId, productId: item.product_id})} className={`px-4 py-1.5 rounded-full bg-pink-600 text-white text-[9px] font-black uppercase tracking-widest shadow-lg ${isCurrentlyReviewing ? 'bg-slate-400 shadow-none' : ''}`}>
-              {isCurrentlyReviewing ? 'Cerrar' : 'Calificar'}
-            </button>
-          )}
-        </div>
-        {isCurrentlyReviewing && !isRated && (
-          <div className="pt-4 animate-in zoom-in-95">
-            <div className="flex gap-2 mb-4">
-              {[1,2,3,4,5].map(s => (
-                <button key={s} onClick={() => setRating(s)}><Star size={20} className={s <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"} /></button>
-              ))}
-            </div>
-            <textarea value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Tu opinión..." className="w-full p-3 rounded-xl border-none bg-white text-sm mb-3 shadow-inner" rows={2} />
-            <button onClick={() => handleSendReview(item.product_id)} disabled={submittingReview} className="w-full bg-pink-600 text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest">{submittingReview ? 'Enviando...' : 'Publicar'}</button>
-          </div>
-        )}
-      </div>
-    );
+      if (res.ok) { 
+        toast.success("¡Gracias por tu opinión!"); 
+        setRatedProducts(p => [...p, productId]); 
+        setReviewingProduct(null); 
+      }
+    } catch (err) { toast.error("Error al enviar"); } finally { setSubmittingReview(false); }
   };
 
   if (!user) {
@@ -292,7 +337,29 @@ const AccountPage = () => {
                             <div><span className="text-[10px] text-blue-600 tracking-widest block">ORDEN #{order.id}</span><p className="text-sm text-gray-400">{new Date(order.date_created).toLocaleDateString()}</p></div>
                             <div className="text-right"><span className="px-4 py-1.5 rounded-full text-[9px] tracking-widest mb-3 inline-block bg-gray-100">{order.status}</span><p className="text-2xl text-gray-900 tracking-tighter">${order.total}</p></div>
                           </div>
-                          {order.status === 'completed' && <div className="mb-8 p-6 bg-pink-50 rounded-[2rem] border border-pink-100 animate-in fade-in slide-in-from-bottom-4"><div className="flex items-center gap-3 mb-6 text-pink-500 font-black uppercase tracking-tight text-sm"><Star size={20} className="fill-current" /> Califica tus productos</div><div className="space-y-3">{order.line_items.map((item: any) => <RatingSection key={item.id} item={item} orderId={order.id} />)}</div></div>}
+                          {order.status === 'completed' && (
+                            <div className="mb-8 p-6 bg-pink-50 rounded-[2rem] border border-pink-100 animate-in fade-in slide-in-from-bottom-4">
+                              <div className="flex items-center gap-3 mb-6 text-pink-500 font-black uppercase tracking-tight text-sm">
+                                <Star size={20} className="fill-current" /> Califica tus productos
+                              </div>
+                              <div className="space-y-3">
+                                {order.line_items.map((item: any) => (
+                                  <RatingSection 
+                                    key={item.id} 
+                                    item={item} 
+                                    orderId={order.id} 
+                                    user={user}
+                                    apiUrl={apiUrl}
+                                    ratedProducts={ratedProducts}
+                                    reviewingProduct={reviewingProduct}
+                                    setReviewingProduct={setReviewingProduct}
+                                    handleSendReview={handleSendReview}
+                                    submittingReview={submittingReview}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
                           <div className="space-y-2 mb-8 px-2 text-xs font-bold text-gray-400 uppercase">{order.line_items.map((item: any) => <div key={item.id} className="flex justify-between"><span>{item.name} <b>x{item.quantity}</b></span><span>${item.total}</span></div>)}</div>
                           <div className="flex flex-col sm:flex-row gap-4 border-t border-gray-100 pt-8 mt-4">
                              {order.status === 'pending' || (order.status === 'on-hold' && order.payment_method === 'bacs') ? (

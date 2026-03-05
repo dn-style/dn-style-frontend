@@ -1,26 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useConfigStore } from '../store/configStore';
 
-// Hook para obtener el valor del dólar blue
+// Hook para obtener el valor del dólar blue (desde el store global)
 export const useDolarBlue = () => {
-  const [rate, setRate] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchRate = async () => {
-      try {
-        const res = await fetch('https://dolarapi.com/v1/dolares/blue');
-        const data = await res.json();
-        if (data && data.venta) {
-          setRate(data.venta);
-        }
-      } catch (error) {
-        console.error('Error fetching dollar rate:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRate();
-  }, []);
+  const rate = useConfigStore(state => state.rate);
+  const loading = useConfigStore(state => state.loading);
 
   return { rate, loading };
 };
@@ -56,22 +39,18 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({
   arsClassName = "text-gray-400 text-xs font-bold" 
 }) => {
   const { rate } = useDolarBlue();
-  const isIphone = isIphoneCategory(categories || []);
+  // Mostramos siempre ambos precios si tenemos el rate, o solo USD si no lo tenemos.
   const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
 
-  if (isIphone) {
-    const priceInArs = rate ? numericPrice * rate : null;
-    return (
-      <div className={`flex flex-col ${className}`}>
-        <span className={usdClassName}>US$ {formatPrice(numericPrice)}</span>
-        {priceInArs && (
-          <span className={arsClassName}>
-            ARS ${formatPrice(priceInArs)} <span className="text-[8px] opacity-60">(Dólar Blue)</span>
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  return <span className={usdClassName}>${formatPrice(numericPrice)}</span>;
+  const priceInArs = rate ? numericPrice * rate : null;
+  return (
+    <div className={`flex flex-col ${className}`}>
+      <span className={usdClassName}>US$ {formatPrice(numericPrice)}</span>
+      {priceInArs && (
+        <span className={arsClassName}>
+          ARS ${formatPrice(priceInArs)}
+        </span>
+      )}
+    </div>
+  );
 };

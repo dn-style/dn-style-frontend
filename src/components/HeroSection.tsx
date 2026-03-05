@@ -18,9 +18,9 @@ const HeroSection: React.FC<HeroSectionProps> = ({
   align = "left",
 }) => {
   const alignmentClasses = {
-    left: "items-start text-left",
+    left: "items-center text-center md:items-start md:text-left",
     center: "items-center text-center",
-    right: "items-end text-right",
+    right: "items-center text-center md:items-end md:text-right",
   };
 
   return (

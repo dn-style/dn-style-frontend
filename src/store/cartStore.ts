@@ -4,22 +4,12 @@ import type { CartItem, Product } from '../types';
 import { toast } from 'react-toastify';
 import { isIphoneCategory } from '../utils/priceUtils';
 
-// Helper para obtener el rate actual fuera de un hook (para el store)
-const fetchDolarBlueRate = async (): Promise<number | null> => {
-  try {
-    const res = await fetch('https://dolarapi.com/v1/dolares/blue');
-    const data = await res.json();
-    return data?.venta || null;
-  } catch (error) {
-    console.error('Error fetching dollar rate for cart:', error);
-    return null;
-  }
-};
+import { useConfigStore } from './configStore';
 
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
-  addItem: (product: Product, quantity?: number, attributes?: Record<string, string>) => Promise<void>;
+  addItem: (product: Product, quantity?: number, attributes?: Record<string, string>, variationId?: number) => Promise<void>;
   removeItem: (cartId: string) => void;
   updateQuantity: (cartId: string, quantity: number) => void;
   clearCart: () => void;
@@ -34,13 +24,14 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
 
-      addItem: async (product, quantity = 1, attributes = {}) => {
+      addItem: async (product, quantity = 1, attributes = {}, variationId) => {
         const { items } = get();
+        const rate = useConfigStore.getState().rate;
         
         // Conversión de precio si es categoría iPhone (USD -> ARS)
         let finalPrice = product.price;
+
         if (isIphoneCategory(product.categories || [])) {
-          const rate = await fetchDolarBlueRate();
           if (rate) {
             const numericPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
             finalPrice = (numericPrice * rate).toString();
@@ -49,7 +40,7 @@ export const useCartStore = create<CartState>()(
 
         // Generar un ID único basado en producto y atributos
         const attrKey = Object.values(attributes).sort().join('-');
-        const cartId = `${product.id}-${attrKey}`;
+        const cartId = variationId ? `${product.id}-${variationId}` : `${product.id}-${attrKey}`;
 
         const existingItem = items.find((item) => item.cartId === cartId);
 
@@ -71,6 +62,7 @@ export const useCartStore = create<CartState>()(
                 price: finalPrice, // Guardamos el precio ya convertido a pesos
                 cartId, 
                 quantity, 
+                variationId,
                 selectedAttributes: attributes 
               },
             ],

@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node back.ts",
+    "start": "node dist/back.js",
     "dev": "ts-node-dev back.ts",
+    "build": "rm -rf dist && tsc && mkdir -p dist/email-templates && cp email-templates/*.hbs dist/email-templates/",
+    "preview-emails": "ts-node preview-templates.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

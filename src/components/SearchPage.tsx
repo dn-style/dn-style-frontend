@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Search, Package, ArrowRight } from "lucide-react";
 import type { Product } from "../types";
+import { PriceDisplay } from "../utils/priceUtils";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
@@ -84,7 +85,12 @@ const SearchPage = () => {
                       <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4" dangerouslySetInnerHTML={{ __html: product.short_description || "" }} />
                     </div>
                     <div className="flex items-center justify-between mt-auto">
-                      <span className="text-2xl font-black tracking-tighter">${product.price}</span>
+                      <PriceDisplay 
+                        price={product.price} 
+                        categories={product.categories}
+                        usdClassName="text-2xl font-black tracking-tighter"
+                        arsClassName="text-xs font-bold text-gray-400"
+                      />
                       <div className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100">
                         <ArrowRight size={18} />
                       </div>
