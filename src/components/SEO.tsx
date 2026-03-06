@@ -15,7 +15,7 @@ const SEO: React.FC<SEOProps> = ({
   description = "DN shop Store - Lo mejor en fragancias, electrónica y tecnología en Brandsen y todo el país.", 
   canonical, 
   ogType = "website",
-  ogImage = "https://test.system4us.com/og-image.jpg", // Asegúrate de subir esta imagen
+  ogImage = "https://dnshop.com.ar/og-image.jpg", // Asegúrate de subir esta imagen
   structuredData 
 }) => {
   const siteTitle = "DN shop STORE";

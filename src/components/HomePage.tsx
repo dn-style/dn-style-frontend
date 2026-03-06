@@ -13,10 +13,10 @@ const HomePage = () => {
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "url": "https://test.system4us.com",
+    "url": "https://dnshop.com.ar",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://test.system4us.com/search?q={search_term_string}",
+      "target": "https://dnshop.com.ar/search?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };

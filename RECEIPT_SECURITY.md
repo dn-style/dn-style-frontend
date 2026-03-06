@@ -39,10 +39,12 @@ Para que el sistema funcione de forma permanente, se configuró el `docker-compo
 ## Cómo Probar la Seguridad
 1. **Acceso Anónimo**: Intenta abrir una URL de comprobante en una ventana de incógnito. Deberías recibir un error `401`.
 2. **Acceso Cliente**: Loguéate con una cuenta de cliente normal e intenta abrir la URL. Deberías recibir un error `403`.
-3. **Acceso Administrador**: Loguéate en `https://test.system4us.com/wp-admin` y luego abre la URL del comprobante. Deberías visualizar el archivo (Imagen o PDF) correctamente.
+3. **Acceso Administrador**: Loguéate en `https://dnshop.com.ar/wp-admin` y luego abre la URL del comprobante. Deberías visualizar el archivo (Imagen o PDF) correctamente.
 
 ## Soporte de Archivos
 El sistema detecta automáticamente el tipo de archivo y asigna el `Content-Type` adecuado:
 - `.jpg`, `.jpeg` -> `image/jpeg`
 - `.png` -> `image/png`
 - `.pdf` -> `application/pdf`
+   * Usuario: dnshopAdmin                                                                                                                                                       
+   * Contraseña: XRAB*aK9XYKbmpd1q2HT    

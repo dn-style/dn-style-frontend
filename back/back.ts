@@ -38,8 +38,8 @@ if (!isTest) {
 
 // --- CONFIGURACIÓN CORS ---
 const allowedOrigins = [
-  'https://test.system4us.com',
-  'http://test.system4us.com',
+  'https://dnshop.com.ar',
+  'http://dnshop.com.ar',
   'https://dnshop.com.ar',
   'http://dnshop.com.ar',
   'https://www.dnshop.com.ar',
@@ -298,21 +298,21 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
     });
 
     console.log('[Create Order] ✅ WooCommerce respondió con Status:', response.status);
-    
+
     // Si la orden se creó correctamente y tenemos datos de conversión, crear nota privada
     if (response.data && response.data.id && _conversion_data && Number(_conversion_data.rate) > 0) {
       const orderId = response.data.id;
       const rateVal = _conversion_data.rate;
       const totalVal = _conversion_data.total_ars || 0;
-      
+
       const noteContent = `ℹ️ DETALLES DE CONVERSIÓN (ARS):\n\n` +
-                          `• Cotización aplicada: $${rateVal}\n` +
-                          `• Total en Pesos: ARS $${Number(totalVal).toLocaleString('es-AR')}\n\n` +
-                          `Detalle de productos:\n${_conversion_data.details || 'No especificado'}`;
+        `• Cotización aplicada: $${rateVal}\n` +
+        `• Total en Pesos: ARS $${Number(totalVal).toLocaleString('es-AR')}\n\n` +
+        `Detalle de productos:\n${_conversion_data.details || 'No especificado'}`;
 
       try {
-        await axios.post(`http://wordpress/wp-json/wc/v3/orders/${orderId}/notes`, 
-          { note: noteContent, customer_note: false }, 
+        await axios.post(`http://wordpress/wp-json/wc/v3/orders/${orderId}/notes`,
+          { note: noteContent, customer_note: false },
           { headers: { 'Authorization': `Basic ${auth}` } }
         );
         console.log(`[Create Order] 📝 Nota de conversión creada en pedido #${orderId}`);
@@ -320,7 +320,7 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
         console.error(`[Create Order] ⚠️ Error al crear nota de conversión:`, noteErr.message);
       }
     }
-    
+
     res.json(rewriteUrls(response.data));
   } catch (err: any) {
     console.error('[Create Order Error] ❌ Error detallado:');
@@ -491,7 +491,7 @@ app.post('/orders/upload-receipt', upload.single('file'), async (req: Request, r
 
 app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
   let key = req.params[0];
-  
+
   // Header de diagnóstico para confirmar que el backend está sirviendo el archivo
   res.setHeader('X-Served-By', 'dn-backend');
 
@@ -506,7 +506,7 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     console.log(`[SECURITY CHECK] ACCESO A COMPROBANTE DETECTADO: ${cleanKey}`);
     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-    
+
     const authHeader = req.headers.authorization;
     const cookieHeader = req.headers.cookie;
 
@@ -528,8 +528,8 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
 
     try {
       // Usar nuestro puente de autenticación PHP que es más fiable con las cookies de sesión
-      const targetHost = req.headers.host || 'test.system4us.com';
-      
+      const targetHost = req.headers.host || 'dnshop.com.ar';
+
       const wpResponse = await axios.get('http://wordpress/auth-bridge.php', {
         headers: {
           ...(authHeader ? { 'Authorization': authHeader } : {}),
@@ -551,9 +551,9 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
         console.warn(`[Security] 🚫 Acceso denegado para usuario ${wpResponse.data.id} a comprobante: ${cleanKey}. No es Admin.`);
         return res.status(403).send('Prohibido: Permisos insuficientes (Se requiere rol de administrador)');
       }
-      
+
       console.log(`[Security] ✅ Acceso concedido a admin (${user_login}) para comprobante: ${cleanKey}`);
-      
+
       // Para comprobantes, forzar no-cache SIEMPRE, incluso si la respuesta es exitosa
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
@@ -727,13 +727,13 @@ const cleanText = (text: string) => {
 const serveWithSEO = async (req: Request, res: Response, seoData: { title: string, description: string, image: string }) => {
   const indexPath = path.join(ROOT_DIR, 'public_html', 'index.html');
   if (!fs.existsSync(indexPath)) return res.status(500).send('Build not found');
-  
+
   let html = fs.readFileSync(indexPath, 'utf8');
   const fullTitle = `${seoData.title} | DN shop`;
   const cleanDescription = cleanText(seoData.description);
-  
+
   html = html.replace(/<title>.*?<\/title>/g, `<title>${fullTitle}</title>`);
-  
+
   const metaTags = `
     <meta name="description" content="${cleanDescription}" />
     <meta property="og:title" content="${fullTitle}" />
@@ -742,7 +742,7 @@ const serveWithSEO = async (req: Request, res: Response, seoData: { title: strin
     <meta property="og:type" content="product" />
     <meta name="twitter:card" content="summary_large_image" />
   `;
-  
+
   res.send(html.replace('</head>', `${metaTags}</head>`));
 };
 

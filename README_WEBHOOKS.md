@@ -14,7 +14,7 @@ Para que el sistema de correos electrónicos y actualizaciones automáticas func
     *   **Nombre**: `DN Backend - Pedido Creado`
     *   **Estado**: `Activo`
     *   **Tema**: `Orden creada` (order.created)
-    *   **URL de envío**: `https://dnshop.com.ar/webhooks/woocommerce` (o `https://test.system4us.com/...` para desarrollo)
+    *   **URL de envío**: `https://dnshop.com.ar/webhooks/woocommerce` (o `https://dnshop.com.ar/...` para desarrollo)
     *   **Secreto**: (Puedes dejarlo en blanco o poner una clave, el sistema actual procesa la carga útil directamente).
     *   **Versión de la API**: `WP REST API Integration v3`
     *   Haz clic en **Guardar Webhook**.
@@ -24,7 +24,7 @@ Para que el sistema de correos electrónicos y actualizaciones automáticas func
     *   **Nombre**: `DN Backend - Pedido Actualizado`
     *   **Estado**: `Activo`
     *   **Tema**: `Orden actualizada` (order.updated)
-    *   **URL de envío**: `https://dnshop.com.ar/webhooks/woocommerce` (o `https://test.system4us.com/...` para desarrollo)
+    *   **URL de envío**: `https://dnshop.com.ar/webhooks/woocommerce` (o `https://dnshop.com.ar/...` para desarrollo)
     *   **Versión de la API**: `WP REST API Integration v3`
     *   Haz clic en **Guardar Webhook**.
 

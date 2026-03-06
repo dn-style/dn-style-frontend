@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuración básica
-SITE_URL="https://test.system4us.com"
+SITE_URL="https://dnshop.com.ar"
 SITE_TITLE="DN shop"
 ADMIN_USER="admin"
 ADMIN_PASSWORD="Ds12345678!"
@@ -44,7 +44,7 @@ docker-compose run --rm wp-cli wp --allow-root eval "
         'region'             => 'us-east-1',
         'copy-to-s3'         => 1,
         'serve-from-s3'      => 1,
-        'delivery-domain'    => 'test.system4us.com/images',
+        'delivery-domain'    => 'dnshop.com.ar/images',
         'enable-delivery-domain' => 1,
         'force-https'        => 1,
         'use-yearmonth-folders'  => 1,

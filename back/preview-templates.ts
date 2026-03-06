@@ -19,9 +19,9 @@ const testData = {
     ],
     year: new Date().getFullYear(),
     tracking_number: "AR-123456789-DN",
-    tracking_url: "https://test.system4us.com/tracking/AR-123456789-DN",
-    reset_link: "https://test.system4us.com/reset-password?token=preview-token",
-    verify_link: "https://test.system4us.com/verify?token=welcome-token"
+    tracking_url: "https://dnshop.com.ar/tracking/AR-123456789-DN",
+    reset_link: "https://dnshop.com.ar/reset-password?token=preview-token",
+    verify_link: "https://dnshop.com.ar/verify?token=welcome-token"
 };
 
 const templates = [
@@ -37,12 +37,12 @@ console.log('🚀 Generando previsualizaciones de plantillas...');
 
 templates.forEach(templateName => {
     const templatePath = path.join(templatesDir, `${templateName}.hbs`);
-    
+
     if (fs.existsSync(templatePath)) {
         const source = fs.readFileSync(templatePath, 'utf8');
         const template = hbs.compile(source);
         const html = template(testData);
-        
+
         const outputPath = path.join(outputDir, `${templateName}.html`);
         fs.writeFileSync(outputPath, html);
         console.log(`✅ Generado: ${outputPath}`);
