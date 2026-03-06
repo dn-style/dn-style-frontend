@@ -115,7 +115,7 @@ const ShippingPolicyPage = () => {
         </section>
 
         <section className="mt-16 pt-8 border-t border-gray-200 text-sm text-center font-bold uppercase tracking-widest text-gray-400">
-          DN STYLE - Brandsen, Argentina
+          DN shop - Brandsen, Argentina
         </section>
       </div>
     </div>

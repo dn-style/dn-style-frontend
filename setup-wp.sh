@@ -2,7 +2,7 @@
 
 # Configuración básica
 SITE_URL="http://localhost:8086"
-SITE_TITLE="DN Style Store"
+SITE_TITLE="DN shop Store"
 ADMIN_USER="admin"
 ADMIN_PASSWORD="Ds12345678!"
 ADMIN_EMAIL="admin@example.com"

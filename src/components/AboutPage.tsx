@@ -2,7 +2,7 @@ const AboutPage = () => {
   return (
     <div className="bg-white  min-h-screen py-16">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h1 className="text-4xl font-extrabold text-gray-900  mb-6">Sobre DN Style</h1>
+        <h1 className="text-4xl font-extrabold text-gray-900  mb-6">Sobre DN shop</h1>
         <p className="text-xl text-gray-600  mb-12 leading-relaxed">
           Somos más que una tienda online. Somos una experiencia curada para aquellos que buscan calidad, estilo y distinción en cada detalle de su vida.
         </p>

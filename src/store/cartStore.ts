@@ -59,6 +59,7 @@ export const useCartStore = create<CartState>()(
               ...items,
               { 
                 ...product, 
+                images: Array.isArray(product.images) ? product.images : [],
                 price: finalPrice, // Guardamos el precio ya convertido a pesos
                 cartId, 
                 quantity, 

@@ -12,7 +12,7 @@ const SpeedDialButton: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   
   const itemsCount = useCartStore((state) => state.itemsCount());
-  const whatsappNumber = "5491112345678"; // Reemplazar con número real
+  const whatsappNumber = "542223434403"; // Reemplazar con número real
 
   useEffect(() => {
     if (isChatOpen && !socket) {
@@ -96,7 +96,7 @@ const SpeedDialButton: React.FC = () => {
           {/* Header Chat */}
           <div className="bg-black text-white p-4 flex justify-between items-center">
             <div>
-              <h3 className="font-bold text-sm">Soporte DN Style</h3>
+              <h3 className="font-bold text-sm">Soporte DN shop</h3>
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> En línea
               </p>

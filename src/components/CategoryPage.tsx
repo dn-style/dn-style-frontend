@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { X } from "lucide-react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useCategoriesStore } from "../store/categoriesStore";
 import SEO from "./SEO";
 import { PriceDisplay } from "../utils/priceUtils";
+import { trackViewItemList } from "../utils/analytics";
 
 export interface Product {
   id: number;
@@ -38,13 +40,33 @@ const CategoryPage: React.FC = () => {
   const { categories } = useCategoriesStore();
 
   const currentCategory = slug ? categories.find((c) => c.slug === slug) : undefined;
-  const mainCategoryId = currentCategory?.parent || currentCategory?.id;
-  const mainCategory = categories.find((c) => c.id === mainCategoryId);
+  
+  // Buscar la categoría raíz (parent === 0)
+  const findRootCategory = (cat: any): any => {
+    if (!cat || cat.parent === 0) return cat;
+    const parent = categories.find(c => c.id === cat.parent);
+    return findRootCategory(parent);
+  };
+
+  const rootCategory = findRootCategory(currentCategory);
+  const mainCategoryId = rootCategory?.id;
+  const mainCategory = rootCategory;
   const subCategories = categories.filter((c) => c.parent === mainCategoryId);
 
-  const [selectedSubCat, setSelectedSubCat] = useState<number | null>(
-    currentCategory?.parent ? currentCategory.id : null
-  );
+  const [selectedSubCat, setSelectedSubCat] = useState<number | null>(null);
+
+  // Sincronizar el estado interno con la URL cuando cambia el slug
+  useEffect(() => {
+    if (currentCategory) {
+      if (currentCategory.parent !== 0) {
+        setSelectedSubCat(currentCategory.id);
+      } else {
+        setSelectedSubCat(null);
+      }
+      // Resetear filtros de atributos al cambiar de categoría
+      setSelectedAttributes({});
+    }
+  }, [slug, categories, currentCategory]);
 
   const [totalProducts, setTotalProducts] = useState<number | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
@@ -96,6 +118,12 @@ const CategoryPage: React.FC = () => {
   });
 
   const allProducts = data?.pages.flatMap((page) => page.products) || [];
+
+  useEffect(() => {
+    if (allProducts.length > 0 && currentCategory) {
+      trackViewItemList(currentCategory.name, allProducts);
+    }
+  }, [currentCategory?.id, allProducts.length === 0]);
 
   // Resetear el conteo cuando cambian los filtros principales para evitar mostrar el valor anterior
   useEffect(() => {
@@ -158,9 +186,16 @@ const CategoryPage: React.FC = () => {
         
         {/* Sidebar */}
         <aside className={`
-          fixed top-0 left-0 h-full w-72 bg-white z-40 p-6 overflow-y-auto shadow-2xl transition-transform duration-300 md:shadow-none
+          fixed top-0 left-0 h-full w-72 bg-white z-[60] p-6 overflow-y-auto shadow-2xl transition-transform duration-300 md:shadow-none
           ${showSidebar ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0 md:w-1/4
         `}>
+          <div className="flex justify-between items-center md:hidden mb-8">
+            <h3 className="text-xl font-black uppercase tracking-tighter">Filtros</h3>
+            <button onClick={() => setShowSidebar(false)} className="p-2 bg-gray-100 rounded-full">
+              <X size={20} />
+            </button>
+          </div>
+
           <div className="mb-8">
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Categorías</h3>
             <div className="flex flex-col gap-2">
@@ -242,7 +277,7 @@ const CategoryPage: React.FC = () => {
       </div>
       
       {/* Overlay para móvil */}
-      {showSidebar && <div className="fixed inset-0 bg-black/50 z-30 md:hidden" onClick={() => setShowSidebar(false)}></div>}
+      {showSidebar && <div className="fixed inset-0 bg-black/50 z-[55] md:hidden" onClick={() => setShowSidebar(false)}></div>}
     </div>
   );
 };

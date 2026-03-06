@@ -153,13 +153,12 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
                       className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-gray-50  mb-4 flex items-center justify-center p-4"
                     >
                       {/* Image background */}
-                       <img 
-                         src={product.images[0]?.src || "/placeholder.png"}
+                       <img
+                         src={product.images?.[0]?.src || "/placeholder.png"}
                          alt={product.name}
                          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                          loading="lazy"
                        />
-                       
                        {/* Badge for price */}
                       {product.price && (
                         <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-sm">

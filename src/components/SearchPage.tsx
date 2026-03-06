@@ -3,6 +3,7 @@ import { useSearchParams, Link } from "react-router-dom";
 import { Search, Package, ArrowRight } from "lucide-react";
 import type { Product } from "../types";
 import { PriceDisplay } from "../utils/priceUtils";
+import { trackSearch } from "../utils/analytics";
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
@@ -17,6 +18,7 @@ const SearchPage = () => {
     if (!query) return;
     
     setLoading(true);
+    trackSearch(query);
     fetch(`${apiUrl}/wc/products?search=${encodeURIComponent(query)}&per_page=100`)
       .then(async res => {
         const totalHeader = res.headers.get("X-WP-Total");

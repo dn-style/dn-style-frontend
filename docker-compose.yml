@@ -48,6 +48,7 @@ services:
         define('WP_DEBUG', false);
     volumes:
       - wp_data:/var/www/html
+      - ./back/auth-bridge.php:/var/www/html/auth-bridge.php
     networks:
       - app-network
 

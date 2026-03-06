@@ -1,8 +1,18 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { CheckCircle, Package, User, ShoppingBag, Home, ArrowRight } from "lucide-react";
+import { trackPurchase } from "../utils/analytics";
 
 const ThankYouPage = () => {
+  const location = useLocation();
+  const order = location.state?.order;
+
+  useEffect(() => {
+    if (order && order.id) {
+      trackPurchase(order.id.toString(), parseFloat(order.total), order.line_items || []);
+    }
+  }, [order]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-20 px-4">
       <div className="max-w-4xl mx-auto text-center">

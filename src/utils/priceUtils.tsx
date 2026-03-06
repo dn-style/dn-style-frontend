@@ -9,9 +9,8 @@ export const useDolarBlue = () => {
 };
 
 export const isIphoneCategory = (categories: { id: number; name: string; slug: string; parent?: number }[]) => {
-  // Verificamos si tiene la categoría 'iphone' y si es una categoría principal (parent === 0 o no tiene parent)
-  // Nota: En WooCommerce API, si parent es 0 es principal.
-  return categories.some(cat => cat.slug === 'apple' && (!cat.parent || cat.parent === 0));
+  // Verificamos si tiene la categoría 'apple' o 'iphone' y si es una categoría principal
+  return categories.some(cat => (cat.slug === 'apple' || cat.slug === 'iphone') && (!cat.parent || cat.parent === 0));
 };
 
 export const formatPrice = (price: string | number) => {
@@ -39,18 +38,30 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({
   arsClassName = "text-gray-400 text-xs font-bold" 
 }) => {
   const { rate } = useDolarBlue();
-  // Mostramos siempre ambos precios si tenemos el rate, o solo USD si no lo tenemos.
   const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+  const isApple = isIphoneCategory(categories || []);
 
-  const priceInArs = rate ? numericPrice * rate : null;
+  if (isApple) {
+    const priceInArs = rate ? numericPrice * rate : null;
+    return (
+      <div className={`flex flex-col ${className}`}>
+        <span className={usdClassName}>US$ {formatPrice(numericPrice)}</span>
+        {priceInArs && (
+          <span className={arsClassName}>
+            ARS ${formatPrice(priceInArs)}
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  // Para productos que no son Apple, mostramos solo en ARS
+  // Asumimos que el precio base ya viene en ARS si no es Apple
   return (
     <div className={`flex flex-col ${className}`}>
-      <span className={usdClassName}>US$ {formatPrice(numericPrice)}</span>
-      {priceInArs && (
-        <span className={arsClassName}>
-          ARS ${formatPrice(priceInArs)}
-        </span>
-      )}
+      <span className={usdClassName.replace('text-blue-600', 'text-gray-900')}>
+        ARS ${formatPrice(numericPrice)}
+      </span>
     </div>
   );
 };

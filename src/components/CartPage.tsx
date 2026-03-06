@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { isIphoneCategory, formatPrice } from "../utils/priceUtils";
 import { useUserStore } from "../store/userStore";
+import { trackRemoveFromCart } from "../utils/analytics";
 
 const CartPage = () => {
   const { items, removeItem, updateQuantity, cartTotal, clearCart } = useCartStore();
@@ -16,6 +17,11 @@ const CartPage = () => {
     } else {
       navigate('/checkout');
     }
+  };
+
+  const handleRemove = (item: any) => {
+    trackRemoveFromCart(item);
+    removeItem(item.cartId);
   };
 
   if (items.length === 0) {
@@ -45,13 +51,13 @@ const CartPage = () => {
           {items.map((item) => (
             <div key={item.cartId} className="flex gap-4 p-4 bg-white rounded-2xl shadow-sm border border-gray-100 group">
               <div className="w-24 h-24 flex-shrink-0 bg-gray-50 rounded-xl overflow-hidden border border-gray-50 flex items-center justify-center p-2">
-                <img src={item.images[0]?.src || '/placeholder.png'} alt={item.name} className="w-full h-full object-contain" />
+                <img src={item.images?.[0]?.src || '/placeholder.png'} alt={item.name} className="w-full h-full object-contain" />
               </div>
               
               <div className="flex-grow flex flex-col justify-between">
                 <div className="flex justify-between items-start">
                   <h3 className="font-bold text-lg text-gray-900 line-clamp-1 group-hover:text-blue-600 transition-colors">{item.name}</h3>
-                  <button onClick={() => removeItem(item.cartId)} className="text-gray-300 hover:text-red-500 transition-colors">
+                  <button onClick={() => handleRemove(item)} className="text-gray-300 hover:text-red-500 transition-colors">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   </button>
                 </div>

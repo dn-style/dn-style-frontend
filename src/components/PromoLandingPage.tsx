@@ -1,28 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useCartStore } from "../store/cartStore";
-import { toast } from "react-toastify";
+import { Link, useNavigate } from "react-router-dom";
 import SEO from "./SEO";
-import { ShoppingCart, Gift, ShieldCheck, Truck, ArrowRight } from "lucide-react";
+import { ShoppingCart, Gift, ShieldCheck, ArrowRight } from "lucide-react";
 import { PriceDisplay } from "../utils/priceUtils";
 
 const PromoLandingPage: React.FC = () => {
+  const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL || "";
-  const addItem = useCartStore((state) => state.addItem);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // ID del producto Airpods Pro 2 (Hardcoded para esta landing específica)
-  // En un entorno real, esto se buscaría por slug o se pasaría por props
-  const AIRPODS_ID = "76"; // Asumiendo este ID basado en el seed o el sistema
+  const AIRPODS_ID = "493"; 
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`${apiUrl}/wc/products?search=AirPods Pro`);
+        const res = await fetch(`${apiUrl}/wc/products/${AIRPODS_ID}`);
         const data = await res.json();
-        if (data && data.length > 0) {
-          setProduct(data[0]);
+        if (data && data.id) {
+          setProduct(data);
         }
       } catch (error) {
         console.error("Error fetching promo product:", error);
@@ -31,19 +28,10 @@ const PromoLandingPage: React.FC = () => {
       }
     };
     fetchProduct();
-  }, [apiUrl]);
+  }, [apiUrl, AIRPODS_ID]);
 
   const handleAddToCart = () => {
-    if (product) {
-      addItem({
-        id: product.id,
-        name: product.name,
-        price: parseFloat(product.price),
-        image: product.images?.[0]?.src || "",
-        quantity: 1,
-      });
-      toast.success("¡AirPods añadidos! Estás participando por el iPhone 15.");
-    }
+    navigate(`/producto/${AIRPODS_ID}`);
   };
 
   if (loading) {
@@ -58,7 +46,7 @@ const PromoLandingPage: React.FC = () => {
     <div className="bg-white min-h-screen overflow-x-hidden">
       <SEO 
         title="Promo AirPods Pro 2 + Sorteo iPhone 15"
-        description="Compra tus AirPods Pro 2 y participa automáticamente por un iPhone 15 sellado. ¡Solo en DN Style!"
+        description="Compra tus AirPods Pro 2 y participa automáticamente por un iPhone 15 sellado. ¡Solo en DN shop!"
       />
 
       {/* Hero Section Landing */}
@@ -75,7 +63,7 @@ const PromoLandingPage: React.FC = () => {
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full">
           <div className="max-w-2xl">
             <span className="inline-block bg-red-600 text-white text-[10px] md:text-xs font-black uppercase tracking-[0.3em] px-4 py-2 rounded-full mb-6 animate-pulse">
-              Evento Exclusivo DN Style
+              Evento Exclusivo DN shop
             </span>
             <h1 className="text-4xl md:text-7xl font-black text-white leading-none mb-6 uppercase tracking-tighter">
               Tus AirPods <br /> 
@@ -83,9 +71,6 @@ const PromoLandingPage: React.FC = () => {
               iPhone 15
             </h1>
             <p className="text-lg md:text-xl text-gray-300 mb-10 font-medium max-w-lg">
-              {/* Con la compra de tus AirPods Pro 2, recibes un cupón digital automático para participar por un iPhone 15 de 128GB sellado. */}
-              Que bueno ya logramos superar la situacion de la foto para el sorteo!!!! <br></br>
-              Mañana charlamos como seguir y los textos de esta pantalla
               </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <button 
@@ -108,7 +93,7 @@ const PromoLandingPage: React.FC = () => {
       {/* Trust & Rules Section */}
       <section className="py-20 bg-gray-50 border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-center">
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-100">
                 <Gift className="text-red-600" size={32} />
@@ -127,15 +112,15 @@ const PromoLandingPage: React.FC = () => {
                 Todos nuestros productos son 100% originales con garantía oficial Apple y soporte técnico local en Brandsen.
               </p>
             </div>
-            <div className="flex flex-col items-center">
+            {/* <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-100">
                 <Truck className="text-green-600" size={32} />
               </div>
-              {/* <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Envío Inmediato</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Envío Inmediato</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Despachamos tus AirPods en menos de 24hs hábiles. Envío gratis a todo el país para esta promoción.
-              </p> */}
-            </div>
+              </p> 
+            </div> */}
           </div>
         </div>
       </section>
@@ -161,6 +146,9 @@ const PromoLandingPage: React.FC = () => {
                 <li className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
                   <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Resistentes al agua y sudor
                 </li>
+                <li className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
+                  <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Versión alternativa calidad premium
+                </li>
               </ul>
             </div>
             <div className="bg-black p-8 rounded-[40px] text-white flex justify-between items-center shadow-2xl transform hover:scale-[1.02] transition-transform cursor-pointer" onClick={handleAddToCart}>
@@ -174,7 +162,7 @@ const PromoLandingPage: React.FC = () => {
                       arsClassName="text-xs font-bold text-gray-400 mt-1"
                     />
                   ) : (
-                    <span className="text-3xl font-black">$Diego decime el Precio</span>
+                    <span className="text-3xl font-black">$30.000</span>
                   )}
                </div>
                <button className="bg-white text-black w-14 h-14 rounded-full flex items-center justify-center">

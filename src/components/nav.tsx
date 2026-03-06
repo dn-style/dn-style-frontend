@@ -33,7 +33,7 @@ const Header: React.FC = () => {
   const { data } = useQuery<Category[], Error>({
     queryKey: ["categories"],
     queryFn: fetchCategories,
-    staleTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 5, // 5 minutos de stale time
   });
 
   React.useEffect(() => {
@@ -54,7 +54,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="w-full relative z-50 bg-white shadow-sm">
+    <header className="w-full sticky top-0 z-[100] bg-white shadow-sm">
       {/* 1. Barra de Anuncio Superior */}
       {/* <div className="bg-black text-white text-[10px] md:text-[11px] font-bold uppercase tracking-[0.25em] py-2 text-center">
         <span>✈️ Envíos Gratis en compras superiores a $100.000 — De Brandsen a todo el país</span>
@@ -69,7 +69,7 @@ const Header: React.FC = () => {
             <Link to="/" className="block">
               <img
                 src={`${apiUrl}/wp-content/uploads/2026/03/logodnstyle.png`}
-                alt="DN Style"
+                alt="DN shop"
                 className="h-10 md:h-14 w-auto transform transition-transform hover:scale-105"
               />
             </Link>
@@ -173,7 +173,7 @@ const Header: React.FC = () => {
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[112px] bg-white z-[100] animate-in slide-in-from-top duration-300 overflow-y-auto pb-20">
+        <div className="md:hidden fixed inset-0 top-[112px] bg-white z-[110] animate-in slide-in-from-top duration-300 overflow-y-auto pb-20">
           <div className="p-6">
             <form onSubmit={handleSearch} className="relative w-full mb-8">
               <input

@@ -6,9 +6,11 @@ import "slick-carousel/slick/slick-theme.css";
 import type { Product, Review } from "../types";
 import { useCartStore } from "../store/cartStore";
 import { toast } from "react-toastify";
-import { Star, StarHalf, Mail, CreditCard } from "lucide-react";
+import { Star, StarHalf, CreditCard } from "lucide-react";
 import SEO from "./SEO";
 import { PriceDisplay } from "../utils/priceUtils";
+import { trackViewItem, trackAddToCart, trackWhatsAppClick } from "../utils/analytics";
+import { useConfigStore } from "../store/configStore";
 
 interface Variation {
   id: number;
@@ -55,6 +57,7 @@ const StarRating = ({ rating }: { rating: number }) => {
 const ProductPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const rate = useConfigStore(state => state.rate);
   const [product, setProduct] = useState<Product | null>(null);
   const [variations, setVariations] = useState<Variation[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -85,6 +88,9 @@ const ProductPage = () => {
         if (!data || data.error || !data.id) throw new Error("Producto inválido");
         setProduct(data);
         setError(false);
+        
+        // Google Analytics: View Item
+        trackViewItem(data, rate);
         
         // Una vez tenemos el producto, cargamos lo demás en segundo plano sin bloquear si fallan
         fetch(`${apiUrl}/wc/products/${id}/variations`).then(r => r.json()).then(v => setVariations(Array.isArray(v) ? v : [])).catch(() => {});
@@ -122,7 +128,7 @@ const ProductPage = () => {
     
     if (match && match.image?.src) {
        console.log("[ProductPage] 📸 Cambio de imagen detectado por variación:", match.image.src);
-       const imgIndex = product.images.findIndex(img => img.src === match.image?.src);
+       const imgIndex = (product.images || []).findIndex(img => img.src === match.image?.src);
        if (imgIndex !== -1) {
          setSelectedImage(imgIndex);
          setVariationImageOverride(null);
@@ -140,12 +146,13 @@ const ProductPage = () => {
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imgContainerRef.current || (!product?.images[selectedImage] && !variationImageOverride)) return;
+    const currentImage = product?.images?.[selectedImage];
+    if (!imgContainerRef.current || (!currentImage && !variationImageOverride)) return;
     const { left, top, width, height } = imgContainerRef.current.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
     const y = ((e.clientY - top) / height) * 100;
     
-    const currentSrc = variationImageOverride || product?.images[selectedImage]?.src;
+    const currentSrc = variationImageOverride || currentImage?.src;
     
     setZoomStyle({
       display: 'block',
@@ -175,9 +182,12 @@ const ProductPage = () => {
           alt: currentVariation.image.alt || product.name
         }] : product.images 
       }, 1, selectedAttributes, currentVariation.id);
+      
+      trackAddToCart(product, 1, rate);
     } else {
       if (product.stock_status === 'outofstock') return toast.error("Sin stock");
       addItem(product, 1);
+      trackAddToCart(product, 1, rate);
     }
   };
 
@@ -223,9 +233,9 @@ const ProductPage = () => {
               onMouseLeave={handleMouseLeave}
               ref={imgContainerRef}
             >
-              {product.images?.length > 0 || variationImageOverride ? (
+              {(product.images?.length > 0 || variationImageOverride) ? (
                  <img 
-                   src={variationImageOverride || product.images[selectedImage]?.src} 
+                   src={variationImageOverride || product.images?.[selectedImage]?.src} 
                    alt={product.name}
                    className="w-full h-full object-contain p-8 transition-transform duration-500 group-hover:scale-105"
                  />
@@ -340,6 +350,7 @@ const ProductPage = () => {
                   href={`https://wa.me/542223434403?text=${encodeURIComponent(`Hola, quiero consultar por el producto ${product.name}.`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackWhatsAppClick(product.name)}
                   className="flex-1 font-bold py-5 px-8 rounded-2xl border-2 border-green-500 text-green-600 hover:bg-green-50 transition-all uppercase text-xs tracking-widest flex items-center justify-center gap-3"
                >
                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.483 8.411-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.308 1.657zm6.222-3.61c1.566.93 3.118 1.403 4.646 1.404 5.314 0 9.638-4.323 9.64-9.637 0-2.574-1.002-4.993-2.822-6.815-1.821-1.821-4.24-2.822-6.812-2.822-5.314 0-9.638 4.323-9.641 9.637-.001 1.666.425 3.287 1.232 4.708l-.995 3.633 3.752-.984zm11.332-6.541c-.31-.155-1.832-.904-2.112-1.006-.28-.101-.484-.155-.688.155-.204.31-.788 1.006-.966 1.213-.178.206-.356.233-.666.078-.31-.155-1.309-.483-2.493-1.538-.921-.822-1.543-1.838-1.724-2.148-.181-.31-.019-.477.136-.631.139-.139.31-.361.466-.543.155-.181.206-.31.31-.517.104-.206.052-.388-.026-.543-.078-.155-.688-1.655-.944-2.27-.249-.599-.501-.518-.688-.528-.178-.008-.382-.01-.585-.01s-.535.077-.815.388c-.28.31-1.07 1.045-1.07 2.549s1.096 2.95 1.25 3.155c.155.206 2.158 3.296 5.228 4.621.73.315 1.3.504 1.744.645.733.233 1.4.2 1.926.122.587-.087 1.832-.749 2.088-1.474.256-.724.256-1.344.179-1.474-.077-.13-.284-.206-.594-.361z"/></svg>

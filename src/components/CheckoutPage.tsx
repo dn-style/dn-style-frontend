@@ -5,17 +5,10 @@ import { useForm } from "react-hook-form";
 import type { CustomerAddress } from "../types";
 import { toast } from "react-toastify";
 import { useUserStore } from "../store/userStore";
-import { MapPin, User as UserIcon, Gift } from "lucide-react";
-
-interface PaymentGateway {
-  id: string;
-  title: string;
-  description: string;
-  settings?: {
-    instructions?: { value: string };
-    account_details?: { value: any[] };
-  };
-}
+import { useConfigStore } from "../store/configStore";
+import { isIphoneCategory } from "../utils/priceUtils";
+import { User as UserIcon } from "lucide-react";
+import { trackBeginCheckout } from "../utils/analytics";
 
 const CheckoutPage = () => {
   const { items, cartTotal, clearCart } = useCartStore();
@@ -51,6 +44,11 @@ const CheckoutPage = () => {
         setUseSavedAddress(true);
       }
     }
+    
+    // Analytics: Begin Checkout
+    if (items.length > 0) {
+      trackBeginCheckout(items, cartTotal());
+    }
   }, [user, reset]);
 
   if (items.length === 0) {
@@ -80,6 +78,15 @@ const CheckoutPage = () => {
       country: formData.country || 'AR',
     };
 
+    // Preparar metadatos de conversión para la nota del pedido
+    const { rate: currentRate } = useConfigStore.getState();
+    const hasIphoneItems = items.some(i => isIphoneCategory(i.categories || []));
+    
+    const iphoneDetails = items
+      .filter(item => isIphoneCategory(item.categories || []))
+      .map(item => `${item.name}: ARS $${(parseFloat(item.price) * item.quantity).toLocaleString('es-AR')} (Cant: ${item.quantity})`)
+      .join('\n');
+
     const orderData: any = {
       payment_method: paymentMethod,
       payment_method_title: paymentMethod === 'bacs' ? 'Transferencia Bancaria' : 'Mercado Pago',
@@ -93,6 +100,12 @@ const CheckoutPage = () => {
           quantity: Number(item.quantity)
         };
       }),
+      // Pasamos info extra para que el backend cree la nota
+      _conversion_data: hasIphoneItems && currentRate ? {
+        rate: currentRate,
+        total_ars: cartTotal(),
+        details: iphoneDetails
+      } : null
     };
 
     if (user?.id && Number(user.id) > 0) {
@@ -123,7 +136,7 @@ const CheckoutPage = () => {
       }
       
       clearCart();
-      navigate('/thanks');
+      navigate('/thanks', { state: { order: result } });
     } catch (error: any) {
       console.error('Error en checkout:', error);
       toast.error(error.message);
@@ -244,7 +257,7 @@ const CheckoutPage = () => {
                   <li key={item.cartId} className="flex justify-between items-center text-sm">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-white rounded overflow-hidden">
-                        <img src={item.images[0]?.src} className="w-full h-full object-cover" />
+                        <img src={item.images?.[0]?.src || '/placeholder.png'} className="w-full h-full object-cover" />
                       </div>
                       <div>
                         <span className="font-medium text-gray-900 block">{item.name}</span>

@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
-import { Package, User, LogOut, Upload, CheckCircle, Save, Star, MessageSquare, ArrowRight } from "lucide-react";
+import { Package, User, LogOut, CheckCircle, Save, Star } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useUserStore, CustomerAddress, UserProfile } from "../store/userStore";
+import { useUserStore } from "../store/userStore";
+import type { CustomerAddress, UserProfile } from "../store/userStore";
+import { trackLogin, trackSignUp, setAnalyticsUser } from "../utils/analytics";
 
 const RatingSection = ({ 
   item, 
@@ -79,13 +81,11 @@ const AccountPage = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [reviewingProduct, setReviewingProduct] = useState<{orderId: number, productId: number} | null>(null);
   const [ratedProducts, setRatedProducts] = useState<number[]>([]);
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   
   const { register: registerLogin, handleSubmit: submitLogin } = useForm();
@@ -117,12 +117,12 @@ const AccountPage = () => {
     try {
       const res = await fetch(`${apiUrl}/auth/customer?email=${email}`);
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.id) {
         updateUser(data);
         resetProfile({
-          first_name: data.first_name,
-          last_name: data.last_name,
-          email: data.email,
+          first_name: data.first_name || "",
+          last_name: data.last_name || "",
+          email: data.email || "",
           phone: data.billing?.phone || "",
           address_1: data.billing?.address_1 || "",
           city: data.billing?.city || "",
@@ -131,7 +131,7 @@ const AccountPage = () => {
           country: data.billing?.country || "AR"
         });
       }
-    } catch (err) { console.error(err); } finally { setLoadingProfile(false); }
+    } catch (err) { console.error("[Account] Error fetching profile:", err); } finally { setLoadingProfile(false); }
   };
 
   const fetchOrders = async (email: string) => {
@@ -163,6 +163,8 @@ const AccountPage = () => {
       };
       
       login(basicUser, result.token);
+      setAnalyticsUser(basicUser.id, { email: basicUser.email });
+      trackLogin();
       toast.success(`¡Hola!`);
       if (redirectPath === 'checkout') navigate('/checkout');
       else { setActiveTab('orders'); fetchOrders(result.user_email); fetchFullProfile(result.user_email); }
@@ -184,6 +186,7 @@ const AccountPage = () => {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Error al registrarse');
+      trackSignUp();
       toast.success('Registro exitoso. Ya puedes entrar.');
       setActiveTab('login');
     } catch (err: any) { toast.error(stripHtml(err.message)); }
@@ -207,16 +210,50 @@ const AccountPage = () => {
     if (!user) return;
     setLoadingProfile(true);
     try {
+      // Formatear payload exactamente como WooCommerce espera
+      const payload = {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        billing: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          phone: data.phone,
+          address_1: data.address_1,
+          city: data.city,
+          state: data.state,
+          postcode: data.postcode,
+          country: data.country || "AR",
+          email: user.email
+        },
+        shipping: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          address_1: data.address_1,
+          city: data.city,
+          state: data.state,
+          postcode: data.postcode,
+          country: data.country || "AR"
+        }
+      };
+
       const res = await fetch(`${apiUrl}/auth/customer/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ first_name: data.first_name, last_name: data.last_name, billing: data, shipping: data })
+        body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error("Error al guardar");
+      
+      if (!res.ok) throw new Error("Error al guardar en el servidor");
+      
       const updated = await res.json();
       updateUser(updated);
-      toast.success("Perfil actualizado");
-    } catch (err: any) { toast.error(stripHtml(err.message)); } finally { setLoadingProfile(false); }
+      toast.success("Perfil actualizado con éxito");
+      
+      // Volver a pedir los datos para asegurar sincronización total
+      fetchFullProfile(user.email);
+    } catch (err: any) { 
+      console.error("[Account] Save error:", err);
+      toast.error("No se pudo guardar el perfil"); 
+    } finally { setLoadingProfile(false); }
   };
 
   const handleUploadReceipt = async (orderId: number) => {

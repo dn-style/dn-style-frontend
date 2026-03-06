@@ -1,5 +1,3 @@
-import React from "react";
-
 const PrivacyPage = () => {
   return (
     <div className="bg-white min-h-screen py-16 px-4">

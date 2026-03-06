@@ -22,7 +22,7 @@ const LoadingScreen: React.FC = () => {
       {/* Texto de carga */}
       <div className="mt-8 flex flex-col items-center">
         <p className="text-sm font-black tracking-[0.3em] uppercase text-slate-900 animate-bounce">
-          DN Style
+          DN shop
         </p>
         <div className="mt-2 w-48 h-1 bg-slate-100 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-blue-500 to-blue-600 animate-progress origin-left"></div>

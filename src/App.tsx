@@ -30,6 +30,8 @@ import ThankYouPage from "./components/ThankYouPage";
 import PromoLandingPage from "./components/PromoLandingPage";
 import { useConfigStore } from "./store/configStore";
 import { useCategoriesStore } from "./store/categoriesStore";
+import { useUserStore } from "./store/userStore";
+import { setAnalyticsUser } from "./utils/analytics";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,13 @@ function App() {
   const [isAppLoading, setIsAppLoading] = useState(true);
   const fetchRate = useConfigStore(state => state.fetchRate);
   const setCategories = useCategoriesStore(state => state.setCategories);
+  const { user } = useUserStore();
+
+  useEffect(() => {
+    if (user?.id) {
+      setAnalyticsUser(user.id, { email: user.email });
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     const apiUrl = import.meta.env.VITE_API_URL || "";
@@ -44,7 +53,7 @@ function App() {
     // Inicializar datos globales una sola vez
     Promise.all([
       fetchRate(apiUrl),
-      fetch(`${apiUrl}/wc/categories`).then(r => r.json()).then(setCategories)
+      fetch(`${apiUrl}/wc/categories?t=${Date.now()}`).then(r => r.json()).then(setCategories)
     ]).finally(() => {
       setIsAppLoading(false);
     });

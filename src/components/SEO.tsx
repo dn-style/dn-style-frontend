@@ -12,13 +12,13 @@ interface SEOProps {
 
 const SEO: React.FC<SEOProps> = ({ 
   title, 
-  description = "DN Style Store - Lo mejor en fragancias, electrónica y tecnología en Brandsen y todo el país.", 
+  description = "DN shop Store - Lo mejor en fragancias, electrónica y tecnología en Brandsen y todo el país.", 
   canonical, 
   ogType = "website",
   ogImage = "https://test.system4us.com/og-image.jpg", // Asegúrate de subir esta imagen
   structuredData 
 }) => {
-  const siteTitle = "DN STYLE STORE";
+  const siteTitle = "DN shop STORE";
   const fullTitle = title ? `${title} | ${siteTitle}` : siteTitle;
   const currentUrl = canonical || window.location.href;
 
