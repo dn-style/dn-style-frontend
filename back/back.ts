@@ -809,20 +809,27 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
   const topic = req.headers['x-wc-webhook-topic'] as string;
   const data = req.body;
 
-  console.log(`[Webhook] 🔔 Evento recibido: ${topic} (ID: ${data.id}, Status: ${data.status})`);
+  if (!data) {
+    console.warn(`[Webhook] ⚠️ Recibido webhook sin body. Topic: ${topic}`);
+    return res.status(400).send('No body');
+  }
+
+  console.log(`[Webhook] 🔔 Evento recibido: ${topic} (ID: ${data?.id || 'N/A'}, Status: ${data?.status || 'N/A'})`);
 
   try {
     switch (topic) {
       case 'order.created':
-        // Se envía confirmación inmediata al crear el pedido
-        await sendOrderEmail(data, 'order-confirmation');
+        if (data && data.id) {
+          // Se envía confirmación inmediata al crear el pedido
+          await sendOrderEmail(data, 'order-confirmation');
+        }
         break;
 
       case 'order.updated':
         // Mapeo de estados a templates
-        if (data.status === 'processing') {
+        if (data && data.status === 'processing') {
           await sendOrderEmail(data, 'order-preparing');
-        } else if (data.status === 'cancelled') {
+        } else if (data && data.status === 'cancelled') {
           await sendOrderEmail(data, 'order-cancelled');
         }
         break;
