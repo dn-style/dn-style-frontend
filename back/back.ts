@@ -299,25 +299,36 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
 
     console.log('[Create Order] ✅ WooCommerce respondió con Status:', response.status);
 
-    // Si la orden se creó correctamente y tenemos datos de conversión, crear nota privada
-    if (response.data && response.data.id && _conversion_data && Number(_conversion_data.rate) > 0) {
+    // Si la orden se creó correctamente, proceder con notificaciones y notas
+    if (response.data && response.data.id) {
       const orderId = response.data.id;
-      const rateVal = _conversion_data.rate;
-      const totalVal = _conversion_data.total_ars || 0;
 
-      const noteContent = `ℹ️ DETALLES DE CONVERSIÓN (ARS):\n\n` +
-        `• Cotización aplicada: $${rateVal}\n` +
-        `• Total en Pesos: ARS $${Number(totalVal).toLocaleString('es-AR')}\n\n` +
-        `Detalle de productos:\n${_conversion_data.details || 'No especificado'}`;
+      // 1. NOTIFICACIÓN INMEDIATA AL ADMIN (Desde la API para mayor fiabilidad)
+      const customerName = `${fullPayload.billing?.first_name || ''} ${fullPayload.billing?.last_name || ''}`.trim() || 'Cliente';
+      await sendAdminNotification(
+        `Nuevo Pedido #${orderId}`, 
+        `Se ha recibido un nuevo pedido de <b>${customerName}</b> por un total de <b>${response.data.total} ${response.data.currency}</b>.`
+      );
 
-      try {
-        await axios.post(`http://wordpress/wp-json/wc/v3/orders/${orderId}/notes`,
-          { note: noteContent, customer_note: false },
-          { headers: { 'Authorization': `Basic ${auth}` } }
-        );
-        console.log(`[Create Order] 📝 Nota de conversión creada en pedido #${orderId}`);
-      } catch (noteErr: any) {
-        console.error(`[Create Order] ⚠️ Error al crear nota de conversión:`, noteErr.message);
+      // 2. Si tenemos datos de conversión, crear nota privada
+      if (_conversion_data && Number(_conversion_data.rate) > 0) {
+        const rateVal = _conversion_data.rate;
+        const totalVal = _conversion_data.total_ars || 0;
+
+        const noteContent = `ℹ️ DETALLES DE CONVERSIÓN (ARS):\n\n` +
+          `• Cotización aplicada: $${rateVal}\n` +
+          `• Total en Pesos: ARS $${Number(totalVal).toLocaleString('es-AR')}\n\n` +
+          `Detalle de productos:\n${_conversion_data.details || 'No especificado'}`;
+
+        try {
+          await axios.post(`http://wordpress/wp-json/wc/v3/orders/${orderId}/notes`,
+            { note: noteContent, customer_note: false },
+            { headers: { 'Authorization': `Basic ${auth}` } }
+          );
+          console.log(`[Create Order] 📝 Nota de conversión creada en pedido #${orderId}`);
+        } catch (noteErr: any) {
+          console.error(`[Create Order] ⚠️ Error al crear nota de conversión:`, noteErr.message);
+        }
       }
     }
 
@@ -770,8 +781,14 @@ const getSenderInfo = () => {
 // --- HELPER: ENVIAR NOTIFICACIÓN AL ADMIN ---
 const sendAdminNotification = async (subject: string, content: string) => {
   try {
-    const adminEmail = process.env.SMTP_USER;
-    if (!adminEmail) return;
+    // El destinatario es ADMIN_EMAIL, o EMAIL_SENDER como fallback
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_SENDER || process.env.SMTP_USER;
+    
+    // Si el email parece ser un ID de Brevo, cancelamos para evitar rebotar
+    if (!adminEmail || adminEmail.includes('smtp-brevo.com') || !adminEmail.includes('@')) {
+       console.warn('[Email Admin] ⚠️ No hay una dirección de correo real para el admin. Configura ADMIN_EMAIL.');
+       return;
+    }
 
     await transporter.sendMail({
       from: getSenderInfo(),
@@ -841,11 +858,6 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
 
   if (!data || Object.keys(data).length === 0) {
     console.warn(`[Webhook] ⚠️ Petición vacía recibida en /webhooks/woocommerce`);
-    if (isVerbose) {
-      console.log('--- Debug Headers ---');
-      console.log(JSON.stringify(req.headers, null, 2));
-      console.log('---------------------');
-    }
     return res.status(200).send('OK (Empty)'); // Respondemos 200 para que WC no reintente si es un ping
   }
 
@@ -855,10 +867,9 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
     switch (topic) {
       case 'order.created':
         if (data && data.id) {
-          // Notificar al cliente
+          // SOLO enviamos el mail al cliente. 
+          // El aviso al admin ya se envió desde la API para mayor velocidad y fiabilidad.
           await sendOrderEmail(data, 'order-confirmation');
-          // Notificar al admin
-          await sendAdminNotification(`Nuevo Pedido #${data.id}`, `Se ha recibido un nuevo pedido de <b>${data.billing?.first_name} ${data.billing?.last_name}</b> por un total de <b>${data.total} ${data.currency}</b>.`);
         }
         break;
 

@@ -12,7 +12,7 @@ import { trackBeginCheckout } from "../utils/analytics";
 
 const CheckoutPage = () => {
   const { items, cartTotal, clearCart } = useCartStore();
-  const { user } = useUserStore();
+  const { user, updateUser } = useUserStore();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
@@ -146,13 +146,28 @@ const CheckoutPage = () => {
             shipping: finalBillingData
           };
           
-          await fetch(`${apiUrl}/auth/customer/${user.id}`, {
+          const updateRes = await fetch(`${apiUrl}/auth/customer/${user.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updatePayload)
           });
           
-          console.log('[Checkout] ✅ Datos de perfil actualizados automáticamente');
+          if (updateRes.ok) {
+            const data = await updateRes.json();
+            // Normalizamos los datos de WordPress/WooCommerce al formato de nuestro UserProfile
+            const normalizedUser = {
+              id: data.id,
+              email: data.email,
+              first_name: data.first_name,
+              last_name: data.last_name,
+              billing: data.billing || {},
+              shipping: data.shipping || {}
+            };
+            
+            // Actualizamos el estado local global
+            updateUser(normalizedUser);
+            console.log('[Checkout] ✅ Datos de perfil actualizados en WordPress y LocalStore');
+          }
         } catch (updateErr) {
           console.error('[Checkout] ⚠️ Error al actualizar perfil (pero el pedido fue exitoso):', updateErr);
         }
@@ -272,7 +287,6 @@ const CheckoutPage = () => {
 
         {/* Resumen de Pedido y Pago */}
         <div>
-           {/* ... Resto del componente igual (Resumen pedido, Métodos de pago, Botón) ... */}
            <div className="bg-gray-50 p-8 rounded-2xl border border-gray-200 sticky top-24">
               <h2 className="text-xl font-bold mb-6 text-gray-900">Tu Pedido</h2>
               <ul className="space-y-4 mb-6 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
@@ -309,14 +323,6 @@ const CheckoutPage = () => {
                   >
                     <span className="text-sm font-medium">Transferencia</span>
                   </button>
-                  
-                  {/* <button 
-                    type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    className={`flex-1 py-3 px-2 rounded-lg border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'card' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <span className="text-sm font-medium">Tarjeta / MP</span>
-                  </button> */}
                 </div>
 
                 {paymentMethod === 'bacs' && (
@@ -341,18 +347,8 @@ const CheckoutPage = () => {
                     </div>
                   </div>
                 )}
-
-                {paymentMethod === 'card' && (
-                   <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 animate-fadeIn">
-                      <p className="text-sm text-gray-600 mb-2">Serás redirigido a Mercado Pago para completar tu pago de forma segura.</p>
-                      <div className="h-12 bg-blue-500 rounded flex items-center justify-center text-white font-bold cursor-pointer">
-                         Pagar con Mercado Pago
-                      </div>
-                   </div>
-                )}
               </div>
 
-              {/* Botón de envío que maneja ambos casos (Saved vs Form) */}
               <button 
                 onClick={useSavedAddress ? handleSubmit(() => onSubmit({} as CustomerAddress)) : undefined}
                 type={useSavedAddress ? 'button' : 'submit'}
