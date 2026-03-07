@@ -760,6 +760,29 @@ app.get(/^\/(?!wc|auth|images|orders).*/, (req, res) => {
   res.sendFile(path.join(ROOT_DIR, 'public_html', 'index.html'));
 });
 
+// --- HELPER: ENVIAR NOTIFICACIÓN AL ADMIN ---
+const sendAdminNotification = async (subject: string, content: string) => {
+  try {
+    const adminEmail = process.env.SMTP_USER;
+    if (!adminEmail) return;
+
+    await transporter.sendMail({
+      from: `"DN shop System" <${process.env.SMTP_USER}>`,
+      to: adminEmail,
+      subject: `[ADMIN] ${subject}`,
+      html: `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+              <h2 style="color: #333;">Notificación de Sistema</h2>
+              <p style="font-size: 16px; color: #666;">${content}</p>
+              <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="font-size: 12px; color: #999;">DN shop Backend - ${new Date().toLocaleString()}</p>
+             </div>`
+    });
+    console.log(`[Email Admin] ✅ Notificación enviada: ${subject}`);
+  } catch (err) {
+    console.error('[Email Admin Error] ❌ No se pudo enviar notificación:', err);
+  }
+};
+
 // --- HELPER: ENVIAR EMAILS DE PEDIDO ---
 const sendOrderEmail = async (orderData: any, templateName: string) => {
   try {
@@ -809,9 +832,14 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
   const topic = req.headers['x-wc-webhook-topic'] as string;
   const data = req.body;
 
-  if (!data) {
-    console.warn(`[Webhook] ⚠️ Recibido webhook sin body. Topic: ${topic}`);
-    return res.status(400).send('No body');
+  if (!data || Object.keys(data).length === 0) {
+    console.warn(`[Webhook] ⚠️ Petición vacía recibida en /webhooks/woocommerce`);
+    if (isVerbose) {
+      console.log('--- Debug Headers ---');
+      console.log(JSON.stringify(req.headers, null, 2));
+      console.log('---------------------');
+    }
+    return res.status(200).send('OK (Empty)'); // Respondemos 200 para que WC no reintente si es un ping
   }
 
   console.log(`[Webhook] 🔔 Evento recibido: ${topic} (ID: ${data?.id || 'N/A'}, Status: ${data?.status || 'N/A'})`);
@@ -820,8 +848,10 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
     switch (topic) {
       case 'order.created':
         if (data && data.id) {
-          // Se envía confirmación inmediata al crear el pedido
+          // Notificar al cliente
           await sendOrderEmail(data, 'order-confirmation');
+          // Notificar al admin
+          await sendAdminNotification(`Nuevo Pedido #${data.id}`, `Se ha recibido un nuevo pedido de <b>${data.billing?.first_name} ${data.billing?.last_name}</b> por un total de <b>${data.total} ${data.currency}</b>.`);
         }
         break;
 
@@ -829,8 +859,13 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
         // Mapeo de estados a templates
         if (data && data.status === 'processing') {
           await sendOrderEmail(data, 'order-preparing');
+          await sendAdminNotification(`Pedido #${data.id} en Preparación`, `El pedido de <b>${data.billing?.first_name}</b> ha pasado a estado 'procesando'.`);
         } else if (data && data.status === 'cancelled') {
           await sendOrderEmail(data, 'order-cancelled');
+          await sendAdminNotification(`Pedido #${data.id} CANCELADO`, `El pedido ha sido marcado como cancelado.`);
+        } else if (data) {
+          // Notificar cualquier otro cambio de estado al admin
+          await sendAdminNotification(`Actualización Pedido #${data.id}`, `El pedido ha cambiado su estado a: <b>${data.status}</b>.`);
         }
         break;
 
