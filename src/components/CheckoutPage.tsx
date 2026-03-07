@@ -134,6 +134,29 @@ const CheckoutPage = () => {
       } else {
         toast.success('¡Pago procesado con éxito!');
       }
+
+      // --- ACTUALIZACIÓN DE PERFIL ---
+      // Si el usuario está logueado, actualizamos sus datos en WordPress para futuras compras
+      if (user?.id) {
+        try {
+          const updatePayload = {
+            first_name: finalBillingData.first_name,
+            last_name: finalBillingData.last_name,
+            billing: finalBillingData,
+            shipping: finalBillingData
+          };
+          
+          await fetch(`${apiUrl}/auth/customer/${user.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatePayload)
+          });
+          
+          console.log('[Checkout] ✅ Datos de perfil actualizados automáticamente');
+        } catch (updateErr) {
+          console.error('[Checkout] ⚠️ Error al actualizar perfil (pero el pedido fue exitoso):', updateErr);
+        }
+      }
       
       clearCart();
       navigate('/thanks', { state: { order: result } });

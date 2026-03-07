@@ -766,8 +766,11 @@ const sendAdminNotification = async (subject: string, content: string) => {
     const adminEmail = process.env.SMTP_USER;
     if (!adminEmail) return;
 
+    const senderEmail = process.env.EMAIL_SENDER || process.env.SMTP_USER;
+    const senderName = process.env.EMAIL_SENDER_NAME || "DN shop System";
+
     await transporter.sendMail({
-      from: `"DN shop System" <${process.env.SMTP_USER}>`,
+      from: `"${senderName}" <${senderEmail}>`,
       to: adminEmail,
       subject: `[ADMIN] ${subject}`,
       html: `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -813,8 +816,11 @@ const sendOrderEmail = async (orderData: any, templateName: string) => {
       'order-cancelled': `Pedido Cancelado #${orderData.id} - DN shop`
     };
 
+    const senderEmail = process.env.EMAIL_SENDER || process.env.SMTP_USER;
+    const senderName = process.env.EMAIL_SENDER_NAME || "DN shop";
+
     const mailOptions = {
-      from: `"DN shop" <${process.env.SMTP_USER}>`,
+      from: `"${senderName}" <${senderEmail}>`,
       to: orderData.billing?.email,
       subject: subjects[templateName] || `Actualización de Pedido #${orderData.id}`,
       html: html
