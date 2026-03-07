@@ -418,7 +418,7 @@ app.post('/auth/forgot-password', async (req: Request, res: Response) => {
     });
 
     await transporter.sendMail({
-      from: `"DN shop" <${process.env.SMTP_USER}>`,
+      from: getSenderInfo(),
       to: email,
       subject: 'Recuperar Contraseña - DN shop',
       html
@@ -760,17 +760,21 @@ app.get(/^\/(?!wc|auth|images|orders).*/, (req, res) => {
   res.sendFile(path.join(ROOT_DIR, 'public_html', 'index.html'));
 });
 
+// --- HELPER: OBTENER REMITENTE ---
+const getSenderInfo = () => {
+  const email = process.env.EMAIL_SENDER || process.env.SMTP_USER;
+  const name = process.env.EMAIL_SENDER_NAME || "DN shop";
+  return `"${name}" <${email}>`;
+};
+
 // --- HELPER: ENVIAR NOTIFICACIÓN AL ADMIN ---
 const sendAdminNotification = async (subject: string, content: string) => {
   try {
     const adminEmail = process.env.SMTP_USER;
     if (!adminEmail) return;
 
-    const senderEmail = process.env.EMAIL_SENDER || process.env.SMTP_USER;
-    const senderName = process.env.EMAIL_SENDER_NAME || "DN shop System";
-
     await transporter.sendMail({
-      from: `"${senderName}" <${senderEmail}>`,
+      from: getSenderInfo(),
       to: adminEmail,
       subject: `[ADMIN] ${subject}`,
       html: `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -816,11 +820,8 @@ const sendOrderEmail = async (orderData: any, templateName: string) => {
       'order-cancelled': `Pedido Cancelado #${orderData.id} - DN shop`
     };
 
-    const senderEmail = process.env.EMAIL_SENDER || process.env.SMTP_USER;
-    const senderName = process.env.EMAIL_SENDER_NAME || "DN shop";
-
     const mailOptions = {
-      from: `"${senderName}" <${senderEmail}>`,
+      from: getSenderInfo(),
       to: orderData.billing?.email,
       subject: subjects[templateName] || `Actualización de Pedido #${orderData.id}`,
       html: html
