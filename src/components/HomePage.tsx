@@ -41,9 +41,6 @@ const HomePage = () => {
         />
       </section>
 
-      {/* SECCIÓN 2: Barra de Beneficios/Confianza */}
-      <FeaturesSection />
-
       {/* SECCIÓN 3: Vitrina de Fragancias */}
       {slugToId["fragancias"] ? (
         <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
@@ -76,6 +73,8 @@ const HomePage = () => {
           <Divitions categoryId={slugToId["electronica"]} />
         </section>
       ) : null}
+      {/* SECCIÓN 2: Barra de Beneficios/Confianza */}
+      <FeaturesSection />
     </div>
   );
 };

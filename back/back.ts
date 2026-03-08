@@ -808,7 +808,7 @@ const sendAdminNotification = async (subject: string, content: string) => {
 };
 
 // --- HELPER: ENVIAR EMAILS DE PEDIDO ---
-const sendOrderEmail = async (orderData: any, templateName: string) => {
+const sendOrderEmail = async (orderData: any, templateName: string, extraData: any = {}) => {
   try {
     const templatePath = path.join(ROOT_DIR, 'email-templates', `${templateName}.hbs`);
     if (!fs.existsSync(templatePath)) {
@@ -823,18 +823,20 @@ const sendOrderEmail = async (orderData: any, templateName: string) => {
       name: orderData.billing?.first_name || 'Cliente',
       order_id: orderData.id,
       total: orderData.total,
-      items: orderData.line_items.map((item: any) => ({
+      items: orderData.line_items?.map((item: any) => ({
         name: item.name,
         quantity: item.quantity,
         price: item.total
-      })),
-      year: new Date().getFullYear()
+      })) || [],
+      year: new Date().getFullYear(),
+      ...extraData // Inyectar seguimiento, urls, etc.
     });
 
     const subjects: any = {
       'order-confirmation': `Pedido Recibido #${orderData.id} - DN shop`,
       'order-preparing': `Estamos preparando tu pedido #${orderData.id} - DN shop`,
-      'order-cancelled': `Pedido Cancelado #${orderData.id} - DN shop`
+      'order-cancelled': `Pedido Cancelado #${orderData.id} - DN shop`,
+      'order-shipped': `¡Tu pedido #${orderData.id} está en camino! 🚚`
     };
 
     const mailOptions = {
@@ -877,13 +879,44 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
         // Mapeo de estados a templates
         if (data && data.status === 'processing') {
           await sendOrderEmail(data, 'order-preparing');
-          await sendAdminNotification(`Pedido #${data.id} en Preparación`, `El pedido de <b>${data.billing?.first_name}</b> ha pasado a estado 'procesando'.`);
         } else if (data && data.status === 'cancelled') {
           await sendOrderEmail(data, 'order-cancelled');
           await sendAdminNotification(`Pedido #${data.id} CANCELADO`, `El pedido ha sido marcado como cancelado.`);
-        } else if (data) {
-          // Notificar cualquier otro cambio de estado al admin
+        } else if (data && data.status === 'completed') {
+          // Si se marca como completado, enviamos mail de despacho/completado
+          await sendOrderEmail(data, 'order-shipped');
+          await sendAdminNotification(`Pedido #${data.id} COMPLETADO`, `El pedido ha sido marcado como entregado/completado.`);
+        } else if (data && data.status && !['pending', 'on-hold'].includes(data.status)) {
           await sendAdminNotification(`Actualización Pedido #${data.id}`, `El pedido ha cambiado su estado a: <b>${data.status}</b>.`);
+        }
+        break;
+
+      case 'order_note.created':
+        // SOLO si la nota es para el cliente (customer_note: true) y NO es privada
+        if (data && data.customer_note === true) {
+          const noteText = (data.note || '').toLowerCase();
+          
+          // CASO EDGE: Solo enviar si la nota parece un código de seguimiento
+          if (noteText.includes('seguimiento') || noteText.includes('tracking') || noteText.includes('guia') || noteText.includes('guía')) {
+            console.log(`[Webhook] 🚚 Nota de seguimiento detectada para orden #${data.order_id}`);
+            
+            // Necesitamos los datos de la orden para el email (especialmente el mail del cliente)
+            try {
+              const orderRes = await api.get(`orders/${data.order_id}`);
+              const orderData = orderRes.data;
+              
+              // Extraer el código de la nota (buscamos algo que parezca un código tras los dos puntos o similar)
+              const trackingCode = data.note.split(':').pop().trim();
+
+              await sendOrderEmail(orderData, 'order-shipped', {
+                tracking_number: trackingCode || data.note
+              });
+            } catch (err) {
+              console.error('[Webhook Error] Fallo al obtener orden para nota:', err);
+            }
+          } else {
+            console.log(`[Webhook] 📝 Nota informativa para cliente recibida (no es tracking, se ignora envío de mail automático)`);
+          }
         }
         break;
 
