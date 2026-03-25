@@ -11,13 +11,33 @@ import { User as UserIcon } from "lucide-react";
 import { trackBeginCheckout } from "../utils/analytics";
 
 const CheckoutPage = () => {
-  const { items, cartTotal, clearCart } = useCartStore();
+  const { items, cartTotal, clearCart, coupon } = useCartStore();
   const { user, updateUser } = useUserStore();
   const navigate = useNavigate();
   
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'bacs' | 'woo-mercado-pago-basic' | 'card'>('bacs');
+  const [paymentMethod, setPaymentMethod] = useState<string>('bacs');
+  const [gateways, setGateways] = useState<any[]>([]);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
+  const [selectedShipping, setSelectedShipping] = useState<string>("");
   const [useSavedAddress, setUseSavedAddress] = useState(false);
+
+  useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
+    fetch(`${apiUrl}/wc/payment_gateways`)
+      .then(r => r.json())
+      .then(d => {
+        if (Array.isArray(d)) setGateways(d.filter(g => g.enabled));
+      });
+    fetch(`${apiUrl}/wc/shipping_methods`)
+      .then(r => r.json())
+      .then(d => {
+        if (Array.isArray(d)) {
+          setShippingMethods(d);
+          if (d.length > 0) setSelectedShipping(d[0].id);
+        }
+      });
+  }, []);
 
   // Formulario react-hook-form
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CustomerAddress>();
@@ -87,12 +107,15 @@ const CheckoutPage = () => {
       .map(item => `${item.name}: ARS $${(parseFloat(item.price) * item.quantity).toLocaleString('es-AR')} (Cant: ${item.quantity})`)
       .join('\n');
 
+    const selectedGateway = gateways.find(g => g.id === paymentMethod);
+
     const orderData: any = {
       payment_method: paymentMethod,
-      payment_method_title: paymentMethod === 'bacs' ? 'Transferencia Bancaria' : 'Mercado Pago',
+      payment_method_title: selectedGateway?.title || 'Pedido Directo',
       set_paid: paymentMethod === 'woo-mercado-pago-basic', 
       billing: finalBillingData,
-      shipping: finalBillingData, 
+      shipping: finalBillingData,
+      shipping_lines: selectedShipping ? [{ method_id: selectedShipping, method_title: shippingMethods.find(s => s.id === selectedShipping)?.title || 'Envío' }] : [],
       line_items: items.map(item => {
         return {
           product_id: Number(item.id),
@@ -100,6 +123,7 @@ const CheckoutPage = () => {
           quantity: Number(item.quantity)
         };
       }),
+      coupon_lines: coupon ? [{ code: coupon.code }] : [],
       // Pasamos info extra para que el backend cree la nota
       _conversion_data: hasIphoneItems && currentRate ? {
         rate: currentRate,
@@ -311,7 +335,30 @@ const CheckoutPage = () => {
                 ))}
               </ul>
               
-              <div className="border-t border-gray-200 pt-4 mb-8">
+              <div className="mb-8">
+                <h3 className="font-bold mb-4 text-gray-900 uppercase text-xs tracking-widest">Método de Envío</h3>
+                <div className="space-y-3">
+                  {shippingMethods.map(method => (
+                    <button 
+                      key={method.id}
+                      type="button"
+                      onClick={() => setSelectedShipping(method.id)}
+                      className={`w-full p-4 rounded-xl border flex justify-between items-center transition-all ${selectedShipping === method.id ? 'border-blue-600 bg-blue-50' : 'border-gray-200'}`}
+                    >
+                      <span className="font-bold text-sm">{method.title || method.method_title}</span>
+                      <span className="text-[10px] uppercase font-black text-blue-600">Gratis</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="border-t border-gray-200 pt-4 mb-8 space-y-2">
+                {coupon && (
+                   <div className="flex justify-between text-sm text-green-600 font-bold uppercase tracking-widest">
+                      <span>CUPÓN: {coupon.code}</span>
+                      <span>-{coupon.type === 'percent' ? `${coupon.amount}%` : `$${coupon.amount}`}</span>
+                   </div>
+                )}
                 <div className="flex justify-between font-bold text-lg text-gray-900">
                   <span>Total</span>
                   <span className="text-blue-600">${cartTotal().toFixed(2)}</span>
@@ -319,22 +366,18 @@ const CheckoutPage = () => {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-bold mb-3 text-gray-900">Método de Pago</h3>
-                <div className="flex gap-3 mb-4 flex-wrap">
-                  <button 
-                    type="button"
-                    onClick={() => setPaymentMethod('bacs')}
-                    className={`flex-1 py-3 px-2 rounded-lg border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'bacs' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <span className="text-sm font-medium">Transferencia</span>
-                  </button>
-                  <button 
-                    type="button"
-                    onClick={() => setPaymentMethod('woo-mercado-pago-basic')}
-                    className={`flex-1 py-3 px-2 rounded-lg border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'woo-mercado-pago-basic' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <span className="text-sm font-medium">Mercado Pago</span>
-                  </button>
+                <h3 className="font-bold mb-3 text-gray-900 uppercase text-xs tracking-widest">Método de Pago</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                  {gateways.map(gateway => (
+                    <button 
+                      key={gateway.id}
+                      type="button"
+                      onClick={() => setPaymentMethod(gateway.id)}
+                      className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === gateway.id ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200'}`}
+                    >
+                      <span className="text-xs font-bold uppercase">{gateway.title}</span>
+                    </button>
+                  ))}
                 </div>
 
                 {paymentMethod === 'bacs' && (

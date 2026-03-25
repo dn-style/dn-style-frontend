@@ -6,14 +6,23 @@ import { isIphoneCategory } from '../utils/priceUtils';
 
 import { useConfigStore } from './configStore';
 
+interface Coupon {
+  code: string;
+  amount: string;
+  type: string;
+}
+
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  coupon: Coupon | null;
   addItem: (product: Product, quantity?: number, attributes?: Record<string, string>, variationId?: number) => Promise<void>;
   removeItem: (cartId: string) => void;
   updateQuantity: (cartId: string, quantity: number) => void;
   clearCart: () => void;
   toggleCart: () => void;
+  applyCoupon: (coupon: Coupon) => void;
+  removeCoupon: () => void;
   cartTotal: () => number;
   itemsCount: () => number;
 }
@@ -23,12 +32,12 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      coupon: null,
 
       addItem: async (product, quantity = 1, attributes = {}, variationId) => {
         const { items } = get();
         const rate = useConfigStore.getState().rate;
-        
-        // Conversión de precio si es categoría iPhone (USD -> ARS)
+
         let finalPrice = product.price;
 
         if (isIphoneCategory(product.categories || [])) {
@@ -38,7 +47,6 @@ export const useCartStore = create<CartState>()(
           }
         }
 
-        // Generar un ID único basado en producto y atributos
         const attrKey = Object.values(attributes).sort().join('-');
         const cartId = variationId ? `${product.id}-${variationId}` : `${product.id}-${attrKey}`;
 
@@ -57,14 +65,14 @@ export const useCartStore = create<CartState>()(
           set({
             items: [
               ...items,
-              { 
-                ...product, 
+              {
+                ...product,
                 images: Array.isArray(product.images) ? product.images : [],
-                price: finalPrice, // Guardamos el precio ya convertido a pesos
-                cartId, 
-                quantity, 
+                price: finalPrice,
+                cartId,
+                quantity,
                 variationId,
-                selectedAttributes: attributes 
+                selectedAttributes: attributes
               },
             ],
           });
@@ -88,16 +96,30 @@ export const useCartStore = create<CartState>()(
         }));
       },
 
-      clearCart: () => set({ items: [] }),
+      clearCart: () => set({ items: [], coupon: null }),
 
       toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
 
+      applyCoupon: (coupon: Coupon) => set({ coupon }),
+      removeCoupon: () => set({ coupon: null }),
+
       cartTotal: () => {
-        const { items } = get();
-        return items.reduce((total, item) => {
-            const price = parseFloat(item.price) || 0;
-            return total + price * item.quantity;
+        const { items, coupon } = get();
+        let subtotal = items.reduce((total, item) => {
+          const price = parseFloat(item.price) || 0;
+          return total + price * item.quantity;
         }, 0);
+
+        if (coupon) {
+          const amount = parseFloat(coupon.amount) || 0;
+          if (coupon.type === 'percent') {
+            subtotal = subtotal * (1 - (amount / 100));
+          } else {
+            subtotal = Math.max(0, subtotal - amount);
+          }
+        }
+
+        return subtotal;
       },
 
       itemsCount: () => {
