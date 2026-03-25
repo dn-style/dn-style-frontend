@@ -173,6 +173,11 @@ const CheckoutPage = () => {
         }
       }
       
+      if (result.init_point) {
+        window.location.href = result.init_point;
+        return;
+      }
+
       clearCart();
       navigate('/thanks', { state: { order: result } });
     } catch (error: any) {
@@ -322,6 +327,13 @@ const CheckoutPage = () => {
                     className={`flex-1 py-3 px-2 rounded-lg border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'bacs' ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-gray-200 hover:border-gray-300'}`}
                   >
                     <span className="text-sm font-medium">Transferencia</span>
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => setPaymentMethod('woo-mercado-pago-basic')}
+                    className={`flex-1 py-3 px-2 rounded-lg border flex flex-col items-center justify-center gap-2 transition-all ${paymentMethod === 'woo-mercado-pago-basic' ? 'border-sky-600 bg-sky-50 text-sky-700' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <span className="text-sm font-medium">Mercado Pago</span>
                   </button>
                 </div>
 
