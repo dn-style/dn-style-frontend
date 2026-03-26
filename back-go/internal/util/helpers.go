@@ -6,16 +6,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+
+	"github.com/valyala/bytebufferpool"
 )
 
-// RewriteUrls normalizes URLs from WordPress for the frontend
+var bufferPool = &bytebufferpool.Pool{}
+
+// RewriteUrls normalizes URLs from WordPress for the frontend with re-used memory
 func RewriteUrls(data interface{}) interface{} {
 	if data == nil {
 		return nil
 	}
 
-	raw, _ := json.Marshal(data)
-	s := string(raw)
+	// Use pool to avoid allocation and GC pressure
+	buf := bufferPool.Get()
+	defer bufferPool.Put(buf)
+
+	_ = json.NewEncoder(buf).Encode(data)
+	s := buf.String()
 
 	// SEO Parity: Remapeo de Uploads de WordPress a Proxy Local
 	uploadsPattern := `https?:(?:\\\/\\\/|//)[^"'\s]+?(?:\\\/|/)wp-content(?:\\\/|/)uploads`

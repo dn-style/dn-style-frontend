@@ -94,9 +94,9 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 					details = d
 				}
 
-				noteContent := fmt.Sprintf("ℹ️ DETALLES DE CONVERSIÓN (ARS):\n\n"+
-					"• Cotización aplicada: $%v\n"+
-					"• Total en Pesos: ARS $%v\n\n"+
+				noteContent := fmt.Sprintf(" DETALLES DE CONVERSIN (ARS):\n\n"+
+					" Cotizacin aplicada: $%v\n"+
+					" Total en Pesos: ARS $%v\n\n"+
 					"Detalle de productos:\n%s", rateVal, totalVal, details)
 
 				_, _ = config.HttpClient.R().
@@ -106,7 +106,7 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 			}
 		}
 
-		// 3. MOTOR DE PLUGINS DINÁMICO (Soporte Interceptores) 🚀
+		// 3. MOTOR DE PLUGINS DINMICO (Soporte Interceptores) 
 		totalVal, _ := strconv.ParseFloat(fmt.Sprintf("%v", data["total"]), 64)
 
 		for _, plugin := range plugins.OrderInterceptors {

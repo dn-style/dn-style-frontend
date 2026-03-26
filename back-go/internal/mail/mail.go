@@ -20,7 +20,7 @@ func SendOrderEmail(to, orderID, status string, orderData interface{}) error {
 	templatePath := filepath.Join("templates", "order_status.html")
 	tpl, err := os.ReadFile(templatePath)
 	if err != nil {
-		fmt.Printf("[Mail] ❌ Template not found: %v\n", err)
+		fmt.Printf("[Mail]  Template not found: %v\n", err)
 		return err
 	}
 
@@ -33,7 +33,7 @@ func SendOrderEmail(to, orderID, status string, orderData interface{}) error {
 	})
 
 	if err != nil {
-		fmt.Printf("[Mail] ❌ Error rendering template: %v\n", err)
+		fmt.Printf("[Mail]  Error rendering template: %v\n", err)
 		return err
 	}
 
@@ -45,7 +45,7 @@ func SendOrderEmail(to, orderID, status string, orderData interface{}) error {
 	if err := m.To(to); err != nil {
 		return err
 	}
-	m.Subject(fmt.Sprintf("Actualización de tu pedido #%s", orderID))
+	m.Subject(fmt.Sprintf("Actualizacin de tu pedido #%s", orderID))
 	m.SetBodyString(mail.TypeTextHTML, html)
 
 	c, err := mail.NewClient(smtpHost, mail.WithPort(smtpPort), mail.WithSMTPAuth(mail.SMTPAuthPlain),

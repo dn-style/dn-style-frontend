@@ -19,8 +19,8 @@ interface NotificationStore {
 export const useNotificationStore = create<NotificationStore>((set) => ({
   toasts: [],
   globalConfig: {
-    successMessage: '¡Operación exitosa!',
-    errorMessage: 'Ocurrió un error',
+    successMessage: 'Operacin exitosa!',
+    errorMessage: 'Ocurri un error',
     duration: 3000,
     position: 'top-right',
     theme: 'colored'

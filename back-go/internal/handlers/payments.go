@@ -23,7 +23,7 @@ func HandleMPWebhook(c *fiber.Ctx) error {
 		return c.Status(200).SendString("OK (No ID)")
 	}
 
-	fmt.Printf("[Mercado Pago Webhook] 🔔 Notification received for ID: %s\n", id)
+	fmt.Printf("[Mercado Pago Webhook]  Notification received for ID: %s\n", id)
 
 	token := os.Getenv("MP_ACCESS_TOKEN")
 	client := resty.New()
@@ -32,7 +32,7 @@ func HandleMPWebhook(c *fiber.Ctx) error {
 		Get("https://api.mercadopago.com/v1/payments/" + id)
 
 	if err != nil {
-		fmt.Printf("[Mercado Pago Webhook] ❌ Error fetching payment: %v\n", err)
+		fmt.Printf("[Mercado Pago Webhook]  Error fetching payment: %v\n", err)
 		return c.Status(500).SendString(err.Error())
 	}
 
@@ -43,7 +43,7 @@ func HandleMPWebhook(c *fiber.Ctx) error {
 	orderID, _ := payment["external_reference"].(string)
 
 	if status == "approved" && orderID != "" {
-		fmt.Printf("[Mercado Pago Webhook] ✅ Payment approved for Order #%s\n", orderID)
+		fmt.Printf("[Mercado Pago Webhook]  Payment approved for Order #%s\n", orderID)
 
 		// Update WC Order
 		auth := base64.StdEncoding.EncodeToString([]byte(config.WcKey + ":" + config.WcSecret))

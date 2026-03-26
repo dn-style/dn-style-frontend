@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== INICIANDO TEST DE SUBIDA DE IMÁGENES (MÉTODO ROBUSTO) ==="
+echo "=== INICIANDO TEST DE SUBIDA DE IMGENES (MTODO ROBUSTO) ==="
 
 docker-compose run --rm wp-cli wp --allow-root eval '
   if ( ! defined( "WC_PLUGIN_FILE" ) ) { include_once WP_PLUGIN_DIR . "/woocommerce/woocommerce.php"; }
@@ -9,18 +9,18 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   require_once ABSPATH . "wp-admin/includes/image.php";
 
   // --- 1. LIMPIEZA ---
-  echo "🧹 Borrando productos de test anteriores...\n";
+  echo " Borrando productos de test anteriores...\n";
   $test_products = get_posts(["post_type" => "product", "s" => "[TEST-IMG]", "numberposts" => -1, "post_status" => "any"]);
   foreach ($test_products as $p) { wp_delete_post($p->ID, true); }
 
-  // --- 2. FUNCIÓN DE DESCARGA MANUAL ---
+  // --- 2. FUNCIN DE DESCARGA MANUAL ---
   function upload_robust_img($url, $title) {
-      echo "📥 Descargando: $title...\n";
+      echo " Descargando: $title...\n";
       
       // Intentar descarga manual para evitar validaciones estrictas de URL de sideload
       $temp_file = download_url($url);
       if (is_wp_error($temp_file)) {
-          echo "❌ Error descarga: " . $temp_file->get_error_message() . "\n";
+          echo " Error descarga: " . $temp_file->get_error_message() . "\n";
           return 0;
       }
 
@@ -34,15 +34,15 @@ docker-compose run --rm wp-cli wp --allow-root eval '
       
       if (is_wp_error($id)) {
           @unlink($temp_file);
-          echo "❌ Error sideload: " . $id->get_error_message() . "\n";
+          echo " Error sideload: " . $id->get_error_message() . "\n";
           return 0;
       }
 
-      echo "✅ Imagen ID: $id\n";
+      echo " Imagen ID: $id\n";
       return $id;
   }
 
-  // --- 3. IMÁGENES CON EXTENSIÓN EXPLÍCITA ---
+  // --- 3. IMGENES CON EXTENSIN EXPLCITA ---
   $test_images = [
       "https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80&fm=jpg",
       "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80&fm=jpg",
@@ -62,6 +62,6 @@ docker-compose run --rm wp-cli wp --allow-root eval '
       if ($img_id) $product->set_image_id($img_id);
       $product->save();
       
-      echo "🚀 Creado: $name (ID " . $product->get_id() . ")\n";
+      echo " Creado: $name (ID " . $product->get_id() . ")\n";
   }
 '

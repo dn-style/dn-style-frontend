@@ -14,7 +14,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   setRate: (rate) => set({ rate }),
 
   fetchRate: async (apiUrl) => {
-    // Si ya tenemos el rate y no es nulo, no volvemos a pedirlo en esta sesión
+    // Si ya tenemos el rate y no es nulo, no volvemos a pedirlo en esta sesin
     if (get().rate !== null) return;
 
     set({ loading: true });

@@ -57,7 +57,7 @@ const Header: React.FC = () => {
     <header className="w-full sticky top-0 z-[100] bg-white shadow-sm">
       {/* 1. Barra de Anuncio Superior */}
       {/* <div className="bg-black text-white text-[10px] md:text-[11px] font-bold uppercase tracking-[0.25em] py-2 text-center">
-        <span>✈️ Envíos Gratis en compras superiores a $100.000 — De Brandsen a todo el país</span>
+        <span> Envos Gratis en compras superiores a $100.000  De Brandsen a todo el pas</span>
       </div> */}
 
       {/* 2. Main Header (Logo, Search, Icons) */}
@@ -80,7 +80,7 @@ const Header: React.FC = () => {
             <form onSubmit={handleSearch} className="relative w-full group">
               <input
                 type="text"
-                placeholder="¿Qué estás buscando hoy?"
+                placeholder="Qu ests buscando hoy?"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-gray-50 border-0 rounded-2xl px-12 py-3.5 text-xs font-medium focus:ring-2 focus:ring-black/10 transition-all outline-none placeholder:text-gray-400"
@@ -119,7 +119,7 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. BARRA CENTRAL DE CATEGORÍAS (Desktop) */}
+      {/* 3. BARRA CENTRAL DE CATEGORAS (Desktop) */}
       <nav className="hidden md:block border-t border-gray-50">
         <div className="max-w-7xl mx-auto">
           <ul className="flex justify-center items-center gap-2 lg:gap-4 h-14">
@@ -204,7 +204,7 @@ const Header: React.FC = () => {
                   >
                     {cat.name}
                   </Link>
-                  {/* Simplificado para móvil: solo categorías principales */}
+                  {/* Simplificado para mvil: solo categoras principales */}
                 </div>
               ))}
 

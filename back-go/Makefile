@@ -8,13 +8,13 @@ CMD_DIR=cmd/server
 GO=go
 BUILD_FLAGS=-o
 
-# Obtener lista de carpetas en plugins_src para detectar plugins automáticamente
+# Obtener lista de carpetas en plugins_src para detectar plugins automticamente
 PLUGINS=$(shell find $(PLUGINS_SRC_DIR) -maxdepth 1 -mindepth 1 -type d)
 
 .PHONY: all clean main plugins directories
 
 all: directories main plugins
-	@echo "✨ ¡Backend y Plugins compilados correctamente en $(BIN_DIR)/!"
+	@echo " Backend y Plugins compilados correctamente en $(BIN_DIR)/!"
 
 # Crear estructura de carpetas necesaria
 directories:
@@ -23,20 +23,20 @@ directories:
 
 # Compilar binario principal (desde cmd/server)
 main:
-	@echo "🏗️  Compilando binario principal (DN Backend)..."
-	@$(GO) build $(BUILD_FLAGS) $(BIN_DIR)/dn-backend ./$(CMD_DIR)
+	@echo "  Compilando binario principal (DN AGENT)..."
+	@$(GO) build $(BUILD_FLAGS) $(BIN_DIR)/agent ./$(CMD_DIR)
 
-# Bucle para compilar todos los plugins dinámicos detectados
+# Bucle para compilar todos los plugins dinmicos detectados
 plugins:
 	@for dir in $(PLUGINS); do \
 		name=$$(basename $$dir); \
-		echo "🔌 Compilando plugin: $$name..."; \
+		echo " Compilando plugin: $$name..."; \
 		$(GO) build -buildmode=plugin $(BUILD_FLAGS) $(PLUGINS_BIN_DIR)/$$name.so $$dir/main.go; \
 	done
 
 # Limpieza de archivos generados
 clean:
-	@echo "🧹 Limpiando binarios anteriores..."
+	@echo " Limpiando binarios anteriores..."
 	@rm -rf $(BIN_DIR)
 
 # Ayuda
@@ -44,5 +44,5 @@ help:
 	@echo "Uso:"
 	@echo "  make all      - Compila todo (Backend y Plugins)"
 	@echo "  make main     - Compila solo el binario principal"
-	@echo "  make plugins  - Compila solo los plugins dinámicos"
+	@echo "  make plugins  - Compila solo los plugins dinmicos"
 	@echo "  make clean    - Borra la carpeta bin/"

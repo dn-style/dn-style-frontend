@@ -17,7 +17,7 @@ RUN rm -rf /usr/share/nginx/html/*
 
 # Copy build assets from build stage
 COPY --from=build /app/dist /usr/share/nginx/html
-# También los guardamos en una carpeta de backup para poder refrescar volúmenes persistentes
+# Tambin los guardamos en una carpeta de backup para poder refrescar volmenes persistentes
 COPY --from=build /app/dist /app/build_backup
 
 # Remove ANY existing config files to avoid conflicts

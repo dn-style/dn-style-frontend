@@ -8,10 +8,11 @@ import (
 	"time"
 
 	"dn-backend-go/internal/config"
+	"dn-backend-go/internal/control"
 	"dn-backend-go/internal/handlers"
 	"dn-backend-go/internal/plugins"
+	"dn-backend-go/internal/util"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -57,9 +58,11 @@ func main() {
 	}
 
 	// 3. HTTP Client (Resty)
-	config.HttpClient = resty.New().
-		SetBaseURL("http://localhost:8086"). // Docker WP
-		SetTimeout(10 * time.Second)
+	wpURL := os.Getenv("WC_WP_URL")
+	if wpURL == "" {
+		wpURL = "http://localhost:8086" // Docker WP Default
+	}
+	config.InitHttpClient(wpURL)
 
 	// 4. Socket.io
 	config.SocketServer = socketio.NewServer(nil)
@@ -70,7 +73,7 @@ func main() {
 	})
 	config.SocketServer.OnEvent("/", "join_chat", func(s socketio.Conn, msg string) {
 		s.Emit("receive_message", map[string]interface{}{
-			"text":      "¡Hola! ¿Cómo podemos ayudarte?",
+			"text":      "Hola! Cmo podemos ayudarte?",
 			"sender":    "agent",
 			"timestamp": time.Now(),
 		})
@@ -78,8 +81,10 @@ func main() {
 	go config.SocketServer.Serve()
 	defer config.SocketServer.Close()
 
-	// 5. Plugins
+	// 5. Plugins, Workers & Control Plane
 	plugins.LoadDynamicPlugins()
+	util.StartWorker()
+	control.ConnectToControlPlane()
 
 	// 6. Fiber App
 	app := fiber.New(fiber.Config{
@@ -88,7 +93,7 @@ func main() {
 
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://dnshop.com.ar, http://dnshop.com.ar, https://www.dnshop.com.ar, http://10.10.0.3:3001, http://localhost:3000, http://localhost:3001",
+		AllowOrigins:     "http://localhost:5173, https://dnshop.com.ar, http://dnshop.com.ar, https://www.dnshop.com.ar, http://10.10.0.3:3001, http://localhost:3000, http://localhost:3001",
 		AllowCredentials: true,
 		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Content-Type, Authorization, X-Requested-With",

@@ -100,7 +100,7 @@ export const Container: UserComponent<ContainerProps> = ({
       {isDropTarget && (
         <div className="absolute inset-0 z-50 bg-green-50/80 border-2 border-green-500 border-dashed flex items-center justify-center pointer-events-none">
            <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-widest animate-pulse">
-             Soltar Aquí
+             Soltar Aqu
            </span>
         </div>
       )}
@@ -276,7 +276,7 @@ export const Button: UserComponent<ButtonProps> = ({
 Button.craft = {
   displayName: 'Button',
   props: {
-    text: 'Click Aquí',
+    text: 'Click Aqu',
     backgroundColor: '#111827',
     color: '#ffffff',
     paddingX: 24,
@@ -526,7 +526,7 @@ export const Grid: UserComponent<GridProps> = ({
       {isDropTarget && (
         <div className="absolute inset-0 z-50 bg-green-50/80 border-2 border-green-500 border-dashed flex items-center justify-center pointer-events-none">
            <span className="bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm uppercase tracking-widest animate-pulse">
-             Soltar Aquí
+             Soltar Aqu
            </span>
         </div>
       )}
@@ -691,8 +691,8 @@ export const HeroBlock: UserComponent<HeroBlockProps> = ({ title, subtitle, butt
 HeroBlock.craft = {
   displayName: 'HeroBlock',
   props: {
-    title: 'Nueva Colección 2026',
-    subtitle: 'Descubre lo último en tecnología y diseño premium para tu estilo de vida.',
+    title: 'Nueva Coleccin 2026',
+    subtitle: 'Descubre lo ltimo en tecnologa y diseo premium para tu estilo de vida.',
     buttonText: 'Explorar Tienda',
     backgroundColor: '#ffffff'
   }

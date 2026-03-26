@@ -48,7 +48,7 @@ func HandleGenericWPProxy(c *fiber.Ctx) error {
 		Get(targetUrl)
 
 	if err != nil {
-		fmt.Printf("[Bridge] ❌ Error: %v\n", err)
+		fmt.Printf("[Bridge]  Error: %v\n", err)
 		return c.Status(500).JSON(fiber.Map{"error": "Error forwarding request to WordPress"})
 	}
 

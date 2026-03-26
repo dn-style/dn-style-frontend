@@ -36,9 +36,9 @@ const SearchPage = () => {
     <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8 text-gray-900">
       <div className="max-w-7xl mx-auto">
         
-        {/* Header de Búsqueda */}
+        {/* Header de Bsqueda */}
         <div className="mb-12 border-b border-gray-100 pb-12">
-          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">Resultados de búsqueda</p>
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">Resultados de bsqueda</p>
           <div className="flex items-center gap-4">
             <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tight italic">
               "{query}"
@@ -59,7 +59,7 @@ const SearchPage = () => {
           <div className="text-center py-24">
             <Search size={64} className="mx-auto text-gray-100 mb-6" />
             <h2 className="text-2xl font-bold mb-4">No encontramos lo que buscas</h2>
-            <p className="text-gray-500 mb-8">Intenta con otros términos o explora nuestras categorías.</p>
+            <p className="text-gray-500 mb-8">Intenta con otros trminos o explora nuestras categoras.</p>
             <Link to="/" className="inline-flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl">
               Volver al Inicio <ArrowRight size={16} />
             </Link>

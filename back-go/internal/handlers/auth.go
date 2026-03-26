@@ -39,7 +39,7 @@ func HandleLogin(c *fiber.Ctx) error {
 	}
 	_ = json.Unmarshal(resp.Body(), &tokenData)
 
-	// Iniciar sesión también en WC para obtener billing info
+	// Iniciar sesin tambin en WC para obtener billing info
 	respProf, _ := config.HttpClient.R().
 		SetHeader("Authorization", "Basic "+auth).
 		SetQueryParam("email", tokenData.UserEmail).

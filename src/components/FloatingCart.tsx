@@ -7,7 +7,7 @@ const FloatingCart: React.FC = () => {
   const itemsCount = useCartStore((state) => state.itemsCount());
   const location = useLocation();
 
-  // No mostrar el botón si estamos en el carrito o en el checkout
+  // No mostrar el botn si estamos en el carrito o en el checkout
   const hidePaths = ["/cart", "/checkout"];
   if (hidePaths.includes(location.pathname) || itemsCount === 0) {
     return null;
@@ -26,7 +26,7 @@ const FloatingCart: React.FC = () => {
           {itemsCount}
         </span>
 
-        {/* Efecto de pulso si hay pocos items para llamar la atención */}
+        {/* Efecto de pulso si hay pocos items para llamar la atencin */}
         <span className="absolute inset-0 rounded-full bg-blue-600 animate-ping opacity-20 -z-10"></span>
       </Link>
     </div>

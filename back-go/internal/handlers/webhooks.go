@@ -2,14 +2,13 @@ package handlers
 
 import (
 	"fmt"
-	"strings"
 
 	"dn-backend-go/internal/util"
 
 	"github.com/gofiber/fiber/v2"
 )
 
-// HandleWCWebhook handles notifications from WooCommerce (Cache invalidation & Emails)
+// HandleWCWebhook handles notifications from WooCommerce (Async via Global Worker)
 func HandleWCWebhook(c *fiber.Ctx) error {
 	var payload map[string]interface{}
 	if err := c.BodyParser(&payload); err != nil {
@@ -17,18 +16,17 @@ func HandleWCWebhook(c *fiber.Ctx) error {
 	}
 
 	topic := c.Get("X-Wc-Webhook-Topic")
-	id := fmt.Sprintf("%v", payload["id"])
 
-	fmt.Printf("[WC Webhook] Topic: %s (ID: %s)\n", topic, id)
-
-	// 1. Invalidation de Cache
-	if strings.Contains(topic, "product") {
-		util.FlushCacheByPattern("products:*")
-		util.FlushCacheByPattern("product:" + id)
-		util.FlushCacheByPattern("variations:" + id)
-	} else if strings.Contains(topic, "category") {
-		util.FlushCacheByPattern("categories:*")
+	// Enviar a la cola de trabajo GLOBAL
+	util.TaskQueue <- util.Task{
+		Type: "wc_webhook",
+		Payload: map[string]interface{}{
+			"topic": topic,
+			"id":    payload["id"],
+		},
 	}
+
+	fmt.Printf("[Webhook] Event queued: %s\n", topic)
 
 	return c.SendStatus(200)
 }

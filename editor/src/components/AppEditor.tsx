@@ -131,7 +131,7 @@ export const AppEditor = ({ onOpenBlockEditor, onOpenConfig }: AppEditorProps) =
                       backgroundColor="#f3f4f6"
                     />
                     <Element is={Container} padding={40} canvas>
-                      <Text text="Arrastra más contenido aquí..." fontSize={14} color="#9ca3af" textAlign="center" />
+                      <Text text="Arrastra ms contenido aqu..." fontSize={14} color="#9ca3af" textAlign="center" />
                     </Element>
                   </Element>
                 </Frame>

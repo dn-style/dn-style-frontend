@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== INICIANDO SEEDER MASIVO (1000 ARTÍCULOS) ==="
+echo "=== INICIANDO SEEDER MASIVO (1000 ARTCULOS) ==="
 
 docker-compose run --rm wp-cli wp --allow-root eval '
   ini_set("memory_limit", "512M");
@@ -29,8 +29,8 @@ docker-compose run --rm wp-cli wp --allow-root eval '
       return $term["term_id"];
   }
 
-  // --- 2. CONFIGURACIÓN DE IMÁGENES BASE ---
-  echo "📥 Verificando/Descargando banco de imágenes base...\n";
+  // --- 2. CONFIGURACIN DE IMGENES BASE ---
+  echo " Verificando/Descargando banco de imgenes base...\n";
   $base_images = [
       "tech" => [
           download_img("https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=500"),
@@ -42,10 +42,10 @@ docker-compose run --rm wp-cli wp --allow-root eval '
       ]
   ];
 
-  // --- 3. CATEGORÍAS Y SUBCATEGORÍAS ---
-  echo "🗂️ Creando estructura de categorías...\n";
+  // --- 3. CATEGORAS Y SUBCATEGORAS ---
+  echo " Creando estructura de categoras...\n";
   
-  $elec_id = safe_insert_cat("Electrónica", "electronica");
+  $elec_id = safe_insert_cat("Electrnica", "electronica");
   $cats = [
       "celulares" => safe_insert_cat("Celulares", "celulares", $elec_id),
       "laptops"   => safe_insert_cat("Laptops", "laptops", $elec_id),
@@ -61,14 +61,14 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   $all_cat_ids = array_values($cats);
 
   // --- 4. GENERADOR MASIVO ---
-  echo "🚀 Iniciando generación masiva de 1000 productos...\n";
+  echo " Iniciando generacin masiva de 1000 productos...\n";
   
   $adjectives = ["Ultra", "Pro", "Max", "Lite", "Neo", "X", "Prime", "Elite", "Core", "Air"];
   $nouns = ["Phone", "Book", "Pad", "Pod", "Sense", "Vision", "Note", "Tab", "Scent", "Essence"];
   
   global $wpdb;
-  // Limpiar productos previos del seeder masivo para evitar saturación en re-ejecución
-  // Comentado para permitir acumulación si se desea, o descomentar para limpieza:
+  // Limpiar productos previos del seeder masivo para evitar saturacin en re-ejecucin
+  // Comentado para permitir acumulacin si se desea, o descomentar para limpieza:
   // $wpdb->query("DELETE FROM {$wpdb->prefix}posts WHERE post_type = \"product\"");
 
   for ($i = 1; $i <= 1000; $i++) {
@@ -88,8 +88,8 @@ docker-compose run --rm wp-cli wp --allow-root eval '
       $product->set_status("publish");
       $product->save();
 
-      if ($i % 100 == 0) echo "✅ Progreso: $i / 1000 productos creados.\n";
+      if ($i % 100 == 0) echo " Progreso: $i / 1000 productos creados.\n";
   }
 
-  echo "\n🎉 PROCESO TERMINADO: 1000 Productos generados.\n";
+  echo "\n PROCESO TERMINADO: 1000 Productos generados.\n";
 '

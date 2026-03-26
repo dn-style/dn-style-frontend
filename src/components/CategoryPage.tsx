@@ -41,7 +41,7 @@ const CategoryPage: React.FC = () => {
 
   const currentCategory = slug ? categories.find((c) => c.slug === slug) : undefined;
   
-  // Buscar la categoría raíz (parent === 0)
+  // Buscar la categora raz (parent === 0)
   const findRootCategory = (cat: any): any => {
     if (!cat || cat.parent === 0) return cat;
     const parent = categories.find(c => c.id === cat.parent);
@@ -63,7 +63,7 @@ const CategoryPage: React.FC = () => {
       } else {
         setSelectedSubCat(null);
       }
-      // Resetear filtros de atributos al cambiar de categoría
+      // Resetear filtros de atributos al cambiar de categora
       setSelectedAttributes({});
     }
   }, [slug, categories, currentCategory]);
@@ -75,7 +75,7 @@ const CategoryPage: React.FC = () => {
 
   const apiUrl = import.meta.env.VITE_API_URL || "";
 
-  // --- FETCH DE PRODUCTOS CON CACHÉ (React Query) ---
+  // --- FETCH DE PRODUCTOS CON CACH (React Query) ---
   const fetchProducts = async ({ pageParam = 1 }) => {
     const categoryParam = selectedSubCat || mainCategoryId;
     if (!categoryParam) return { products: [], nextPage: null };
@@ -180,7 +180,7 @@ const CategoryPage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 py-8 text-gray-900">
       <SEO 
         title={currentCategory?.name}
-        description={`Explora nuestra colección de ${currentCategory?.name}. Los mejores productos con envío a todo el país.`}
+        description={`Explora nuestra coleccin de ${currentCategory?.name}. Los mejores productos con envo a todo el pas.`}
       />
       <div className="flex flex-col md:flex-row gap-8">
         
@@ -197,7 +197,7 @@ const CategoryPage: React.FC = () => {
           </div>
 
           <div className="mb-8">
-            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Categorías</h3>
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Categoras</h3>
             <div className="flex flex-col gap-2">
               <button onClick={() => selectCategory(null)} className={`text-left px-4 py-2 rounded-xl text-sm font-bold transition-all ${selectedSubCat === null ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-gray-50 text-gray-600 hover:bg-gray-100"}`}>
                 Todo en {mainCategory?.name}
@@ -276,7 +276,7 @@ const CategoryPage: React.FC = () => {
         </main>
       </div>
       
-      {/* Overlay para móvil */}
+      {/* Overlay para mvil */}
       {showSidebar && <div className="fixed inset-0 bg-black/50 z-[55] md:hidden" onClick={() => setShowSidebar(false)}></div>}
     </div>
   );

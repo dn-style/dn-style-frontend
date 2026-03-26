@@ -1,5 +1,5 @@
 /**
- * Utilidad para el envío de eventos a Google Analytics (GA4)
+ * Utilidad para el envo de eventos a Google Analytics (GA4)
  */
 
 declare global {
@@ -26,13 +26,13 @@ export const trackEvent = (eventName: string, params: Record<string, any> = {}) 
   }
 };
 
-// Función auxiliar para asegurar que el precio sea ARS para Analytics
+// Funcin auxiliar para asegurar que el precio sea ARS para Analytics
 const getArsPrice = (price: string | number, categories: any[] = [], rate: number | null): number => {
   const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
-  // Si ya es un iPhone o categoría en dólares (y tenemos el rate), convertimos
-  // Nota: El cartStore ya guarda algunos precios convertidos, pero aquí aseguramos consistencia.
+  // Si ya es un iPhone o categora en dlares (y tenemos el rate), convertimos
+  // Nota: El cartStore ya guarda algunos precios convertidos, pero aqu aseguramos consistencia.
   const isUsd = categories.some(c => c.slug === 'iphone' || c.slug === 'apple');
-  if (isUsd && rate && numericPrice < 10000) { // < 10000 es un heurístico para detectar USD
+  if (isUsd && rate && numericPrice < 10000) { // < 10000 es un heurstico para detectar USD
     return numericPrice * rate;
   }
   return numericPrice;
@@ -67,7 +67,7 @@ export const trackAddToCart = (product: any, quantity: number = 1, rate: number 
 };
 
 export const trackBeginCheckout = (items: any[], total: number, rate: number | null = null) => {
-  // Aquí asumimos que el total ya viene en la moneda que el usuario ve, 
+  // Aqu asumimos que el total ya viene en la moneda que el usuario ve, 
   // pero forzamos que Google lo registre como ARS.
   trackEvent('begin_checkout', {
     currency: 'ARS',

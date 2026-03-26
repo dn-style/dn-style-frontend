@@ -42,10 +42,10 @@ const CheckoutPage = () => {
   // Formulario react-hook-form
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CustomerAddress>();
 
-  // Efecto para detectar si hay dirección guardada y usarla por defecto
+  // Efecto para detectar si hay direccin guardada y usarla por defecto
   useEffect(() => {
     if (user) {
-      // Pre-poblar el formulario con datos del perfil o de facturación previa
+      // Pre-poblar el formulario con datos del perfil o de facturacin previa
       const defaultData: Partial<CustomerAddress> = {
         first_name: user.billing?.first_name || user.first_name || '',
         last_name: user.billing?.last_name || user.last_name || '',
@@ -86,19 +86,19 @@ const CheckoutPage = () => {
   const onSubmit = async (formData: CustomerAddress) => {
     setLoading(true);
 
-    // Determinar qué datos usar: los guardados o los del formulario
+    // Determinar qu datos usar: los guardados o los del formulario
     let finalBillingData: CustomerAddress;
 
     // Si useSavedAddress es true, intentamos usar los del perfil, 
-    // pero si el formulario fue editado o se pre-rellenó por reset(), 
-    // los datos ya están en formData si se usa handleSubmit.
+    // pero si el formulario fue editado o se pre-rellen por reset(), 
+    // los datos ya estn en formData si se usa handleSubmit.
     
     finalBillingData = {
       ...formData,
       country: formData.country || 'AR',
     };
 
-    // Preparar metadatos de conversión para la nota del pedido
+    // Preparar metadatos de conversin para la nota del pedido
     const { rate: currentRate } = useConfigStore.getState();
     const hasIphoneItems = items.some(i => isIphoneCategory(i.categories || []));
     
@@ -115,7 +115,7 @@ const CheckoutPage = () => {
       set_paid: paymentMethod === 'woo-mercado-pago-basic', 
       billing: finalBillingData,
       shipping: finalBillingData,
-      shipping_lines: selectedShipping ? [{ method_id: selectedShipping, method_title: shippingMethods.find(s => s.id === selectedShipping)?.title || 'Envío' }] : [],
+      shipping_lines: selectedShipping ? [{ method_id: selectedShipping, method_title: shippingMethods.find(s => s.id === selectedShipping)?.title || 'Envo' }] : [],
       line_items: items.map(item => {
         return {
           product_id: Number(item.id),
@@ -136,7 +136,7 @@ const CheckoutPage = () => {
       orderData.customer_id = Number(user.id);
     }
 
-    console.log('[Checkout] 🚀 Enviando orden:', JSON.stringify(orderData, null, 2));
+    console.log('[Checkout]  Enviando orden:', JSON.stringify(orderData, null, 2));
 
     const apiUrl = import.meta.env.VITE_API_URL || "";
     try {
@@ -154,13 +154,13 @@ const CheckoutPage = () => {
       }
       
       if (paymentMethod === 'bacs') {
-        toast.success('¡Pedido recibido! Por favor envía tu comprobante.');
+        toast.success('Pedido recibido! Por favor enva tu comprobante.');
       } else {
-        toast.success('¡Pago procesado con éxito!');
+        toast.success('Pago procesado con xito!');
       }
 
-      // --- ACTUALIZACIÓN DE PERFIL ---
-      // Si el usuario está logueado, actualizamos sus datos en WordPress para futuras compras
+      // --- ACTUALIZACIN DE PERFIL ---
+      // Si el usuario est logueado, actualizamos sus datos en WordPress para futuras compras
       if (user?.id) {
         try {
           const updatePayload = {
@@ -190,10 +190,10 @@ const CheckoutPage = () => {
             
             // Actualizamos el estado local global
             updateUser(normalizedUser);
-            console.log('[Checkout] ✅ Datos de perfil actualizados en WordPress y LocalStore');
+            console.log('[Checkout]  Datos de perfil actualizados en WordPress y LocalStore');
           }
         } catch (updateErr) {
-          console.error('[Checkout] ⚠️ Error al actualizar perfil (pero el pedido fue exitoso):', updateErr);
+          console.error('[Checkout]  Error al actualizar perfil (pero el pedido fue exitoso):', updateErr);
         }
       }
       
@@ -217,25 +217,25 @@ const CheckoutPage = () => {
       <h1 className="text-3xl font-bold mb-8 text-center uppercase tracking-tight">Finalizar Compra</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Columna Izquierda: Datos de Envío */}
+        {/* Columna Izquierda: Datos de Envo */}
         <div>
            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
              <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-sans">1</span>
-               Detalles de Envío
+               Detalles de Envo
              </h2>
 
-             {/* Opción de usar dirección guardada */}
+             {/* Opcin de usar direccin guardada */}
              <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
                <div className="flex items-center justify-between mb-2">
                  <div className="flex items-center gap-3">
                    <div className="p-2 bg-white rounded-full text-blue-600 shadow-sm"><UserIcon size={20} /></div>
                    <div>
                      <p className="font-bold text-sm text-gray-900">
-                       {user?.billing?.address_1 ? "Mis Datos Guardados" : "Enviar a mi dirección"}
+                       {user?.billing?.address_1 ? "Mis Datos Guardados" : "Enviar a mi direccin"}
                      </p>
                      <p className="text-xs text-gray-500">
-                       {user?.billing?.address_1 ? "Usar mi perfil para el envío" : "Completa el formulario para tu primer envío"}
+                       {user?.billing?.address_1 ? "Usar mi perfil para el envo" : "Completa el formulario para tu primer envo"}
                      </p>
                    </div>
                  </div>
@@ -257,12 +257,12 @@ const CheckoutPage = () => {
                    <p className="font-bold text-gray-900">{user.billing.first_name} {user.billing.last_name}</p>
                    <p>{user.billing.address_1}</p>
                    <p>{user.billing.city}, {user.billing.state} ({user.billing.postcode})</p>
-                   <p>{user.billing.email} • {user.billing.phone}</p>
+                   <p>{user.billing.email}  {user.billing.phone}</p>
                  </div>
                )}
              </div>
              
-             {/* Formulario (visible si NO se usa la dirección guardada o no hay datos) */}
+             {/* Formulario (visible si NO se usa la direccin guardada o no hay datos) */}
              <div className={`transition-all duration-500 ease-in-out overflow-hidden ${useSavedAddress ? 'max-h-0' : 'max-h-[1000px]'}`}>
                <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -273,7 +273,7 @@ const CheckoutPage = () => {
                     </div>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Apellido</label>
-                      <input {...register("last_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Pérez" />
+                      <input {...register("last_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Prez" />
                       {errors.last_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                   </div>
@@ -282,17 +282,17 @@ const CheckoutPage = () => {
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
                       <input {...register("email", { required: !useSavedAddress, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="juan@ejemplo.com" />
-                      {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVÁLIDO</span>}
+                      {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVLIDO</span>}
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Telfono</label>
                       <input {...register("phone", { required: !useSavedAddress })} type="tel" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="11 1234 5678" />
                       {errors.phone && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                   </div>
                   
                    <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección</label>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Direccin</label>
                     <input {...register("address_1", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Calle Falsa 123" />
                      {errors.address_1 && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                   </div>
@@ -304,7 +304,7 @@ const CheckoutPage = () => {
                        {errors.city && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Código Postal</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cdigo Postal</label>
                       <input {...register("postcode", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
                        {errors.postcode && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                     </div>
@@ -336,7 +336,7 @@ const CheckoutPage = () => {
               </ul>
               
               <div className="mb-8">
-                <h3 className="font-bold mb-4 text-gray-900 uppercase text-xs tracking-widest">Método de Envío</h3>
+                <h3 className="font-bold mb-4 text-gray-900 uppercase text-xs tracking-widest">Mtodo de Envo</h3>
                 <div className="space-y-3">
                   {shippingMethods.map(method => (
                     <button 
@@ -355,7 +355,7 @@ const CheckoutPage = () => {
               <div className="border-t border-gray-200 pt-4 mb-8 space-y-2">
                 {coupon && (
                    <div className="flex justify-between text-sm text-green-600 font-bold uppercase tracking-widest">
-                      <span>CUPÓN: {coupon.code}</span>
+                      <span>CUPN: {coupon.code}</span>
                       <span>-{coupon.type === 'percent' ? `${coupon.amount}%` : `$${coupon.amount}`}</span>
                    </div>
                 )}
@@ -366,7 +366,7 @@ const CheckoutPage = () => {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-bold mb-3 text-gray-900 uppercase text-xs tracking-widest">Método de Pago</h3>
+                <h3 className="font-bold mb-3 text-gray-900 uppercase text-xs tracking-widest">Mtodo de Pago</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                   {gateways.map(gateway => (
                     <button 
@@ -393,7 +393,7 @@ const CheckoutPage = () => {
                     
                     <div className="mt-4 pt-4 border-t border-blue-200">
                       <p className="text-xs font-medium text-blue-700">
-                        * Podrás subir tu comprobante de pago luego desde la sección{" "}
+                        * Podrs subir tu comprobante de pago luego desde la seccin{" "}
                         <Link to="/account" className="font-bold underline hover:text-blue-900 transition-colors">
                           Mis Pedidos
                         </Link>{" "}

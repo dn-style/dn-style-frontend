@@ -12,10 +12,10 @@ interface SEOProps {
 
 const SEO: React.FC<SEOProps> = ({ 
   title, 
-  description = "DN shop Store - Lo mejor en fragancias, electrónica y tecnología en Brandsen y todo el país.", 
+  description = "DN shop Store - Lo mejor en fragancias, electrnica y tecnologa en Brandsen y todo el pas.", 
   canonical, 
   ogType = "website",
-  ogImage = "https://dnshop.com.ar/og-image.jpg", // Asegúrate de subir esta imagen
+  ogImage = "https://dnshop.com.ar/og-image.jpg", // Asegrate de subir esta imagen
   structuredData 
 }) => {
   const siteTitle = "DN shop STORE";
@@ -24,7 +24,7 @@ const SEO: React.FC<SEOProps> = ({
 
   return (
     <Helmet>
-      {/* Estándar */}
+      {/* Estndar */}
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <link rel="canonical" href={currentUrl} />

@@ -2,20 +2,20 @@ import React from "react";
 
 const faqs = [
   {
-    question: "¿Cuánto tardan los envíos?",
-    answer: "Los envíos en CABA y GBA se realizan en un plazo de 24 a 48 horas hábiles. Para el resto del país, el tiempo estimado es de 3 a 7 días hábiles dependiendo de la localidad."
+    question: "Cunto tardan los envos?",
+    answer: "Los envos en CABA y GBA se realizan en un plazo de 24 a 48 horas hbiles. Para el resto del pas, el tiempo estimado es de 3 a 7 das hbiles dependiendo de la localidad."
   },
   {
-    question: "¿Cuáles son los métodos de pago?",
-    answer: "Aceptamos todas las tarjetas de crédito y débito a través de nuestra pasarela segura, así como transferencias bancarias directas."
+    question: "Cules son los mtodos de pago?",
+    answer: "Aceptamos todas las tarjetas de crdito y dbito a travs de nuestra pasarela segura, as como transferencias bancarias directas."
   },
   {
-    question: "¿Los productos son originales?",
-    answer: "Absolutamente. Todos nuestros perfumes y productos electrónicos son 100% originales, importados legalmente y cuentan con su respectiva garantía de fábrica."
+    question: "Los productos son originales?",
+    answer: "Absolutamente. Todos nuestros perfumes y productos electrnicos son 100% originales, importados legalmente y cuentan con su respectiva garanta de fbrica."
   },
   {
-    question: "¿Cómo realizo un cambio o devolución?",
-    answer: "Tienes 30 días para realizar cambios de productos electrónicos (sellados) y perfumes (sin abrir). Contáctanos por WhatsApp para iniciar el proceso."
+    question: "Cmo realizo un cambio o devolucin?",
+    answer: "Tienes 30 das para realizar cambios de productos electrnicos (sellados) y perfumes (sin abrir). Contctanos por WhatsApp para iniciar el proceso."
   }
 ];
 

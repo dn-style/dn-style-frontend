@@ -82,7 +82,7 @@ export const Toolbox = ({ showCustomBlocks = false, onCreateBlock }: ToolboxProp
             onClick={() => setActiveTab('basics')}
             className={`flex-1 py-2 px-1 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all whitespace-nowrap ${activeTab === 'basics' ? 'bg-gray-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
         >
-            Básicos
+            Bsicos
         </button>
         <button
             onClick={() => setActiveTab('sections')}
@@ -133,7 +133,7 @@ export const Toolbox = ({ showCustomBlocks = false, onCreateBlock }: ToolboxProp
                     <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 pl-1">Elementos</h3>
                     <div className="grid grid-cols-2 gap-3">
                         <BlockItem icon={Type} label="Texto" component={<Text text="Nuevo Texto" />} />
-                        <BlockItem icon={Square} label="Botón" component={<Button />} />
+                        <BlockItem icon={Square} label="Botn" component={<Button />} />
                         <BlockItem icon={ImageIcon} label="Imagen" component={<Image />} />
                         <BlockItem icon={VideoIcon} label="Video" component={<Video />} />
                         <BlockItem icon={Minus} label="Separador" component={<Divider />} />
@@ -146,7 +146,7 @@ export const Toolbox = ({ showCustomBlocks = false, onCreateBlock }: ToolboxProp
         
         {activeTab === 'sections' && (
              <div className="space-y-2">
-                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 pl-1">Pre-diseñados</h3>
+                <h3 className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-3 pl-1">Pre-diseados</h3>
                 <SectionItem icon={LayoutTemplate} label="Hero Section" component={<HeroBlock />} />
                 <SectionItem icon={Grid} label="Grilla Productos" component={<ProductGridBlock />} />
                 <SectionItem icon={Star} label="Features" component={<FeaturesBlock />} />
@@ -172,7 +172,7 @@ export const Toolbox = ({ showCustomBlocks = false, onCreateBlock }: ToolboxProp
                         />
                     ))}
                     {blocks.length === 0 && (
-                        <p className="text-center text-xs text-gray-400 mt-4">No tienes bloques guardados aún.</p>
+                        <p className="text-center text-xs text-gray-400 mt-4">No tienes bloques guardados an.</p>
                     )}
                 </div>
             </div>
@@ -180,7 +180,7 @@ export const Toolbox = ({ showCustomBlocks = false, onCreateBlock }: ToolboxProp
       </div>
       
       <div className="mt-auto p-4 border-t border-gray-200 bg-white shrink-0">
-         <p className="text-[10px] text-gray-400 text-center font-medium">Arrastra al lienzo para añadir</p>
+         <p className="text-[10px] text-gray-400 text-center font-medium">Arrastra al lienzo para aadir</p>
       </div>
     </div>
   );

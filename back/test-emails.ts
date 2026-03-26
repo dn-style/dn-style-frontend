@@ -27,6 +27,6 @@ templates.forEach(name => {
     const template = hbs.compile(source);
     const html = template(mockData);
     fs.writeFileSync(path.join(previewDir, `${name}-preview.html`), html);
-    console.log(`✅ Previsualización generada: back/preview/${name}-preview.html`);
+    console.log(` Previsualizacin generada: back/preview/${name}-preview.html`);
   }
 });

@@ -16,7 +16,7 @@ func (p *MercadoPagoPlugin) Matches(body map[string]interface{}) bool {
 }
 
 func (p *MercadoPagoPlugin) Execute(orderID interface{}, total float64, body map[string]interface{}) (map[string]interface{}, error) {
-	fmt.Printf("[Mercado Pago .SO] 💳 Procesando Orden #%v\n", orderID)
+	fmt.Printf("[Mercado Pago .SO]  Procesando Orden #%v\n", orderID)
 
 	initPoint, err := createMPPreference(orderID, total)
 	if err != nil {

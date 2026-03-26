@@ -13,5 +13,5 @@ RUN npm run build
 
 EXPOSE 4000
 
-# En producción usamos el código compilado
+# En produccin usamos el cdigo compilado
 CMD ["npm", "run", "start"]

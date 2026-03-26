@@ -5,7 +5,7 @@ import { useContextMenuStore } from '../store/editorStore';
 import { useActionStore } from '../store/actionStore';
 import { useDataSourceStore } from '../store/dataSourceStore';
 
-// Componente para un nodo individual del árbol
+// Componente para un nodo individual del rbol
 const LayerNode = ({ nodeId, depth }: { nodeId: string, depth: number }) => {
   const { node, childrenIds, selected, isHovered, connectors, actions } = useEditor((state: any) => {
     const node = state.nodes[nodeId];
@@ -75,7 +75,7 @@ const LayerNode = ({ nodeId, depth }: { nodeId: string, depth: number }) => {
         </div>
 
         <div className="flex-1 truncate text-xs select-none">
-           {nodeId === 'ROOT' ? 'Página' : (node.data.custom.displayName || node.data.name || 'Elemento')} 
+           {nodeId === 'ROOT' ? 'Pgina' : (node.data.custom.displayName || node.data.name || 'Elemento')} 
            {!selected && (
              <span className="text-gray-400 font-normal ml-2 text-[9px] opacity-50 italic">
                {`#${nodeId.substring(0,4)}`}
@@ -151,7 +151,7 @@ export const SettingsPanel = () => {
             className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'logic' ? 'bg-gray-100 text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
         >
             <Zap size={14} />
-            Lógica
+            Lgica
         </button>
       </div>
 
@@ -255,7 +255,7 @@ export const SettingsPanel = () => {
                                         }
                                     }}
                                 >
-                                    <option value="">-- Seleccionar Acción --</option>
+                                    <option value="">-- Seleccionar Accin --</option>
                                     {storeActions.map(a => (
                                         <option key={a.id} value={a.id}>{a.name}</option>
                                     ))}
@@ -281,7 +281,7 @@ export const SettingsPanel = () => {
       ) : (
          selected ? (
             <>
-              {/* Header Fijo Selección */}
+              {/* Header Fijo Seleccin */}
               <div className="p-6 pb-4 border-b border-gray-100 flex items-center justify-between shrink-0">
                 <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Editando</h2>
                 <div className="flex gap-2">
@@ -302,7 +302,7 @@ export const SettingsPanel = () => {
                 {/* CUSTOM SETTINGS COMPONENT */}
                 {selected.settings && (
                     <div className="bg-gray-50 p-4 rounded-2xl border border-blue-100">
-                        <p className="text-[10px] font-black text-blue-600 uppercase mb-4 tracking-widest">Configuración</p>
+                        <p className="text-[10px] font-black text-blue-600 uppercase mb-4 tracking-widest">Configuracin</p>
                         {(() => {
                             const SettingsComponent = selected.settings;
                             return <SettingsComponent />;
@@ -312,7 +312,7 @@ export const SettingsPanel = () => {
 
                 {/* IDENTIFICATION (Custom Name) */}
                 <div className="bg-gray-50 p-4 rounded-2xl">
-                  <label className="block text-[10px] font-black text-blue-600 uppercase mb-3 tracking-widest">Identificación</label>
+                  <label className="block text-[10px] font-black text-blue-600 uppercase mb-3 tracking-widest">Identificacin</label>
                   <input
                     type="text"
                     className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all"
@@ -448,12 +448,12 @@ export const SettingsPanel = () => {
                               value={selected.props[prop] || ''}
                               onChange={(e) => actions.setProp(selected.id, (props: any) => props[prop] = e.target.value)}
                             >
-                              <option value="">Ninguna acción</option>
+                              <option value="">Ninguna accin</option>
                               {storeActions.map(action => (
                                 <option key={action.id} value={action.id}>{action.name}</option>
                               ))}
                             </select>
-                            <p className="text-[8px] text-gray-400 mt-2 font-medium uppercase">Se ejecutará al interactuar con este elemento en producción.</p>
+                            <p className="text-[8px] text-gray-400 mt-2 font-medium uppercase">Se ejecutar al interactuar con este elemento en produccin.</p>
                           </div>
                         );
                     }
