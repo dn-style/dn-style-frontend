@@ -338,8 +338,8 @@ const CheckoutPage = () => {
               </ul>
               
               <div className="mb-8">
-                <h3 className="font-bold mb-4 text-gray-900 uppercase text-xs tracking-widest">Mtodo de Envo</h3>
-                <div className="space-y-3">
+                <h3 className="font-bold mb-4 text-gray-900 uppercase text-xs tracking-widest">Método de Envío</h3>
+                <div className="space-y-3"> 
                   {shippingMethods.map(method => (
                     <button 
                       key={method.id}
