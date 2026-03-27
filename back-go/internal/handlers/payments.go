@@ -23,6 +23,16 @@ func HandleMPWebhook(c *fiber.Ctx) error {
 		return c.Status(200).SendString("OK (No ID)")
 	}
 
+	// Topic filtering logic
+	topic := c.Query("topic")
+	if topic == "" {
+		topic = c.Query("type") // MP notifications usually have 'type' or 'topic' in Query
+	}
+
+	if topic != "" && topic != "payment" {
+		return c.Status(200).SendString(fmt.Sprintf("OK (Topic %s ignored)", topic))
+	}
+
 	fmt.Printf("[Mercado Pago Webhook]  Notification received for ID: %s\n", id)
 
 	token := os.Getenv("MP_ACCESS_TOKEN")
