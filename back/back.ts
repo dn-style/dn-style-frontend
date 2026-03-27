@@ -292,35 +292,36 @@ app.get('/auth/orders', async (req: Request, res: Response) => {
 app.post('/auth/orders', async (req: Request, res: Response) => {
   try {
     const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
-    const fullPayload = req.body;
+    const fullPayload = req.body || {};
 
-    // Extraemos nuestros datos internos para que WooCommerce no se queje de campos desconocidos
-    const { _conversion_data, ...orderPayload } = fullPayload;
+    // 1. Extraer y limpiar payload
+    const _conversion_data = fullPayload._conversion_data;
+    const orderPayload = { ...fullPayload };
+    delete (orderPayload as any)._conversion_data;
 
-    // ASEGURAR DATOS MNIMOS PARA WOOCOMMERCE (Si vienen vacos por algn error del frontend)
-    if (!orderPayload.billing || !orderPayload.billing.first_name || !orderPayload.billing.email) {
-      orderPayload.billing = {
-        first_name: orderPayload.billing?.first_name || 'Cliente',
-        last_name: orderPayload.billing?.last_name || 'DN Style',
-        email: orderPayload.billing?.email || 'ventas@dnshop.com.ar', // Email genrico si no hay uno
-        address_1: orderPayload.billing?.address_1 || 'Calle Falsa 123',
-        city: orderPayload.billing?.city || 'Buenos Aires',
-        state: orderPayload.billing?.state || 'CABA',
-        postcode: orderPayload.billing?.postcode || '1000',
-        country: orderPayload.billing?.country || 'AR',
-        phone: orderPayload.billing?.phone || '1112345678'
-      };
-    }
+    // 2. Normalizar Billing y Shipping (Usar lo que tengamos para ambos)
+    const baseData = orderPayload.billing?.first_name ? orderPayload.billing : (orderPayload.shipping || {});
+    
+    const finalAddress = {
+      first_name: baseData.first_name || 'Cliente',
+      last_name: baseData.last_name || 'DN Style',
+      email: baseData.email || fullPayload.email || 'ventas@dnshop.com.ar',
+      address_1: baseData.address_1 || 'Direccin no especificada',
+      city: baseData.city || 'Buenos Aires',
+      state: baseData.state || 'CABA',
+      postcode: baseData.postcode || '1000',
+      country: baseData.country || 'AR',
+      phone: baseData.phone || '1112345678'
+    };
 
-    // Clonar billing en shipping si shipping est vaco
-    if (!orderPayload.shipping || !orderPayload.shipping.first_name) {
-      orderPayload.shipping = { ...orderPayload.billing };
-    }
+    orderPayload.billing = { ...finalAddress };
+    orderPayload.shipping = { ...finalAddress };
 
-    console.log('[Create Order]  Enviando a WooCommerce:', JSON.stringify(orderPayload, null, 2));
+    console.log(`[Create Order]  Procesando pedido para: ${finalAddress.email}`);
 
     const response = await axios.post('http://wordpress/wp-json/wc/v3/orders', orderPayload, {
-      headers: { 'Authorization': `Basic ${auth}` }
+      headers: { 'Authorization': `Basic ${auth}` },
+      timeout: 15000
     });
 
     console.log('[Create Order]  WooCommerce respondi con Status:', response.status);
