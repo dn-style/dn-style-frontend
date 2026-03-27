@@ -301,7 +301,7 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
 
     // 2. Normalizar Billing y Shipping (Usar lo que tengamos para ambos)
     const baseData = orderPayload.billing?.first_name ? orderPayload.billing : (orderPayload.shipping || {});
-    
+
     const finalAddress = {
       first_name: baseData.first_name || 'Cliente',
       last_name: baseData.last_name || 'DN Style',
@@ -319,10 +319,26 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
 
     console.log(`[Create Order]  Procesando pedido para: ${finalAddress.email}`);
 
-    const response = await axios.post('http://wordpress/wp-json/wc/v3/orders', orderPayload, {
-      headers: { 'Authorization': `Basic ${auth}` },
-      timeout: 15000
-    });
+    let response;
+    try {
+      response = await axios.post('http://wordpress/wp-json/wc/v3/orders', orderPayload, {
+        headers: { 'Authorization': `Basic ${auth}` },
+        timeout: 15000
+      });
+    } catch (err: any) {
+      // Reintento automtico si el ID de cliente es invlido (ej: DB reset o stale data)
+      if (err.response?.data?.code === 'woocommerce_rest_invalid_customer_id') {
+        console.warn(`[Create Order]  ID de cliente invlido (${(orderPayload as any).customer_id}). Reintentando como invitado...`);
+        delete (orderPayload as any).customer_id;
+
+        response = await axios.post('http://wordpress/wp-json/wc/v3/orders', orderPayload, {
+          headers: { 'Authorization': `Basic ${auth}` },
+          timeout: 15000
+        });
+      } else {
+        throw err;
+      }
+    }
 
     console.log('[Create Order]  WooCommerce respondi con Status:', response.status);
 
@@ -333,7 +349,7 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
       // 1. NOTIFICACIN INMEDIATA AL ADMIN (Desde la API para mayor fiabilidad)
       const customerName = `${fullPayload.billing?.first_name || ''} ${fullPayload.billing?.last_name || ''}`.trim() || 'Cliente';
       await sendAdminNotification(
-        `Nuevo Pedido #${orderId}`, 
+        `Nuevo Pedido #${orderId}`,
         `Se ha recibido un nuevo pedido de <b>${customerName}</b> por un total de <b>${response.data.total} ${response.data.currency}</b>.`
       );
 
@@ -425,7 +441,7 @@ app.get('/wc/payment_gateways', async (req: Request, res: Response) => {
       method_title: 'Mercado Pago'
     }
   ];
-  
+
   res.json(gateways);
 });
 
@@ -867,11 +883,11 @@ const sendAdminNotification = async (subject: string, content: string) => {
   try {
     // El destinatario es ADMIN_EMAIL, o EMAIL_SENDER como fallback
     const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_SENDER || process.env.SMTP_USER;
-    
+
     // Si el email parece ser un ID de Brevo, cancelamos para evitar rebotar
     if (!adminEmail || adminEmail.includes('smtp-brevo.com') || !adminEmail.includes('@')) {
-       console.warn('[Email Admin]  No hay una direccin de correo real para el admin. Configura ADMIN_EMAIL.');
-       return;
+      console.warn('[Email Admin]  No hay una direccin de correo real para el admin. Configura ADMIN_EMAIL.');
+      return;
     }
 
     await transporter.sendMail({
@@ -940,7 +956,7 @@ const sendOrderEmail = async (orderData: any, templateName: string, extraData: a
 // --- WEBHOOKS MERCADO PAGO ---
 app.post('/wc/mercado-pago/webhook', async (req: Request, res: Response) => {
   const id = req.query['data.id'] || req.query.id;
-  
+
   if (!id) {
     return res.status(200).send('OK (No ID)');
   }
@@ -959,11 +975,11 @@ app.post('/wc/mercado-pago/webhook', async (req: Request, res: Response) => {
 
       // Update WC Order
       const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
-      await axios.put(`http://wordpress/wp-json/wc/v3/orders/${orderId}`, 
+      await axios.put(`http://wordpress/wp-json/wc/v3/orders/${orderId}`,
         { status: 'processing', set_paid: true },
         { headers: { 'Authorization': `Basic ${auth}` } }
       );
-      
+
       console.log(`[Mercado Pago Webhook]  Order #${orderId} updated to 'processing'`);
     }
 
@@ -1016,16 +1032,16 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
         // SOLO si la nota es para el cliente (customer_note: true) y NO es privada
         if (data && data.customer_note === true) {
           const noteText = (data.note || '').toLowerCase();
-          
+
           // CASO EDGE: Solo enviar si la nota parece un cdigo de seguimiento
           if (noteText.includes('seguimiento') || noteText.includes('tracking') || noteText.includes('guia') || noteText.includes('gua')) {
             console.log(`[Webhook]  Nota de seguimiento detectada para orden #${data.order_id}`);
-            
+
             // Necesitamos los datos de la orden para el email (especialmente el mail del cliente)
             try {
               const orderRes = await api.get(`orders/${data.order_id}`);
               const orderData = orderRes.data;
-              
+
               // Extraer el cdigo de la nota (buscamos algo que parezca un cdigo tras los dos puntos o similar)
               const trackingCode = data.note.split(':').pop().trim();
 

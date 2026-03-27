@@ -70,6 +70,24 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"message": "Error al crear pedido"})
 	}
 
+	// Reintento si el ID de cliente es invlido (stale data en cliente)
+	if resp.StatusCode() == 400 {
+		var errData map[string]interface{}
+		_ = json.Unmarshal(resp.Body(), &errData)
+		if errData["code"] == "woocommerce_rest_invalid_customer_id" {
+			delete(body, "customer_id")
+			resp, err = config.HttpClient.R().
+				SetHeader("Authorization", "Basic "+auth).
+				SetBody(body).
+				Post("/wp-json/wc/v3/orders")
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{"message": "Error al crear pedido"})
+			}
+		} else {
+			return c.Status(400).JSON(errData)
+		}
+	}
+
 	var data map[string]interface{}
 	_ = json.Unmarshal(resp.Body(), &data)
 
@@ -106,7 +124,7 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 			}
 		}
 
-		// 3. MOTOR DE PLUGINS DINMICO (Soporte Interceptores) 
+		// 3. MOTOR DE PLUGINS DINMICO (Soporte Interceptores)
 		totalVal, _ := strconv.ParseFloat(fmt.Sprintf("%v", data["total"]), 64)
 
 		for _, plugin := range plugins.OrderInterceptors {

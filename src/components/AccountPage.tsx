@@ -130,6 +130,9 @@ const AccountPage = () => {
           postcode: data.billing?.postcode || "",
           country: data.billing?.country || "AR"
         });
+      } else if (res.ok && (!data || !data.id)) {
+        console.warn("[Account] Perfil no encontrado en el servidor. Sincronizando sesin...");
+        logout();
       }
     } catch (err) { console.error("[Account] Error fetching profile:", err); } finally { setLoadingProfile(false); }
   };
