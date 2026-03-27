@@ -264,55 +264,55 @@ const CheckoutPage = () => {
                )}
              </div>
              
-             {/* Formulario (visible si NO se usa la direccin guardada o no hay datos) */}
-             <div className={`transition-all duration-500 ease-in-out overflow-hidden ${useSavedAddress ? 'max-h-0' : 'max-h-[1000px]'}`}>
-               <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
-                      <input {...register("first_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Juan" />
-                      {errors.first_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Apellido</label>
-                      <input {...register("last_name", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Prez" />
-                      {errors.last_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
-                      <input {...register("email", { required: !useSavedAddress, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="juan@ejemplo.com" />
-                      {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVLIDO</span>}
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Telfono</label>
-                      <input {...register("phone", { required: !useSavedAddress })} type="tel" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="11 1234 5678" />
-                      {errors.phone && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
-                    </div>
-                  </div>
-                  
-                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Direccin</label>
-                    <input {...register("address_1", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Calle Falsa 123" />
-                     {errors.address_1 && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+              {/* Formulario (visible si NO se usa la direccin guardada o hay errores) */}
+              <div className={`transition-all duration-500 ease-in-out overflow-hidden ${(useSavedAddress && Object.keys(errors).length === 0) ? 'max-h-0' : 'max-h-[2000px]'}`}>
+                <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                   <div className="grid grid-cols-2 gap-4">
                      <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ciudad</label>
-                      <input {...register("city", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
-                       {errors.city && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
-                    </div>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre</label>
+                       <input {...register("first_name", { required: true })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Juan" />
+                       {errors.first_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                     </div>
+                     <div>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Apellido</label>
+                       <input {...register("last_name", { required: true })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Prez" />
+                       {errors.last_name && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                     </div>
+                   </div>
+ 
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                       <input {...register("email", { required: true, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="juan@ejemplo.com" />
+                       {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVLIDO</span>}
+                     </div>
+                     <div>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Telfono</label>
+                       <input {...register("phone", { required: true })} type="tel" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="11 1234 5678" />
+                       {errors.phone && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                     </div>
+                   </div>
+                   
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cdigo Postal</label>
-                      <input {...register("postcode", { required: !useSavedAddress })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
-                       {errors.postcode && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
-                    </div>
-                  </div>
-               </form>
-             </div>
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Direccin</label>
+                     <input {...register("address_1", { required: true })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Calle Falsa 123" />
+                      {errors.address_1 && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                   </div>
+ 
+                   <div className="grid grid-cols-2 gap-4">
+                      <div>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Ciudad</label>
+                       <input {...register("city", { required: true })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
+                        {errors.city && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                     </div>
+                     <div>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cdigo Postal</label>
+                       <input {...register("postcode", { required: true })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
+                        {errors.postcode && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
+                     </div>
+                   </div>
+                </form>
+              </div>
            </div>
         </div>
 
@@ -407,9 +407,8 @@ const CheckoutPage = () => {
               </div>
 
               <button 
-                onClick={useSavedAddress ? handleSubmit(() => onSubmit({} as CustomerAddress)) : undefined}
-                type={useSavedAddress ? 'button' : 'submit'}
-                form={useSavedAddress ? undefined : 'checkout-form'}
+                onClick={handleSubmit(onSubmit)}
+                type="button"
                 disabled={loading}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center"
               >

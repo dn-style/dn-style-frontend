@@ -299,25 +299,11 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
     const orderPayload = { ...fullPayload };
     delete (orderPayload as any)._conversion_data;
 
-    // 2. Normalizar Billing y Shipping (Usar lo que tengamos para ambos)
-    const baseData = orderPayload.billing?.first_name ? orderPayload.billing : (orderPayload.shipping || {});
+    // 2. Confiar en la validacin del frontend. No rellenamos con datos genricos.
+    // Solo forzamos set_paid: false por seguridad para evitar estados de pago prematuros.
+    orderPayload.set_paid = false;
 
-    const finalAddress = {
-      first_name: baseData.first_name || 'Cliente',
-      last_name: baseData.last_name || 'DN Style',
-      email: baseData.email || fullPayload.email || 'ventas@dnshop.com.ar',
-      address_1: baseData.address_1 || 'Direccin no especificada',
-      city: baseData.city || 'Buenos Aires',
-      state: baseData.state || 'CABA',
-      postcode: baseData.postcode || '1000',
-      country: baseData.country || 'AR',
-      phone: baseData.phone || '1112345678'
-    };
-
-    orderPayload.billing = { ...finalAddress };
-    orderPayload.shipping = { ...finalAddress };
-
-    console.log(`[Create Order]  Procesando pedido para: ${finalAddress.email}`);
+    console.log(`[Create Order]  Procesando pedido para: ${orderPayload.billing?.email || 'Guest'}`);
 
     let response;
     try {
@@ -974,17 +960,25 @@ app.post('/wc/mercado-pago/webhook', async (req: Request, res: Response) => {
     const status = result.status;
     const orderId = result.external_reference;
 
-    if (status === 'approved' && orderId) {
-      console.log(`[Mercado Pago Webhook]  Payment approved for Order #${orderId}`);
-
-      // Update WC Order
+    if (orderId) {
       const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
-      await axios.put(`http://wordpress/wp-json/wc/v3/orders/${orderId}`,
-        { status: 'processing', set_paid: true },
-        { headers: { 'Authorization': `Basic ${auth}` } }
-      );
 
-      console.log(`[Mercado Pago Webhook]  Order #${orderId} updated to 'processing'`);
+      if (status === 'approved') {
+        console.log(`[Mercado Pago Webhook]  Payment approved for Order #${orderId}`);
+        await axios.put(`http://wordpress/wp-json/wc/v3/orders/${orderId}`,
+          { status: 'processing', set_paid: true },
+          { headers: { 'Authorization': `Basic ${auth}` } }
+        );
+        console.log(`[Mercado Pago Webhook]  Order #${orderId} updated to 'processing'`);
+      }
+      else if (['cancelled', 'rejected', 'refunded', 'charged_back'].includes(status)) {
+        console.log(`[Mercado Pago Webhook]  Payment ${status} for Order #${orderId}`);
+        await axios.put(`http://wordpress/wp-json/wc/v3/orders/${orderId}`,
+          { status: 'cancelled' },
+          { headers: { 'Authorization': `Basic ${auth}` } }
+        );
+        console.log(`[Mercado Pago Webhook]  Order #${orderId} updated to 'cancelled'`);
+      }
     }
 
     res.status(200).send('OK');

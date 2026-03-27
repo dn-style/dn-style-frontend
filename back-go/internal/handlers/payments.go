@@ -52,15 +52,22 @@ func HandleMPWebhook(c *fiber.Ctx) error {
 	status, _ := payment["status"].(string)
 	orderID, _ := payment["external_reference"].(string)
 
-	if status == "approved" && orderID != "" {
-		fmt.Printf("[Mercado Pago Webhook]  Payment approved for Order #%s\n", orderID)
-
-		// Update WC Order
+	if orderID != "" {
 		auth := base64.StdEncoding.EncodeToString([]byte(config.WcKey + ":" + config.WcSecret))
-		_, _ = config.HttpClient.R().
-			SetHeader("Authorization", "Basic "+auth).
-			SetBody(fiber.Map{"status": "processing", "set_paid": true}).
-			Put("/wp-json/wc/v3/orders/" + orderID)
+
+		if status == "approved" {
+			fmt.Printf("[Mercado Pago Webhook]  Payment approved for Order #%s\n", orderID)
+			_, _ = config.HttpClient.R().
+				SetHeader("Authorization", "Basic "+auth).
+				SetBody(fiber.Map{"status": "processing", "set_paid": true}).
+				Put("/wp-json/wc/v3/orders/" + orderID)
+		} else if status == "cancelled" || status == "rejected" || status == "refunded" || status == "charged_back" {
+			fmt.Printf("[Mercado Pago Webhook]  Payment %s for Order #%s\n", status, orderID)
+			_, _ = config.HttpClient.R().
+				SetHeader("Authorization", "Basic "+auth).
+				SetBody(fiber.Map{"status": "cancelled"}).
+				Put("/wp-json/wc/v3/orders/" + orderID)
+		}
 	}
 
 	return c.Status(200).SendString("OK")

@@ -60,6 +60,7 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"message": "Invalid body"})
 	}
+	body["set_paid"] = false
 
 	resp, err := config.HttpClient.R().
 		SetHeader("Authorization", "Basic "+auth).
