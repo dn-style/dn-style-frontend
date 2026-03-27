@@ -112,7 +112,7 @@ const CheckoutPage = () => {
     const orderData: any = {
       payment_method: paymentMethod,
       payment_method_title: selectedGateway?.title || 'Pedido Directo',
-      set_paid: paymentMethod === 'woo-mercado-pago-basic', 
+      set_paid: false, // El pago se valida vía webhook o revisión manual
       billing: finalBillingData,
       shipping: finalBillingData,
       shipping_lines: selectedShipping ? [{ method_id: selectedShipping, method_title: shippingMethods.find(s => s.id === selectedShipping)?.title || 'Envo' }] : [],
@@ -154,9 +154,11 @@ const CheckoutPage = () => {
       }
       
       if (paymentMethod === 'bacs') {
-        toast.success('Pedido recibido! Por favor enva tu comprobante.');
+        toast.success('Pedido recibido! En espera de comprobante bancario.');
+      } else if (paymentMethod === 'woo-mercado-pago-basic') {
+        toast.info('Redirigiendo a Mercado Pago para completar el pago...');
       } else {
-        toast.success('Pago procesado con xito!');
+        toast.success('Pedido recibido con éxito!');
       }
 
       // --- ACTUALIZACIN DE PERFIL ---

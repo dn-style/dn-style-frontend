@@ -956,9 +956,13 @@ const sendOrderEmail = async (orderData: any, templateName: string, extraData: a
 // --- WEBHOOKS MERCADO PAGO ---
 app.post('/wc/mercado-pago/webhook', async (req: Request, res: Response) => {
   const id = req.query['data.id'] || req.query.id;
+  const topic = req.query.topic || req.body.type;
 
-  if (!id) {
-    return res.status(200).send('OK (No ID)');
+  if (!id) return res.status(200).send('OK (No ID)');
+
+  // Filtrar notificaciones que no sean de pagos (ej: merchant_order) para evitar logs de error
+  if (topic && topic !== 'payment') {
+    return res.status(200).send(`OK (Topic ${topic} ignored)`);
   }
 
   console.log(`[Mercado Pago Webhook]  Notification received for ID: ${id}`);
