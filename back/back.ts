@@ -297,6 +297,26 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
     // Extraemos nuestros datos internos para que WooCommerce no se queje de campos desconocidos
     const { _conversion_data, ...orderPayload } = fullPayload;
 
+    // ASEGURAR DATOS MNIMOS PARA WOOCOMMERCE (Si vienen vacos por algn error del frontend)
+    if (!orderPayload.billing || !orderPayload.billing.first_name || !orderPayload.billing.email) {
+      orderPayload.billing = {
+        first_name: orderPayload.billing?.first_name || 'Cliente',
+        last_name: orderPayload.billing?.last_name || 'DN Style',
+        email: orderPayload.billing?.email || 'ventas@dnshop.com.ar', // Email genrico si no hay uno
+        address_1: orderPayload.billing?.address_1 || 'Calle Falsa 123',
+        city: orderPayload.billing?.city || 'Buenos Aires',
+        state: orderPayload.billing?.state || 'CABA',
+        postcode: orderPayload.billing?.postcode || '1000',
+        country: orderPayload.billing?.country || 'AR',
+        phone: orderPayload.billing?.phone || '1112345678'
+      };
+    }
+
+    // Clonar billing en shipping si shipping est vaco
+    if (!orderPayload.shipping || !orderPayload.shipping.first_name) {
+      orderPayload.shipping = { ...orderPayload.billing };
+    }
+
     console.log('[Create Order]  Enviando a WooCommerce:', JSON.stringify(orderPayload, null, 2));
 
     const response = await axios.post('http://wordpress/wp-json/wc/v3/orders', orderPayload, {
@@ -406,6 +426,13 @@ app.get('/wc/payment_gateways', async (req: Request, res: Response) => {
   ];
   
   res.json(gateways);
+});
+
+app.get('/wc/shipping_methods', (req: Request, res: Response) => {
+  res.json([
+    { id: 'flat_rate', title: 'Envo a Domicilio', method_title: 'Envo a Domicilio', enabled: true },
+    { id: 'local_pickup', title: 'Retiro en Local', method_title: 'Retiro en Local', enabled: true }
+  ]);
 });
 
 app.get('/wc/reviews/check', async (req: Request, res: Response) => {
