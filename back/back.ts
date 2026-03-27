@@ -387,10 +387,25 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
 });
 
 app.get('/wc/payment_gateways', async (req: Request, res: Response) => {
-  try {
-    const response = await api.get('payment_gateways');
-    res.json(rewriteUrls(response.data));
-  } catch { res.json([]); }
+  // Definimos los mtodos de pago manualmente para no depender de la config de WordPress
+  const gateways = [
+    {
+      id: 'bacs',
+      title: 'Transferencia Bancaria',
+      description: 'Realiza tu pago directamente en nuestra cuenta bancaria.',
+      enabled: true,
+      method_title: 'Transferencia Bancaria'
+    },
+    {
+      id: 'woo-mercado-pago-basic',
+      title: 'Mercado Pago',
+      description: 'Paga con tarjeta de crdito, dbito o dinero en cuenta a travs de Mercado Pago.',
+      enabled: true,
+      method_title: 'Mercado Pago'
+    }
+  ];
+  
+  res.json(gateways);
 });
 
 app.get('/wc/reviews/check', async (req: Request, res: Response) => {
