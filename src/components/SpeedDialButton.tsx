@@ -12,7 +12,7 @@ const SpeedDialButton: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   
   const itemsCount = useCartStore((state) => state.itemsCount());
-  const whatsappNumber = "542223434403"; // Reemplazar con número real
+  const whatsappNumber = "542223434403"; // Reemplazar con nmero real
 
   useEffect(() => {
     if (isChatOpen && !socket) {
@@ -50,18 +50,18 @@ const SpeedDialButton: React.FC = () => {
 
   return (
     <>
-      {/* Botón Principal Flotante */}
+      {/* Botn Principal Flotante */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         
         {/* Opciones del Speed Dial */}
         {isOpen && (
           <div className="flex flex-col gap-3 animate-in slide-in-from-bottom-4 fade-in duration-200">
-            {/* Botón Carrito (Solo Móvil) */}
+            {/* Botn Carrito (Solo Mvil) */}
             <Link to="/cart" className="md:hidden flex items-center gap-2 bg-white text-blue-600 px-4 py-2 rounded-full shadow-lg font-bold text-xs uppercase tracking-widest hover:bg-gray-50 transition-all">
               <span className="bg-blue-100 px-2 py-0.5 rounded-full">{itemsCount}</span> Carrito <ShoppingCart size={18} />
             </Link>
 
-            {/* Botón WhatsApp */}
+            {/* Botn WhatsApp */}
             <a 
               href={`https://wa.me/${whatsappNumber}`} 
               target="_blank" 
@@ -71,7 +71,7 @@ const SpeedDialButton: React.FC = () => {
               WhatsApp <MessageCircle size={18} />
             </a>
 
-            {/* Botón Chat en Vivo
+            {/* Botn Chat en Vivo
             <button 
               onClick={() => { setIsChatOpen(true); setIsOpen(false); }}
               className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-full shadow-lg font-bold text-xs uppercase tracking-widest hover:bg-gray-800 transition-all"
@@ -98,7 +98,7 @@ const SpeedDialButton: React.FC = () => {
             <div>
               <h3 className="font-bold text-sm">Soporte DN shop</h3>
               <p className="text-[10px] text-gray-400 flex items-center gap-1">
-                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> En línea
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span> En lnea
               </p>
             </div>
             <button onClick={() => setIsChatOpen(false)} className="hover:text-gray-300">
@@ -106,7 +106,7 @@ const SpeedDialButton: React.FC = () => {
             </button>
           </div>
 
-          {/* Área de Mensajes */}
+          {/* rea de Mensajes */}
           <div className="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-3">
             {messages.map((msg, idx) => (
               <div key={idx} className={`max-w-[80%] p-3 rounded-2xl text-xs font-medium ${msg.sender === 'user' ? 'bg-blue-600 text-white self-end rounded-br-none' : 'bg-white text-gray-700 self-start rounded-bl-none shadow-sm'}`}>

@@ -6,8 +6,8 @@ const ScrollToTop = () => {
   const navType = useNavigationType();
 
   useEffect(() => {
-    // Si el usuario está volviendo atrás (POP), no forzamos el scroll a 0
-    // Esto permite que el navegador intente restaurar la posición anterior.
+    // Si el usuario est volviendo atrs (POP), no forzamos el scroll a 0
+    // Esto permite que el navegador intente restaurar la posicin anterior.
     if (navType !== 'POP') {
       window.scrollTo(0, 0);
     }

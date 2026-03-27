@@ -17,7 +17,7 @@ export const PublishModal = ({ isOpen, onClose, onConfirm }: PublishModalProps) 
 
   const handlePublish = async () => {
     if (!pageName.trim()) {
-        setError('Por favor, ingresa un nombre para la página');
+        setError('Por favor, ingresa un nombre para la pgina');
         return;
     }
     setError(null);
@@ -46,7 +46,7 @@ export const PublishModal = ({ isOpen, onClose, onConfirm }: PublishModalProps) 
               <Globe size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900 leading-tight">Publicar Página</h2>
+              <h2 className="text-lg font-bold text-slate-900 leading-tight">Publicar Pgina</h2>
               <p className="text-xs text-slate-500 font-medium uppercase tracking-widest">Astro Engine</p>
             </div>
           </div>
@@ -62,7 +62,7 @@ export const PublishModal = ({ isOpen, onClose, onConfirm }: PublishModalProps) 
           {!publishedUrl ? (
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre de la página (Slug)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Nombre de la pgina (Slug)</label>
                 <div className="relative group">
                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
                       <Layout size={18} />
@@ -77,7 +77,7 @@ export const PublishModal = ({ isOpen, onClose, onConfirm }: PublishModalProps) 
                     onKeyDown={(e) => e.key === 'Enter' && handlePublish()}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 font-medium italic">Se generará como: {pageName || 'nombre'}.astro</p>
+                <p className="text-[10px] text-slate-400 font-medium italic">Se generar como: {pageName || 'nombre'}.astro</p>
               </div>
 
               {error && (
@@ -98,7 +98,7 @@ export const PublishModal = ({ isOpen, onClose, onConfirm }: PublishModalProps) 
                   </>
                 ) : (
                   <>
-                    <span>Confirmar Publicación</span>
+                    <span>Confirmar Publicacin</span>
                     <Globe size={18} className="group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -113,8 +113,8 @@ export const PublishModal = ({ isOpen, onClose, onConfirm }: PublishModalProps) 
               </div>
               
               <div className="space-y-2">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">¡Publicada!</h3>
-                <p className="text-sm text-slate-500 font-medium">Tu diseño ha sido traspolado a Astro y ya está disponible.</p>
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Publicada!</h3>
+                <p className="text-sm text-slate-500 font-medium">Tu diseo ha sido traspolado a Astro y ya est disponible.</p>
               </div>
 
               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-3">
@@ -147,7 +147,7 @@ export const PublishModal = ({ isOpen, onClose, onConfirm }: PublishModalProps) 
                   className="flex-[2] py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black uppercase text-[10px] tracking-widest transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"
                 >
                   <ExternalLink size={16} />
-                  Ver Página
+                  Ver Pgina
                 </a>
               </div>
             </div>

@@ -14,16 +14,17 @@ import hbs from 'handlebars';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 
-// --- CONFIGURACIÓN DE RUTAS ---
-// Si estamos en la carpeta dist (producción), el root es un nivel arriba
+// --- CONFIGURACIN DE RUTAS ---
+// Si estamos en la carpeta dist (produccin), el root es un nivel arriba
 const ROOT_DIR = __dirname.endsWith('dist') ? path.join(__dirname, '..') : __dirname;
-const SITE_URL = process.env.SITE_URL || 'https://dnshop.com.ar'; // Default a producción
+const SITE_URL = process.env.SITE_URL || 'https://dnshop.com.ar'; // Default a produccin
 
-// --- CONFIGURACIÓN DEBUG ---
+// --- CONFIGURACIN DEBUG ---
 const isVerbose = process.env.VERBOSE_DEBUG === 'true' || process.argv.includes('--debug');
 
-// --- CONFIGURACIÓN REDIS ---
+// --- CONFIGURACIN REDIS ---
 const isTest = process.env.NODE_ENV === 'test';
 const redisClient = createClient({
   url: process.env.REDIS_URL || 'redis://host.docker.internal:6379'
@@ -31,12 +32,17 @@ const redisClient = createClient({
 
 if (!isTest) {
   redisClient.on('error', (err) => console.error('Redis Client Error', err));
-  redisClient.connect().then(() => console.log('✅ Conectado a Redis')).catch(() => {
-    console.error('❌ Error conexión Redis. ¿Está el servicio arriba?');
+  redisClient.connect().then(() => console.log(' Conectado a Redis')).catch(() => {
+    console.error(' Error conexin Redis. Est el servicio arriba?');
   });
 }
 
-// --- CONFIGURACIÓN CORS ---
+// --- CONFIGURACIN MERCADO PAGO ---
+const mpClient = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN || ''
+});
+
+// --- CONFIGURACIN CORS ---
 const allowedOrigins = [
   'https://dnshop.com.ar',
   'http://dnshop.com.ar',
@@ -51,7 +57,7 @@ const allowedOrigins = [
 
 const corsOptions: cors.CorsOptions = {
   origin: (origin, callback) => {
-    // Permitir peticiones sin origen (como apps móviles o curl) o que estén en la whitelist
+    // Permitir peticiones sin origen (como apps mviles o curl) o que estn en la whitelist
     if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
       callback(null, true);
     } else {
@@ -72,10 +78,10 @@ const io = new Server(httpServer, {
 // --- SOCKET.IO ---
 io.on('connection', (socket) => {
   if (isVerbose) console.log('Cliente chat:', socket.id);
-  socket.on('join_chat', () => socket.emit('receive_message', { text: '¡Hola! ¿Cómo podemos ayudarte?', sender: 'agent', timestamp: new Date() }));
+  socket.on('join_chat', () => socket.emit('receive_message', { text: 'Hola! Cmo podemos ayudarte?', sender: 'agent', timestamp: new Date() }));
 });
 
-// --- CACHÉ HELPER ---
+// --- CACH HELPER ---
 const getCache = async (key: string) => {
   try {
     const data = await redisClient.get(key);
@@ -92,10 +98,10 @@ const flushCacheByPattern = async (pattern: string) => {
     const keys = await redisClient.keys(pattern);
     if (keys.length > 0) {
       await redisClient.del(keys);
-      console.log(`[Cache] 🧹 Flushed ${keys.length} keys matching: ${pattern}`);
+      console.log(`[Cache]  Flushed ${keys.length} keys matching: ${pattern}`);
     }
   } catch (err) {
-    console.error(`[Cache Error] ❌ Error flushing pattern ${pattern}:`, err);
+    console.error(`[Cache Error]  Error flushing pattern ${pattern}:`, err);
   }
 };
 
@@ -106,7 +112,7 @@ const rewriteUrls = (data: any) => {
   const siteUrlBase = SITE_URL;
   let s = JSON.stringify(data);
 
-  // Capturar cualquier dominio que tenga wp-content/uploads y redirigirlo a nuestro proxy de imágenes
+  // Capturar cualquier dominio que tenga wp-content/uploads y redirigirlo a nuestro proxy de imgenes
   const uploadsPattern = /https?:(\/\/|\\\/\\\/)[^"'\s]+?(\/|\\\/)wp-content(\/|\\\/)uploads/gi;
   s = s.replace(uploadsPattern, `${siteUrlBase}/images/uploads`);
 
@@ -118,7 +124,7 @@ const rewriteUrls = (data: any) => {
 };
 
 // --- STORAGE & EMAIL ---
-// Configuración optimizada para Brevo y otros proveedores modernos
+// Configuracin optimizada para Brevo y otros proveedores modernos
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 587,
@@ -145,18 +151,18 @@ const ensureBucketExists = async () => {
   if (isTest) return;
   try {
     await s3Client.send(new HeadBucketCommand({ Bucket: PRODUCTS_BUCKET }));
-    console.log(`✅ Bucket "${PRODUCTS_BUCKET}" verificado.`);
+    console.log(` Bucket "${PRODUCTS_BUCKET}" verificado.`);
   } catch (err: any) {
     if (err.name === 'NotFound' || err.$metadata?.httpStatusCode === 404) {
-      console.log(`🟡 Bucket "${PRODUCTS_BUCKET}" no existe. Creándolo...`);
+      console.log(` Bucket "${PRODUCTS_BUCKET}" no existe. Crendolo...`);
       try {
         await s3Client.send(new CreateBucketCommand({ Bucket: PRODUCTS_BUCKET }));
-        console.log(`✅ Bucket "${PRODUCTS_BUCKET}" creado con éxito.`);
+        console.log(` Bucket "${PRODUCTS_BUCKET}" creado con xito.`);
       } catch (createErr: any) {
-        console.error(`❌ Error al crear bucket: ${createErr.message}`);
+        console.error(` Error al crear bucket: ${createErr.message}`);
       }
     } else {
-      console.error(`❌ Error al verificar bucket: ${err.message}`);
+      console.error(` Error al verificar bucket: ${err.message}`);
     }
   }
 };
@@ -194,7 +200,7 @@ app.post('/auth/login', async (req: Request, res: Response) => {
     res.json(response.data);
   } catch (err: any) {
     console.error('[Login Error]', err.response?.data || err.message);
-    res.status(err.response?.status || 500).json(err.response?.data || { message: 'Error de autenticación' });
+    res.status(err.response?.status || 500).json(err.response?.data || { message: 'Error de autenticacin' });
   }
 });
 
@@ -203,7 +209,7 @@ app.post('/auth/register', async (req: Request, res: Response) => {
     const { email, password, first_name, last_name } = req.body;
     const cleanEmail = email.trim();
 
-    // Auth básica para WooCommerce API
+    // Auth bsica para WooCommerce API
     const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
 
     const response = await axios.post('http://wordpress/wp-json/wc/v3/customers', {
@@ -230,7 +236,7 @@ app.post('/auth/register', async (req: Request, res: Response) => {
 app.get('/auth/customer', async (req: Request, res: Response) => {
   try {
     const { email } = req.query;
-    console.log(`[Customer] 🔍 Buscando perfil para: ${email}`);
+    console.log(`[Customer]  Buscando perfil para: ${email}`);
     const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
 
     const response = await axios.get('http://wordpress/wp-json/wc/v3/customers', {
@@ -240,14 +246,14 @@ app.get('/auth/customer', async (req: Request, res: Response) => {
 
     const customer = Array.isArray(response.data) ? response.data[0] : null;
     if (customer) {
-      console.log(`[Customer] ✅ Perfil encontrado ID: ${customer.id}`);
+      console.log(`[Customer]  Perfil encontrado ID: ${customer.id}`);
       res.json(rewriteUrls(customer));
     } else {
-      console.log(`[Customer] ⚠️ No se encontró perfil para ${email}`);
+      console.log(`[Customer]  No se encontr perfil para ${email}`);
       res.json({});
     }
   } catch (err: any) {
-    console.error('[Customer Error] ❌ Fallo al obtener perfil:', err.response?.data || err.message);
+    console.error('[Customer Error]  Fallo al obtener perfil:', err.response?.data || err.message);
     res.status(500).json({ message: 'Error' });
   }
 });
@@ -255,17 +261,17 @@ app.get('/auth/customer', async (req: Request, res: Response) => {
 app.put('/auth/customer/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    console.log(`[Customer] 💾 Actualizando perfil ID: ${id}`);
+    console.log(`[Customer]  Actualizando perfil ID: ${id}`);
     const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
 
     const response = await axios.put(`http://wordpress/wp-json/wc/v3/customers/${id}`, req.body, {
       headers: { 'Authorization': `Basic ${auth}` }
     });
 
-    console.log(`[Customer] ✅ Perfil ID ${id} actualizado con éxito`);
+    console.log(`[Customer]  Perfil ID ${id} actualizado con xito`);
     res.json(rewriteUrls(response.data));
   } catch (err: any) {
-    console.error('[Customer Error] ❌ Fallo al actualizar:', err.response?.data || err.message);
+    console.error('[Customer Error]  Fallo al actualizar:', err.response?.data || err.message);
     res.status(500).json({ message: 'Error al actualizar perfil' });
   }
 });
@@ -291,33 +297,33 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
     // Extraemos nuestros datos internos para que WooCommerce no se queje de campos desconocidos
     const { _conversion_data, ...orderPayload } = fullPayload;
 
-    console.log('[Create Order] 🛒 Enviando a WooCommerce:', JSON.stringify(orderPayload, null, 2));
+    console.log('[Create Order]  Enviando a WooCommerce:', JSON.stringify(orderPayload, null, 2));
 
     const response = await axios.post('http://wordpress/wp-json/wc/v3/orders', orderPayload, {
       headers: { 'Authorization': `Basic ${auth}` }
     });
 
-    console.log('[Create Order] ✅ WooCommerce respondió con Status:', response.status);
+    console.log('[Create Order]  WooCommerce respondi con Status:', response.status);
 
-    // Si la orden se creó correctamente, proceder con notificaciones y notas
+    // Si la orden se cre correctamente, proceder con notificaciones y notas
     if (response.data && response.data.id) {
       const orderId = response.data.id;
 
-      // 1. NOTIFICACIÓN INMEDIATA AL ADMIN (Desde la API para mayor fiabilidad)
+      // 1. NOTIFICACIN INMEDIATA AL ADMIN (Desde la API para mayor fiabilidad)
       const customerName = `${fullPayload.billing?.first_name || ''} ${fullPayload.billing?.last_name || ''}`.trim() || 'Cliente';
       await sendAdminNotification(
         `Nuevo Pedido #${orderId}`, 
         `Se ha recibido un nuevo pedido de <b>${customerName}</b> por un total de <b>${response.data.total} ${response.data.currency}</b>.`
       );
 
-      // 2. Si tenemos datos de conversión, crear nota privada
+      // 2. Si tenemos datos de conversin, crear nota privada
       if (_conversion_data && Number(_conversion_data.rate) > 0) {
         const rateVal = _conversion_data.rate;
         const totalVal = _conversion_data.total_ars || 0;
 
-        const noteContent = `ℹ️ DETALLES DE CONVERSIÓN (ARS):\n\n` +
-          `• Cotización aplicada: $${rateVal}\n` +
-          `• Total en Pesos: ARS $${Number(totalVal).toLocaleString('es-AR')}\n\n` +
+        const noteContent = ` DETALLES DE CONVERSIN (ARS):\n\n` +
+          ` Cotizacin aplicada: $${rateVal}\n` +
+          ` Total en Pesos: ARS $${Number(totalVal).toLocaleString('es-AR')}\n\n` +
           `Detalle de productos:\n${_conversion_data.details || 'No especificado'}`;
 
         try {
@@ -325,16 +331,51 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
             { note: noteContent, customer_note: false },
             { headers: { 'Authorization': `Basic ${auth}` } }
           );
-          console.log(`[Create Order] 📝 Nota de conversión creada en pedido #${orderId}`);
+          console.log(`[Create Order]  Nota de conversin creada en pedido #${orderId}`);
         } catch (noteErr: any) {
-          console.error(`[Create Order] ⚠️ Error al crear nota de conversión:`, noteErr.message);
+          console.error(`[Create Order]  Error al crear nota de conversin:`, noteErr.message);
+        }
+      }
+
+      // 3. MERCADO PAGO PREFERENCE
+      if (response.data.payment_method === 'woo-mercado-pago-basic') {
+        try {
+          const preference = new Preference(mpClient);
+          const result = await preference.create({
+            body: {
+              items: [
+                {
+                  id: orderId.toString(),
+                  title: `Pedido DN Style #${orderId}`,
+                  quantity: 1,
+                  unit_price: Number(response.data.total),
+                  currency_id: 'ARS',
+                },
+              ],
+              external_reference: orderId.toString(),
+              notification_url: process.env.MP_WEBHOOK_URL,
+              back_urls: {
+                success: `${SITE_URL}/thanks`,
+                failure: `${SITE_URL}/cart`,
+                pending: `${SITE_URL}/thanks`,
+              },
+              auto_return: 'approved',
+            },
+          });
+
+          if (result.init_point) {
+            console.log(`[Mercado Pago]  Preferencia creada para pedido #${orderId}: ${result.init_point}`);
+            return res.json({ ...rewriteUrls(response.data), init_point: result.init_point });
+          }
+        } catch (mpErr: any) {
+          console.error(`[Mercado Pago Error]  Error al crear preferencia para #${orderId}:`, mpErr.message);
         }
       }
     }
 
     res.json(rewriteUrls(response.data));
   } catch (err: any) {
-    console.error('[Create Order Error] ❌ Error detallado:');
+    console.error('[Create Order Error]  Error detallado:');
     if (err.response) {
       console.error('Status:', err.response.status);
       console.error('Data:', JSON.stringify(err.response.data, null, 2));
@@ -357,7 +398,7 @@ app.get('/wc/reviews/check', async (req: Request, res: Response) => {
     const { product_id, email } = req.query;
     const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
 
-    // Usamos axios directamente para evitar problemas de tipos con la librería
+    // Usamos axios directamente para evitar problemas de tipos con la librera
     const response = await axios.get(`http://wordpress/wp-json/wc/v3/products/reviews`, {
       params: {
         product: Number(product_id),
@@ -381,7 +422,7 @@ app.post('/wc/reviews', async (req: Request, res: Response) => {
     res.json(response.data);
   } catch (err: any) {
     console.error('[Review Error]', err.response?.data || err.message);
-    res.status(err.response?.status || 500).json(err.response?.data || { message: 'Error al enviar reseña' });
+    res.status(err.response?.status || 500).json(err.response?.data || { message: 'Error al enviar resea' });
   }
 });
 
@@ -418,8 +459,8 @@ app.post('/auth/forgot-password', async (req: Request, res: Response) => {
     const source = fs.readFileSync(templatePath, 'utf8');
     const template = hbs.compile(source);
 
-    // En un sistema real generaríamos un token único. 
-    // Por ahora simulamos el envío del enlace de recuperación.
+    // En un sistema real generaramos un token nico. 
+    // Por ahora simulamos el envo del enlace de recuperacin.
     const resetLink = `${SITE_URL}/reset-password?email=${encodeURIComponent(email)}&token=simulated-token`;
 
     const html = template({
@@ -431,7 +472,7 @@ app.post('/auth/forgot-password', async (req: Request, res: Response) => {
     await transporter.sendMail({
       from: getSenderInfo(),
       to: email,
-      subject: 'Recuperar Contraseña - DN shop',
+      subject: 'Recuperar Contrasea - DN shop',
       html
     });
 
@@ -447,16 +488,16 @@ app.post('/orders/upload-receipt', upload.single('file'), async (req: Request, r
   try {
     const { order_id } = req.body;
     if (!req.file) {
-      console.error('[Upload Receipt] No se recibió ningún archivo');
+      console.error('[Upload Receipt] No se recibi ningn archivo');
       return res.status(400).send('No file');
     }
 
-    console.log(`[Upload Receipt] 📂 Recibido archivo para orden ${order_id}: ${req.file.originalname}`);
+    console.log(`[Upload Receipt]  Recibido archivo para orden ${order_id}: ${req.file.originalname}`);
 
     const fileContent = fs.readFileSync(req.file.path);
     const key = `receipts/order-${order_id}-${Date.now()}-${req.file.originalname}`;
 
-    console.log(`[Upload Receipt] ☁️ Subiendo a S3: ${key}...`);
+    console.log(`[Upload Receipt]  Subiendo a S3: ${key}...`);
     try {
       await s3Client.send(new PutObjectCommand({
         Bucket: PRODUCTS_BUCKET,
@@ -464,18 +505,18 @@ app.post('/orders/upload-receipt', upload.single('file'), async (req: Request, r
         Body: fileContent,
         ContentType: req.file.mimetype
       }));
-      console.log(`[Upload Receipt] ✅ Subida a S3 exitosa`);
+      console.log(`[Upload Receipt]  Subida a S3 exitosa`);
     } catch (s3Err: any) {
-      console.error('[Upload Receipt] ❌ Error en S3:', s3Err.message);
+      console.error('[Upload Receipt]  Error en S3:', s3Err.message);
       throw new Error(`Error al subir a almacenamiento: ${s3Err.message}`);
     }
 
-    console.log(`[Upload Receipt] 📝 Actualizando orden ${order_id} a 'on-hold' y creando nota...`);
+    console.log(`[Upload Receipt]  Actualizando orden ${order_id} a 'on-hold' y creando nota...`);
     try {
       const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
       const noteContent = `Comprobante subido: ${SITE_URL}/images/${key}`;
 
-      // 1. Actualizar estado a 'on-hold' (En espera de revisión)
+      // 1. Actualizar estado a 'on-hold' (En espera de revisin)
       await axios.put(`http://wordpress/wp-json/wc/v3/orders/${order_id}`,
         { status: 'on-hold' },
         { headers: { 'Authorization': `Basic ${auth}` } }
@@ -486,33 +527,33 @@ app.post('/orders/upload-receipt', upload.single('file'), async (req: Request, r
         { note: noteContent, customer_note: false },
         { headers: { 'Authorization': `Basic ${auth}` } }
       );
-      console.log(`[Upload Receipt] ✅ Orden actualizada y nota creada`);
+      console.log(`[Upload Receipt]  Orden actualizada y nota creada`);
     } catch (wcErr: any) {
-      console.error('[Upload Receipt] ⚠️ Error al actualizar WC (pero el archivo se subió):', wcErr.response?.data || wcErr.message);
+      console.error('[Upload Receipt]  Error al actualizar WC (pero el archivo se subi):', wcErr.response?.data || wcErr.message);
     }
 
     res.json({ success: true, key });
   } catch (err: any) {
-    console.error('[Upload Receipt Error] ❌ Fallo total:', err.message);
+    console.error('[Upload Receipt Error]  Fallo total:', err.message);
     res.status(500).json({ error: err.message || 'Error interno del servidor' });
   }
 });
 
-// --- 1. API ROUTES (MÁXIMA PRIORIDAD) ---
+// --- 1. API ROUTES (MXIMA PRIORIDAD) ---
 
 app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
   let key = req.params[0];
 
-  // Header de diagnóstico para confirmar que el backend está sirviendo el archivo
+  // Header de diagnstico para confirmar que el backend est sirviendo el archivo
   res.setHeader('X-Served-By', 'dn-backend');
 
   // Normalizar key: eliminar barras iniciales y decodificar URI
   const cleanKey = decodeURIComponent(key.replace(/^\/+/, ''));
 
-  if (isVerbose) console.log(`[Images] 📸 Request for: ${cleanKey} (Original: ${key})`);
+  if (isVerbose) console.log(`[Images]  Request for: ${cleanKey} (Original: ${key})`);
 
   // --- SEGURIDAD PARA COMPROBANTES ---
-  // Detección más flexible: si la ruta CONTIENE 'receipts/'
+  // Deteccin ms flexible: si la ruta CONTIENE 'receipts/'
   if (cleanKey.includes('receipts/')) {
     console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
     console.log(`[SECURITY CHECK] ACCESO A COMPROBANTE DETECTADO: ${cleanKey}`);
@@ -522,23 +563,23 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
     const cookieHeader = req.headers.cookie;
 
     if (isVerbose) {
-      console.log(`[Security] 🛡️ Verificando acceso a comprobante: ${cleanKey}`);
+      console.log(`[Security]  Verificando acceso a comprobante: ${cleanKey}`);
       console.log(`[Security] Auth Header: ${authHeader ? 'Presente' : 'Ausente'}`);
       console.log(`[Security] Cookie Header: ${cookieHeader ? 'Presente' : 'Ausente'}`);
     }
 
     if (!authHeader && !cookieHeader) {
-      console.warn(`[Security] 🚫 Intento de acceso anónimo a comprobante: ${cleanKey}`);
+      console.warn(`[Security]  Intento de acceso annimo a comprobante: ${cleanKey}`);
       return res.status(401).send('No autorizado: Recurso privado');
     }
 
     if (isVerbose && cookieHeader) {
       const cookieNames = cookieHeader.split(';').map(c => c.split('=')[0].trim());
-      console.log(`[Security] 🍪 Cookies recibidas: ${cookieNames.join(', ')}`);
+      console.log(`[Security]  Cookies recibidas: ${cookieNames.join(', ')}`);
     }
 
     try {
-      // Usar nuestro puente de autenticación PHP que es más fiable con las cookies de sesión
+      // Usar nuestro puente de autenticacin PHP que es ms fiable con las cookies de sesin
       const targetHost = req.headers.host || 'dnshop.com.ar';
 
       const wpResponse = await axios.get('http://wordpress/auth-bridge.php', {
@@ -554,39 +595,39 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
       const { authenticated, is_privileged, user_login } = wpResponse.data;
 
       if (!authenticated) {
-        console.warn(`[Security] 🚫 Intento de acceso a comprobante: No autenticado. Cookies: ${wpResponse.data.debug?.cookies_count || 0}`);
-        return res.status(401).send('No autorizado: Debes iniciar sesión');
+        console.warn(`[Security]  Intento de acceso a comprobante: No autenticado. Cookies: ${wpResponse.data.debug?.cookies_count || 0}`);
+        return res.status(401).send('No autorizado: Debes iniciar sesin');
       }
 
       if (!is_privileged) {
-        console.warn(`[Security] 🚫 Acceso denegado para usuario ${wpResponse.data.id} a comprobante: ${cleanKey}. No es Admin.`);
+        console.warn(`[Security]  Acceso denegado para usuario ${wpResponse.data.id} a comprobante: ${cleanKey}. No es Admin.`);
         return res.status(403).send('Prohibido: Permisos insuficientes (Se requiere rol de administrador)');
       }
 
-      console.log(`[Security] ✅ Acceso concedido a admin (${user_login}) para comprobante: ${cleanKey}`);
+      console.log(`[Security]  Acceso concedido a admin (${user_login}) para comprobante: ${cleanKey}`);
 
       // Para comprobantes, forzar no-cache SIEMPRE, incluso si la respuesta es exitosa
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
     } catch (wpErr: any) {
-      console.error(`[Security] ❌ Error de verificación de auth para ${cleanKey}: ${wpErr.message}`);
+      console.error(`[Security]  Error de verificacin de auth para ${cleanKey}: ${wpErr.message}`);
       if (wpErr.response) {
         console.error(`[Security] WP Response Status: ${wpErr.response.status}`);
         if (isVerbose) console.error(`[Security] WP Response Data:`, wpErr.response.data);
       }
-      return res.status(401).send('No autorizado: Sesión inválida o expirada');
+      return res.status(401).send('No autorizado: Sesin invlida o expirada');
     }
   }
 
-  // Usar la key limpia para el resto de la lógica
+  // Usar la key limpia para el resto de la lgica
   key = cleanKey;
 
   // Limpiar cualquier cabecera previa que pudiera inyectar Nginx o Middlewares
   res.removeHeader('X-Frame-Options');
   res.removeHeader('Content-Security-Policy');
 
-  // Forzar políticas laxas para evitar ORB (Opaque Response Blocking)
+  // Forzar polticas laxas para evitar ORB (Opaque Response Blocking)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.setHeader('Timing-Allow-Origin', '*');
@@ -604,13 +645,13 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
       };
       contentType = mimeMap[ext] || 'image/jpeg';
     }
-    if (isVerbose) console.log(`[Proxy] ☁️ S3 OK (${contentType}): ${key}`);
+    if (isVerbose) console.log(`[Proxy]  S3 OK (${contentType}): ${key}`);
 
     res.setHeader('Content-Type', contentType);
     res.setHeader('Cache-Control', 'public, max-age=31536000');
     return (response.Body as any).pipe(res);
   } catch (err) {
-    if (isVerbose) console.log(`[Proxy] ⚠️ S3 FAIL: ${key}, reintentando local...`);
+    if (isVerbose) console.log(`[Proxy]  S3 FAIL: ${key}, reintentando local...`);
 
     const pathsToTry = [
       path.join(ROOT_DIR, 'wp_uploads', 'wp-content', key),
@@ -620,8 +661,8 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
 
     for (const localPath of pathsToTry) {
       if (fs.existsSync(localPath) && !fs.lstatSync(localPath).isDirectory()) {
-        if (isVerbose) console.log(`[Proxy] 🏠 LOCAL OK: ${localPath}`);
-        // Intentar inferir content type también para local
+        if (isVerbose) console.log(`[Proxy]  LOCAL OK: ${localPath}`);
+        // Intentar inferir content type tambin para local
         const ext = path.extname(localPath).toLowerCase();
         const mimeMap: any = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
         if (mimeMap[ext]) res.setHeader('Content-Type', mimeMap[ext]);
@@ -629,8 +670,8 @@ app.get(/^\/images\/(.*)/, async (req: Request, res: Response) => {
       }
     }
 
-    if (isVerbose) console.log(`[Proxy] ❌ NOT FOUND: ${key}`);
-    // Píxel transparente para evitar error ORB de consola
+    if (isVerbose) console.log(`[Proxy]  NOT FOUND: ${key}`);
+    // Pxel transparente para evitar error ORB de consola
     res.status(404).setHeader('Content-Type', 'image/png').send(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'));
   }
 });
@@ -685,15 +726,15 @@ app.get('/wc/categories', async (req: Request, res: Response) => {
   if (!isForce) {
     const cached = await getCache(cacheKey);
     if (cached) {
-      console.log(`[Categories] ⚡ Serving from cache: ${cacheKey}`);
+      console.log(`[Categories]  Serving from cache: ${cacheKey}`);
       return res.json(cached);
     }
   } else {
-    console.log(`[Categories] 🔄 Force refresh requested. Bypassing cache.`);
+    console.log(`[Categories]  Force refresh requested. Bypassing cache.`);
   }
 
   try {
-    console.log(`[Categories] 🌐 Fetching from WordPress API...`);
+    console.log(`[Categories]  Fetching from WordPress API...`);
     const response = await api._request('GET', 'products/categories', req.query);
     const categories = response.data.map((cat: any) => ({
       id: cat.id, name: cat.name, slug: cat.slug, parent: cat.parent, image: cat.image ? cat.image.src : null,
@@ -708,15 +749,15 @@ app.get('/wc/categories', async (req: Request, res: Response) => {
 
     res.json(data);
   } catch (err: any) {
-    console.error(`[Categories Error] ❌ Fallo al obtener categorías:`, err.message);
+    console.error(`[Categories Error]  Fallo al obtener categoras:`, err.message);
     res.status(500).json({ error: true });
   }
 });
 
-// Endpoint para limpiar manualmente toda la caché (útil para desarrollo/troubleshooting)
+// Endpoint para limpiar manualmente toda la cach (til para desarrollo/troubleshooting)
 app.post('/wc/cache/flush', async (req: Request, res: Response) => {
   try {
-    console.log(`[Cache] 🧨 Manual flushAll requested.`);
+    console.log(`[Cache]  Manual flushAll requested.`);
     await redisClient.flushAll();
     res.json({ success: true, message: 'All cache flushed' });
   } catch (err) {
@@ -731,7 +772,7 @@ const cleanText = (text: string) => {
   return text
     .replace(/<[^>]*>/g, '') // Eliminar tags HTML
     .replace(/"/g, '&quot;') // Escapar comillas dobles
-    .replace(/\n/g, ' ')     // Eliminar saltos de línea
+    .replace(/\n/g, ' ')     // Eliminar saltos de lnea
     .trim();
 };
 
@@ -765,7 +806,7 @@ app.get('/producto/:id', async (req: Request, res: Response) => {
   } catch { res.sendFile(path.join(ROOT_DIR, 'public_html', 'index.html')); }
 });
 
-// --- 3. STATIC & FALLBACK (MÍNIMA PRIORIDAD) ---
+// --- 3. STATIC & FALLBACK (MNIMA PRIORIDAD) ---
 app.use(express.static(path.join(ROOT_DIR, 'public_html')));
 app.get(/^\/(?!wc|auth|images|orders).*/, (req, res) => {
   res.sendFile(path.join(ROOT_DIR, 'public_html', 'index.html'));
@@ -778,7 +819,7 @@ const getSenderInfo = () => {
   return `"${name}" <${email}>`;
 };
 
-// --- HELPER: ENVIAR NOTIFICACIÓN AL ADMIN ---
+// --- HELPER: ENVIAR NOTIFICACIN AL ADMIN ---
 const sendAdminNotification = async (subject: string, content: string) => {
   try {
     // El destinatario es ADMIN_EMAIL, o EMAIL_SENDER como fallback
@@ -786,7 +827,7 @@ const sendAdminNotification = async (subject: string, content: string) => {
     
     // Si el email parece ser un ID de Brevo, cancelamos para evitar rebotar
     if (!adminEmail || adminEmail.includes('smtp-brevo.com') || !adminEmail.includes('@')) {
-       console.warn('[Email Admin] ⚠️ No hay una dirección de correo real para el admin. Configura ADMIN_EMAIL.');
+       console.warn('[Email Admin]  No hay una direccin de correo real para el admin. Configura ADMIN_EMAIL.');
        return;
     }
 
@@ -795,15 +836,15 @@ const sendAdminNotification = async (subject: string, content: string) => {
       to: adminEmail,
       subject: `[ADMIN] ${subject}`,
       html: `<div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-              <h2 style="color: #333;">Notificación de Sistema</h2>
+              <h2 style="color: #333;">Notificacin de Sistema</h2>
               <p style="font-size: 16px; color: #666;">${content}</p>
               <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
               <p style="font-size: 12px; color: #999;">DN shop Backend - ${new Date().toLocaleString()}</p>
              </div>`
     });
-    console.log(`[Email Admin] ✅ Notificación enviada: ${subject}`);
+    console.log(`[Email Admin]  Notificacin enviada: ${subject}`);
   } catch (err) {
-    console.error('[Email Admin Error] ❌ No se pudo enviar notificación:', err);
+    console.error('[Email Admin Error]  No se pudo enviar notificacin:', err);
   }
 };
 
@@ -812,7 +853,7 @@ const sendOrderEmail = async (orderData: any, templateName: string, extraData: a
   try {
     const templatePath = path.join(ROOT_DIR, 'email-templates', `${templateName}.hbs`);
     if (!fs.existsSync(templatePath)) {
-      console.error(`[Email] ❌ No existe el template: ${templatePath}`);
+      console.error(`[Email]  No existe el template: ${templatePath}`);
       return;
     }
 
@@ -836,22 +877,59 @@ const sendOrderEmail = async (orderData: any, templateName: string, extraData: a
       'order-confirmation': `Pedido Recibido #${orderData.id} - DN shop`,
       'order-preparing': `Estamos preparando tu pedido #${orderData.id} - DN shop`,
       'order-cancelled': `Pedido Cancelado #${orderData.id} - DN shop`,
-      'order-shipped': `¡Tu pedido #${orderData.id} está en camino! 🚚`
+      'order-shipped': `Tu pedido #${orderData.id} est en camino! `
     };
 
     const mailOptions = {
       from: getSenderInfo(),
       to: orderData.billing?.email,
-      subject: subjects[templateName] || `Actualización de Pedido #${orderData.id}`,
+      subject: subjects[templateName] || `Actualizacin de Pedido #${orderData.id}`,
       html: html
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`[Email] ✅ Enviado "${templateName}" a ${orderData.billing?.email}`);
+    console.log(`[Email]  Enviado "${templateName}" a ${orderData.billing?.email}`);
   } catch (err) {
-    console.error('[Email Error] ❌ No se pudo enviar el correo:', err);
+    console.error('[Email Error]  No se pudo enviar el correo:', err);
   }
 };
+
+// --- WEBHOOKS MERCADO PAGO ---
+app.post('/wc/mercado-pago/webhook', async (req: Request, res: Response) => {
+  const id = req.query['data.id'] || req.query.id;
+  
+  if (!id) {
+    return res.status(200).send('OK (No ID)');
+  }
+
+  console.log(`[Mercado Pago Webhook]  Notification received for ID: ${id}`);
+
+  try {
+    const payment = new Payment(mpClient);
+    const result = await payment.get({ id: id.toString() });
+
+    const status = result.status;
+    const orderId = result.external_reference;
+
+    if (status === 'approved' && orderId) {
+      console.log(`[Mercado Pago Webhook]  Payment approved for Order #${orderId}`);
+
+      // Update WC Order
+      const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
+      await axios.put(`http://wordpress/wp-json/wc/v3/orders/${orderId}`, 
+        { status: 'processing', set_paid: true },
+        { headers: { 'Authorization': `Basic ${auth}` } }
+      );
+      
+      console.log(`[Mercado Pago Webhook]  Order #${orderId} updated to 'processing'`);
+    }
+
+    res.status(200).send('OK');
+  } catch (err: any) {
+    console.error(`[Mercado Pago Webhook Error]  Error fetching payment ${id}:`, err.message);
+    res.status(500).send('Error');
+  }
+});
 
 // --- WEBHOOKS WOOCOMMERCE ---
 app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
@@ -859,18 +937,18 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
   const data = req.body;
 
   if (!data || Object.keys(data).length === 0) {
-    console.warn(`[Webhook] ⚠️ Petición vacía recibida en /webhooks/woocommerce`);
+    console.warn(`[Webhook]  Peticin vaca recibida en /webhooks/woocommerce`);
     return res.status(200).send('OK (Empty)'); // Respondemos 200 para que WC no reintente si es un ping
   }
 
-  console.log(`[Webhook] 🔔 Evento recibido: ${topic} (ID: ${data?.id || 'N/A'}, Status: ${data?.status || 'N/A'})`);
+  console.log(`[Webhook]  Evento recibido: ${topic} (ID: ${data?.id || 'N/A'}, Status: ${data?.status || 'N/A'})`);
 
   try {
     switch (topic) {
       case 'order.created':
         if (data && data.id) {
           // SOLO enviamos el mail al cliente. 
-          // El aviso al admin ya se envió desde la API para mayor velocidad y fiabilidad.
+          // El aviso al admin ya se envi desde la API para mayor velocidad y fiabilidad.
           await sendOrderEmail(data, 'order-confirmation');
         }
         break;
@@ -887,7 +965,7 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
           await sendOrderEmail(data, 'order-shipped');
           await sendAdminNotification(`Pedido #${data.id} COMPLETADO`, `El pedido ha sido marcado como entregado/completado.`);
         } else if (data && data.status && !['pending', 'on-hold'].includes(data.status)) {
-          await sendAdminNotification(`Actualización Pedido #${data.id}`, `El pedido ha cambiado su estado a: <b>${data.status}</b>.`);
+          await sendAdminNotification(`Actualizacin Pedido #${data.id}`, `El pedido ha cambiado su estado a: <b>${data.status}</b>.`);
         }
         break;
 
@@ -896,16 +974,16 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
         if (data && data.customer_note === true) {
           const noteText = (data.note || '').toLowerCase();
           
-          // CASO EDGE: Solo enviar si la nota parece un código de seguimiento
-          if (noteText.includes('seguimiento') || noteText.includes('tracking') || noteText.includes('guia') || noteText.includes('guía')) {
-            console.log(`[Webhook] 🚚 Nota de seguimiento detectada para orden #${data.order_id}`);
+          // CASO EDGE: Solo enviar si la nota parece un cdigo de seguimiento
+          if (noteText.includes('seguimiento') || noteText.includes('tracking') || noteText.includes('guia') || noteText.includes('gua')) {
+            console.log(`[Webhook]  Nota de seguimiento detectada para orden #${data.order_id}`);
             
             // Necesitamos los datos de la orden para el email (especialmente el mail del cliente)
             try {
               const orderRes = await api.get(`orders/${data.order_id}`);
               const orderData = orderRes.data;
               
-              // Extraer el código de la nota (buscamos algo que parezca un código tras los dos puntos o similar)
+              // Extraer el cdigo de la nota (buscamos algo que parezca un cdigo tras los dos puntos o similar)
               const trackingCode = data.note.split(':').pop().trim();
 
               await sendOrderEmail(orderData, 'order-shipped', {
@@ -915,7 +993,7 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
               console.error('[Webhook Error] Fallo al obtener orden para nota:', err);
             }
           } else {
-            console.log(`[Webhook] 📝 Nota informativa para cliente recibida (no es tracking, se ignora envío de mail automático)`);
+            console.log(`[Webhook]  Nota informativa para cliente recibida (no es tracking, se ignora envo de mail automtico)`);
           }
         }
         break;
@@ -923,7 +1001,7 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
       case 'category.created':
       case 'category.updated':
       case 'category.deleted':
-        console.log(`[Webhook] 🧹 Flushing categories and products cache due to: ${topic}`);
+        console.log(`[Webhook]  Flushing categories and products cache due to: ${topic}`);
         await flushCacheByPattern('categories:*');
         await flushCacheByPattern('products:*');
         await flushCacheByPattern('variations:*');
@@ -936,7 +1014,7 @@ app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {
 
     res.status(200).send('OK');
   } catch (err) {
-    console.error('[Webhook Error] ❌ Error procesando evento:', err);
+    console.error('[Webhook Error]  Error procesando evento:', err);
     res.status(500).send('Error');
   }
 });

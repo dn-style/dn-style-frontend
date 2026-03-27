@@ -23,7 +23,7 @@ const ThankYouPage = () => {
             <CheckCircle size={48} />
           </div>
           <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter text-slate-900 mb-4">
-            ¡Gracias por tu compra!
+            Gracias por tu compra!
           </h1>
           <p className="text-lg text-gray-500 font-medium">
             Hemos recibido tu pedido correctamente. Te enviamos un email con los detalles.
@@ -58,7 +58,7 @@ const ThankYouPage = () => {
               <ShoppingBag size={24} />
             </div>
             <div className="text-left text-white">
-              <h3 className="text-xl font-black uppercase tracking-tight mb-2">Más Productos</h3>
+              <h3 className="text-xl font-black uppercase tracking-tight mb-2">Ms Productos</h3>
               <p className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
                 Explora nuevas tendencias <ArrowRight size={14} />
               </p>
@@ -76,17 +76,17 @@ const ThankYouPage = () => {
             <div className="text-left text-white">
               <h3 className="text-xl font-black uppercase tracking-tight mb-2">Asistencia</h3>
               <p className="text-xs text-blue-100 font-bold uppercase tracking-widest flex items-center gap-2">
-                ¿Tienes alguna duda? <ArrowRight size={14} />
+                Tienes alguna duda? <ArrowRight size={14} />
               </p>
             </div>
           </Link>
 
         </div>
 
-        {/* Botón secundario */}
+        {/* Botn secundario */}
         <div className="mt-12">
           <Link to="/" className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 hover:text-black transition-colors">
-            Volver a la Página Principal
+            Volver a la Pgina Principal
           </Link>
         </div>
 

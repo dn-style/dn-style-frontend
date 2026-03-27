@@ -16,7 +16,7 @@ const ResetPasswordPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error("Las contraseñas no coinciden");
+      toast.error("Las contraseas no coinciden");
       return;
     }
 
@@ -32,9 +32,9 @@ const ResetPasswordPage = () => {
 
       if (res.ok) {
         setSuccess(true);
-        toast.success("¡Contraseña actualizada!");
+        toast.success("Contrasea actualizada!");
       } else {
-        throw new Error("El enlace ha expirado o es inválido.");
+        throw new Error("El enlace ha expirado o es invlido.");
       }
     } catch (err: any) {
       toast.error(err.message);
@@ -50,8 +50,8 @@ const ResetPasswordPage = () => {
           <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
             <CheckCircle size={40} />
           </div>
-          <h1 className="text-3xl font-black uppercase tracking-tight mb-4">¡Todo listo!</h1>
-          <p className="text-gray-500 mb-8">Tu contraseña ha sido actualizada correctamente. Ahora puedes iniciar sesión con tus nuevas credenciales.</p>
+          <h1 className="text-3xl font-black uppercase tracking-tight mb-4">Todo listo!</h1>
+          <p className="text-gray-500 mb-8">Tu contrasea ha sido actualizada correctamente. Ahora puedes iniciar sesin con tus nuevas credenciales.</p>
           <button 
             onClick={() => navigate('/account')}
             className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2"
@@ -70,31 +70,31 @@ const ResetPasswordPage = () => {
           <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Lock size={28} />
           </div>
-          <h1 className="text-2xl font-black uppercase tracking-tight">Nueva Contraseña</h1>
+          <h1 className="text-2xl font-black uppercase tracking-tight">Nueva Contrasea</h1>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Crea una clave segura para tu cuenta</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nueva Contraseña</label>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Nueva Contrasea</label>
             <input 
               type="password" 
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all text-sm font-bold"
-              placeholder="••••••••"
+              placeholder=""
             />
           </div>
           <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Confirmar Contraseña</label>
+            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Confirmar Contrasea</label>
             <input 
               type="password" 
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-100 transition-all text-sm font-bold"
-              placeholder="••••••••"
+              placeholder=""
             />
           </div>
 
@@ -103,7 +103,7 @@ const ResetPasswordPage = () => {
             disabled={loading}
             className="w-full bg-black text-white py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl hover:bg-blue-600 transition-all disabled:opacity-30"
           >
-            {loading ? 'Actualizando...' : 'Restablecer Contraseña'}
+            {loading ? 'Actualizando...' : 'Restablecer Contrasea'}
           </button>
         </form>
       </div>

@@ -10,10 +10,10 @@ describe('Real Integration Tests (Backend <-> WordPress)', () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.data)).toBe(true);
     expect(res.data.length).toBeGreaterThan(0);
-    console.log(`✅ Productos encontrados: ${res.data.length}`);
+    console.log(` Productos encontrados: ${res.data.length}`);
   });
 
-  it('debe devolver categorías con URLs transformadas', async () => {
+  it('debe devolver categoras con URLs transformadas', async () => {
     const res = await axios.get(`${BACKEND_URL}/wc/categories`);
     expect(res.status).toBe(200);
     const categories = res.data;
@@ -23,7 +23,7 @@ describe('Real Integration Tests (Backend <-> WordPress)', () => {
       // Verificar que no hay rastro de 'wordpress' o 'localhost:8086'
       expect(stringified).not.toContain('http://wordpress');
       expect(stringified).not.toContain('localhost:8086');
-      console.log('✅ URLs de categorías reescritas correctamente.');
+      console.log(' URLs de categoras reescritas correctamente.');
     }
   });
 
@@ -35,7 +35,7 @@ describe('Real Integration Tests (Backend <-> WordPress)', () => {
       });
     } catch (error: any) {
       expect([401, 403]).toContain(error.response.status);
-      console.log('✅ Error de autenticación manejado correctamente.');
+      console.log(' Error de autenticacin manejado correctamente.');
     }
   });
 

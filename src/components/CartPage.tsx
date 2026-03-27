@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useCartStore } from "../store/cartStore";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -6,13 +7,36 @@ import { useUserStore } from "../store/userStore";
 import { trackRemoveFromCart } from "../utils/analytics";
 
 const CartPage = () => {
-  const { items, removeItem, updateQuantity, cartTotal, clearCart } = useCartStore();
+  const { items, removeItem, updateQuantity, cartTotal, clearCart, coupon, applyCoupon, removeCoupon } = useCartStore();
   const navigate = useNavigate();
   const { user } = useUserStore();
+  const [couponInput, setCouponInput] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput) return;
+    setIsApplying(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const res = await fetch(`${apiUrl}/wc/coupons/validate?code=${couponInput}`);
+      const data = await res.json();
+      if (data.valid) {
+        applyCoupon({ code: data.code, amount: data.amount, type: data.type });
+        toast.success(data.message);
+        setCouponInput("");
+      } else {
+        toast.error(data.message || "Cupn invlido");
+      }
+    } catch (err) {
+      toast.error("Error al validar cupn");
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
   const handleProceedToCheckout = () => {
     if (!user) {
-      toast.info("Por favor, inicia sesión para finalizar tu compra");
+      toast.info("Por favor, inicia sesin para finalizar tu compra");
       navigate('/account?redirect=checkout');
     } else {
       navigate('/checkout');
@@ -32,8 +56,8 @@ const CartPage = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
           </svg>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Tu carrito está vacío</h2>
-        <p className="text-gray-500 mb-8">Parece que aún no has añadido productos.</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Tu carrito est vaco</h2>
+        <p className="text-gray-500 mb-8">Parece que an no has aadido productos.</p>
         <Link to="/" className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-full transition-colors">
           Explorar Productos
         </Link>
@@ -84,7 +108,7 @@ const CartPage = () => {
                       ${formatPrice(parseFloat(item.price) * item.quantity)}
                     </div>
                     {isIphoneCategory(item.categories || []) && (
-                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Dólar Blue</span>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 italic">Dlar Blue</span>
                     )}
                   </div>
                 </div>
@@ -103,19 +127,62 @@ const CartPage = () => {
             <div className="space-y-4 mb-8 text-gray-600">
               <div className="flex justify-between">
                 <span className="text-sm">Subtotal</span>
-                <span className="font-bold text-gray-900">${formatPrice(cartTotal())}</span>
+                <span className="font-bold text-gray-900">${formatPrice(items.reduce((total, i) => total + (parseFloat(i.price) * i.quantity), 0))}</span>
               </div>
+
+              {/* CUPONES SECCIN */}
+              <div className="pt-4 border-t border-gray-100">
+                {!coupon ? (
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value)}
+                      placeholder="CDIGO DE CUPN" 
+                      className="flex-1 bg-gray-50 border-none rounded-xl px-4 py-3 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-blue-100"
+                    />
+                    <button 
+                      onClick={handleApplyCoupon}
+                      disabled={isApplying || !couponInput}
+                      className="bg-gray-900 text-white px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest disabled:opacity-20 transition-all"
+                    >
+                      {isApplying ? '...' : 'Aplicar'}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex justify-between items-center bg-blue-50/50 p-3 rounded-xl border border-blue-100 animate-in zoom-in-95">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Cupn: {coupon.code}</span>
+                      <span className="text-[9px] text-blue-400 font-bold uppercase">Descuento aplicado!</span>
+                    </div>
+                    <button onClick={removeCoupon} className="text-blue-300 hover:text-red-500 transition-colors">
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {coupon && (
+                 <div className="flex justify-between text-green-600">
+                    <span className="text-sm">Descuento</span>
+                    <span className="font-bold">
+                       -{coupon.type === 'percent' ? `${coupon.amount}%` : `$${formatPrice(parseFloat(coupon.amount))}`}
+                    </span>
+                 </div>
+              )}
+
               <div className="flex justify-between">
-                <span className="text-sm">Envío estimado</span>
+                <span className="text-sm">Envo estimado</span>
                 <span className="text-green-600 font-bold uppercase text-[10px] bg-green-50 px-2 py-1 rounded">Gratis</span>
               </div>
+              
               <div className="border-t border-gray-100 pt-4 flex flex-col items-end gap-1">
                 <div className="flex justify-between w-full font-extrabold text-2xl text-gray-900">
                   <span>Total</span>
                   <span className="text-blue-600">${formatPrice(cartTotal())}</span>
                 </div>
                 {items.some(i => isIphoneCategory(i.categories || [])) && (
-                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest italic">Cotización Dólar Blue aplicada</span>
+                   <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest italic">Cotizacin Dlar Blue aplicada</span>
                 )}
               </div>
             </div>
@@ -128,7 +195,7 @@ const CartPage = () => {
             </button>
             
             <p className="mt-6 text-center text-[10px] text-gray-400 uppercase leading-relaxed tracking-wider">
-              Pago seguro garantizado con tecnología SSL de 256 bits.
+              Pago seguro garantizado con tecnologa SSL de 256 bits.
             </p>
           </div>
         </div>

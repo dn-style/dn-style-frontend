@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-// Simulación de la función de reescritura de URLs para validar lógica
+// Simulacin de la funcin de reescritura de URLs para validar lgica
 const rewriteUrls = (data: any) => {
   if (!data) return data;
   const stringified = JSON.stringify(data);

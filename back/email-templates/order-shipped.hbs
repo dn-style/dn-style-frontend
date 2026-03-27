@@ -41,25 +41,24 @@
       <img src="https://dnshop.com.ar/wp-content/uploads/2026/03/logodnstyle.png" alt="DN shop"
         style="height: 100px; width: auto; display: block; margin: 0 auto;">
     </div>
-    <h2>¡Tu pedido está en camino! 🚚</h2>
-    <p>Hola {{name}},</p>
-    <p>Buenas noticias. Tu pedido <strong>#{{order_id}}</strong> ha sido despachado y está en ruta hacia tu dirección.
-    </p>
+    <h2>Your order is on its way! </h2>
+    <p>Hello {{name}},</p>
+    <p>Great news! Your order <strong>#{{order_id}}</strong> has been dispatched and is on its way to your address.</p>
 
     {{#if tracking_number}}
     <div class="tracking-box">
-      <p>Tu número de seguimiento:</p>
+      <p>Your tracking number:</p>
       <div class="tracking-code">{{tracking_number}}</div>
       {{#if tracking_url}}
       <br />
-      <a href="{{tracking_url}}" style="color: #007cba; text-decoration: none;">Seguir envío</a>
+      <a href="{{tracking_url}}" style="color: #007cba; text-decoration: none;">Track shipment</a>
       {{/if}}
     </div>
     {{else}}
-    <p>Tu pedido llegará pronto.</p>
+    <p>Your order will arrive soon.</p>
     {{/if}}
 
-    <p>Gracias por confiar en DN shop Store.</p>
+    <p>Thank you for choosing DN shop Store.</p>
   </div>
 </body>
 

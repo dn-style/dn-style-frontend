@@ -1,8 +1,8 @@
 import { MessageCircle } from "lucide-react";
 
 const WhatsAppButton = () => {
-  const phoneNumber = "542223434403"; // Reemplaza con tu número real
-  const message = encodeURIComponent("Hola DN shop! Me gustaría consultar sobre sus productos.");
+  const phoneNumber = "542223434403"; // Reemplaza con tu nmero real
+  const message = encodeURIComponent("Hola DN shop! Me gustara consultar sobre sus productos.");
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`;
 
   return (
@@ -16,7 +16,7 @@ const WhatsAppButton = () => {
       <MessageCircle size={28} />
       {/* Tooltip opcional al hacer hover */}
       <span className="absolute right-16 bg-white text-gray-800 text-sm font-medium py-2 px-4 rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-        ¿Necesitas ayuda? Chatea con nosotros
+        Necesitas ayuda? Chatea con nosotros
       </span>
     </a>
   );

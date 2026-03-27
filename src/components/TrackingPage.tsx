@@ -7,7 +7,7 @@ const TrackingPage = () => {
     <div className="bg-white min-h-screen py-16 px-4">
       <div className="max-w-xl mx-auto text-center">
         <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Seguimiento de Pedido</h1>
-        <p className="text-gray-500 mb-8">Ingresa el número de tu orden para conocer su estado actual.</p>
+        <p className="text-gray-500 mb-8">Ingresa el nmero de tu orden para conocer su estado actual.</p>
         
         <div className="bg-gray-50 p-8 rounded-2xl border border-gray-100 shadow-sm">
           <input 
@@ -23,7 +23,7 @@ const TrackingPage = () => {
         </div>
         
         <div className="mt-8 text-sm text-gray-400">
-          ¿No encuentras tu número de orden? Revisa el correo electrónico de confirmación de tu compra.
+          No encuentras tu nmero de orden? Revisa el correo electrnico de confirmacin de tu compra.
         </div>
       </div>
     </div>

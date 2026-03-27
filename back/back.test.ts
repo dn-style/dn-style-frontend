@@ -18,7 +18,7 @@ describe('Backend API Unit Tests', () => {
   it('POST /checkout debe validar campos faltantes', async () => {
     const res = await request(app)
       .post('/checkout')
-      .send({}); // Pedido vacío
-    expect(res.status).toBe(500); // Porque WooCommerce fallará
+      .send({}); // Pedido vaco
+    expect(res.status).toBe(500); // Porque WooCommerce fallar
   });
 });

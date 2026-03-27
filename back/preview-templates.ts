@@ -33,7 +33,7 @@ const templates = [
     'verify-email'
 ];
 
-console.log('🚀 Generando previsualizaciones de plantillas...');
+console.log(' Generando previsualizaciones de plantillas...');
 
 templates.forEach(templateName => {
     const templatePath = path.join(templatesDir, `${templateName}.hbs`);
@@ -45,10 +45,10 @@ templates.forEach(templateName => {
 
         const outputPath = path.join(outputDir, `${templateName}.html`);
         fs.writeFileSync(outputPath, html);
-        console.log(`✅ Generado: ${outputPath}`);
+        console.log(` Generado: ${outputPath}`);
     } else {
-        console.log(`⚠️  No se encontró la plantilla: ${templateName}.hbs`);
+        console.log(`  No se encontr la plantilla: ${templateName}.hbs`);
     }
 });
 
-console.log('\n✨ Proceso terminado. Abre los archivos en la carpeta "back/previews_output" para ver los resultados.');
+console.log('\n Proceso terminado. Abre los archivos en la carpeta "back/previews_output" para ver los resultados.');

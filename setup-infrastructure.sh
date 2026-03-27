@@ -1,42 +1,42 @@
 #!/bin/bash
 
-# Configuración básica
+# Configuracin bsica
 SITE_URL="https://dnshop.com.ar"
 SITE_TITLE="DN shop"
 ADMIN_USER="admin"
 ADMIN_PASSWORD="Ds12345678!"
 ADMIN_EMAIL="admin@example.com"
 
-echo "=== INICIANDO SETUP DE INFRAESTRUCTURA (PRODUCCIÓN) ==="
+echo "=== INICIANDO SETUP DE INFRAESTRUCTURA (PRODUCCIN) ==="
 
-echo "Esperando a que la base de datos esté lista..."
+echo "Esperando a que la base de datos est lista..."
 sleep 5
 
-# 1. INSTALACIÓN CORE
+# 1. INSTALACIN CORE
 if docker-compose run --rm wp-cli wp --allow-root core is-installed --quiet; then
-  echo "✅ WordPress ya está instalado."
+  echo " WordPress ya est instalado."
 else
-  echo "⚙️ Instalando WordPress Core en $SITE_URL..."
+  echo " Instalando WordPress Core en $SITE_URL..."
   docker-compose run --rm wp-cli wp --allow-root core install --url="$SITE_URL" --title="$SITE_TITLE" --admin_user="$ADMIN_USER" --admin_password="$ADMIN_PASSWORD" --admin_email="$ADMIN_EMAIL" --skip-email
-  echo "✅ WordPress instalado."
+  echo " WordPress instalado."
 fi
 
 # 2. PLUGINS
-echo "⚙️ Instalando/Verificando plugins..."
+echo " Instalando/Verificando plugins..."
 PLUGINS="woocommerce woocommerce-mercadopago jwt-authentication-for-wp-rest-api amazon-s3-and-cloudfront cloudflare-flexible-ssl"
 for plugin in $PLUGINS; do
     if ! docker-compose run --rm wp-cli wp --allow-root plugin is-installed $plugin; then
         docker-compose run --rm wp-cli wp --allow-root plugin install $plugin --activate --force
-        echo "✅ Plugin $plugin instalado."
+        echo " Plugin $plugin instalado."
     else
-        # Asegurar que esté activo
+        # Asegurar que est activo
         docker-compose run --rm wp-cli wp --allow-root plugin activate $plugin
-        echo "✅ Plugin $plugin ya instalado."
+        echo " Plugin $plugin ya instalado."
     fi
 done
 
-# 3. CONFIGURACIÓN S3 & STORAGE TOGGLE
-echo "⚙️ Configurando Almacenamiento (S3/R2)..."
+# 3. CONFIGURACIN S3 & STORAGE TOGGLE
+echo " Configurando Almacenamiento (S3/R2)..."
 docker-compose run --rm wp-cli wp --allow-root eval "
     update_option( 'as3cf_settings', array(
         'provider'           => 'aws',
@@ -52,20 +52,20 @@ docker-compose run --rm wp-cli wp --allow-root eval "
     ) );
 "
 
-# 4. CONFIGURACIÓN WOOCOMMERCE
-echo "⚙️ Configurando WooCommerce..."
+# 4. CONFIGURACIN WOOCOMMERCE
+echo " Configurando WooCommerce..."
 docker-compose run --rm wp-cli wp --allow-root option update woocommerce_default_country "AR"
 docker-compose run --rm wp-cli wp --allow-root option update woocommerce_currency "USD"
 docker-compose run --rm wp-cli wp --allow-root rewrite structure "/%postname%/" --hard
 
-# 5. CONFIGURACIÓN SEGURIDAD Y SSL (Cloudflare Flex)
-echo "⚙️ Configurando Seguridad y SSL..."
+# 5. CONFIGURACIN SEGURIDAD Y SSL (Cloudflare Flex)
+echo " Configurando Seguridad y SSL..."
 docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_SECRET_KEY "$(openssl rand -base64 64)" --type=constant --quiet 2>/dev/null
 docker-compose run --rm wp-cli wp --allow-root config set JWT_AUTH_CORS_ENABLE true --raw --type=constant --quiet 2>/dev/null
 docker-compose run --rm wp-cli wp --allow-root config set FORCE_SSL_ADMIN true --raw --type=constant --quiet 2>/dev/null
 
-# 6. GENERACIÓN DE API KEYS
-echo "⚙️ Verificando API Keys..."
+# 6. GENERACIN DE API KEYS
+echo " Verificando API Keys..."
 docker-compose run --rm wp-cli wp --allow-root eval '
   global $wpdb;
   $table_name = $wpdb->prefix . "woocommerce_api_keys";
@@ -90,7 +90,7 @@ docker-compose run --rm wp-cli wp --allow-root eval '
       echo "WC_KEY=$consumer_key\n";
       echo "WC_SECRET=$consumer_secret\n";
   } else {
-      echo "✅ API Keys ya existen.\n";
+      echo " API Keys ya existen.\n";
   }
 '
 

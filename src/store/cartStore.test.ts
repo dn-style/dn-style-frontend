@@ -31,7 +31,7 @@ describe('useCartStore', () => {
     useCartStore.getState().clearCart();
   });
 
-  it('debe añadir un producto al carrito', () => {
+  it('debe aadir un producto al carrito', () => {
     const { addItem, items } = useCartStore.getState();
     addItem(mockProduct as any);
     expect(useCartStore.getState().items.length).toBe(1);

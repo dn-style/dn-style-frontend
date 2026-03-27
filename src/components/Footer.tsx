@@ -17,7 +17,7 @@ const Footer = () => {
              <span className="text-2xl font-bold text-white tracking-tight">DN shop</span>
           </Link>
           <p className="text-sm leading-relaxed">
-            Tu destino premium para fragancias exclusivas y la última tecnología. Elevamos tu estilo personal con productos seleccionados.
+            Tu destino premium para fragancias exclusivas y la ltima tecnologa. Elevamos tu estilo personal con productos seleccionados.
           </p>
           <div className="flex gap-4">
             <a href="https://instagram.com/dnshop.oficial" target="_blank" rel="noopener noreferrer" onClick={() => trackSocial('instagram')} className="hover:text-white transition-colors"><Instagram size={20} /></a>
@@ -30,11 +30,11 @@ const Footer = () => {
 
         {/* Columna 2: Mapa del Sitio */}
         <div>
-          <h3 className="text-white font-bold mb-6 uppercase text-sm tracking-widest">Navegación</h3>
+          <h3 className="text-white font-bold mb-6 uppercase text-sm tracking-widest">Navegacin</h3>
           <ul className="space-y-4 text-sm">
             <li><Link to="/" className="hover:text-white transition-colors">Inicio</Link></li>
             <li><Link to="/categoria/perfumes" className="hover:text-white transition-colors">Perfumes</Link></li>
-            <li><Link to="/categoria/electronica" className="hover:text-white transition-colors">Electrónica</Link></li>
+            <li><Link to="/categoria/electronica" className="hover:text-white transition-colors">Electrnica</Link></li>
             <li><Link to="/about" className="hover:text-white transition-colors">Nosotros</Link></li>
             <li><Link to="/account" className="hover:text-white transition-colors">Mi Cuenta</Link></li>
           </ul>
@@ -45,8 +45,8 @@ const Footer = () => {
           <h3 className="text-white font-bold mb-6 uppercase text-sm tracking-widest">Asistencia</h3>
           <ul className="space-y-4 text-sm">
             <li><Link to="/faq" className="hover:text-white transition-colors">Preguntas Frecuentes</Link></li>
-            <li><Link to="/terms" className="hover:text-white transition-colors">Términos y Condiciones</Link></li>
-            <li><Link to="/privacy" className="hover:text-white transition-colors">Políticas de Privacidad</Link></li>
+            <li><Link to="/terms" className="hover:text-white transition-colors">Trminos y Condiciones</Link></li>
+            <li><Link to="/privacy" className="hover:text-white transition-colors">Polticas de Privacidad</Link></li>
             <li><Link to="/tracking" className="hover:text-white transition-colors">Seguimiento de Pedido</Link></li>
           </ul>
         </div>
@@ -72,9 +72,9 @@ const Footer = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-gray-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs uppercase tracking-tighter">
-        <p>© 2026 DN shop. TODOS LOS DERECHOS RESERVADOS.</p>
+        <p> 2026 DN shop. TODOS LOS DERECHOS RESERVADOS.</p>
         <div className="flex gap-6">
-           <span>De Brandsen a 🇦🇷</span>
+           <span>De Brandsen a </span>
         </div>
       </div>
     </footer>

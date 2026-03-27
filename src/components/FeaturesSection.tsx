@@ -16,8 +16,8 @@ const features = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     ),
-    title: "Envío Rápido",
-    description: "Recibe tu pedido en tiempo récord.",
+    title: "Envo Rpido",
+    description: "Recibe tu pedido en tiempo rcord.",
   },
   {
     icon: (
@@ -35,7 +35,7 @@ const features = [
       </svg>
     ),
     title: "Soporte 24/7",
-    description: "Estamos aquí para ayudarte en todo momento.",
+    description: "Estamos aqu para ayudarte en todo momento.",
   },
 ];
 

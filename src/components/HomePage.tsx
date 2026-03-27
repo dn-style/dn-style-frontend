@@ -8,8 +8,8 @@ const HomePage = () => {
   const apiUrl = import.meta.env.VITE_API_URL || "";
   const slugToId = useCategoriesStore((state) => state.slugToId);
 
-  // Solo bloqueamos si no hay categorías cargadas aún Y el store está vacío
-  // Esto previene el parpadeo pero permite mostrar la página si las categorías fallan o están vacías
+  // Solo bloqueamos si no hay categoras cargadas an Y el store est vaco
+  // Esto previene el parpadeo pero permite mostrar la pgina si las categoras fallan o estn vacas
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -25,11 +25,11 @@ const HomePage = () => {
     <div className="bg-white min-h-screen">
       <SEO 
         title="Inicio"
-        description="DN shop Store - Fragancias Premium, lo último en Electrónica y Tecnología Apple. Envíos a todo el país desde Brandsen."
+        description="DN shop Store - Fragancias Premium, lo ltimo en Electrnica y Tecnologa Apple. Envos a todo el pas desde Brandsen."
         structuredData={structuredData}
       />
       
-      {/* SECCIÓN 1: Hero Principal (Fragancias) */}
+      {/* SECCIN 1: Hero Principal (Fragancias) */}
       <section className="relative">
         <HeroSection
           title="Compra tus airpod pro 2 y participa por tu IPHONE 15 sellado!"
@@ -41,7 +41,7 @@ const HomePage = () => {
         />
       </section>
 
-      {/* SECCIÓN 3: Vitrina de Fragancias */}
+      {/* SECCIN 3: Vitrina de Fragancias */}
       {slugToId["fragancias"] ? (
         <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between mb-8">
@@ -52,7 +52,7 @@ const HomePage = () => {
         </section>
       ) : null}
 
-      {/* SECCIÓN 4: Vitrina de Apple */}
+      {/* SECCIN 4: Vitrina de Apple */}
       {slugToId["apple"] ? (
         <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between mb-8">
@@ -63,17 +63,17 @@ const HomePage = () => {
         </section>
       ) : null}
 
-      {/* SECCIÓN 5: Vitrina de Electrónica */}
+      {/* SECCIN 5: Vitrina de Electrnica */}
       {slugToId["electronica"] ? (
          <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 bg-gray-50">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Tendencias en Electrónica</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Tendencias en Electrnica</h2>
             <a href="/categoria/electronica" className="text-blue-600 font-semibold hover:underline">Ver todo &rarr;</a>
           </div>
           <Divitions categoryId={slugToId["electronica"]} />
         </section>
       ) : null}
-      {/* SECCIÓN 2: Barra de Beneficios/Confianza */}
+      {/* SECCIN 2: Barra de Beneficios/Confianza */}
       <FeaturesSection />
     </div>
   );

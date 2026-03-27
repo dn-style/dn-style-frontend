@@ -1,6 +1,6 @@
 import { useConfigStore } from '../store/configStore';
 
-// Hook para obtener el valor del dólar blue (desde el store global)
+// Hook para obtener el valor del dlar blue (desde el store global)
 export const useDolarBlue = () => {
   const rate = useConfigStore(state => state.rate);
   const loading = useConfigStore(state => state.loading);
@@ -9,7 +9,7 @@ export const useDolarBlue = () => {
 };
 
 export const isIphoneCategory = (categories: { id: number; name: string; slug: string; parent?: number }[]) => {
-  // Verificamos si tiene la categoría 'apple' o 'iphone' y si es una categoría principal
+  // Verificamos si tiene la categora 'apple' o 'iphone' y si es una categora principal
   return categories.some(cat => (cat.slug === 'apple' || cat.slug === 'iphone') && (!cat.parent || cat.parent === 0));
 };
 

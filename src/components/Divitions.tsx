@@ -50,7 +50,7 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
       });
   }, [categoryId]);
 
-  // Efecto para detectar cambios en el tamaño de la ventana
+  // Efecto para detectar cambios en el tamao de la ventana
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -60,13 +60,13 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
         height: window.innerHeight,
       });
 
-      // Forzar actualización del slider después de redimensionar
+      // Forzar actualizacin del slider despus de redimensionar
       if (sliderRef.current) {
         setTimeout(() => {
           sliderRef.current?.slickGoTo(0);
           setTimeout(() => {
             if (sliderRef.current) {
-              // @ts-ignore - react-slick tiene un método interno para redimensionar
+              // @ts-ignore - react-slick tiene un mtodo interno para redimensionar
               sliderRef.current.innerSlider.adaptHeight();
               sliderRef.current.slickPlay();
             }
@@ -132,7 +132,7 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
           slidesToShow: 1,
           slidesToScroll: 1,
           arrows: false,
-          dots: windowSize.width > 350, // Ocultar dots en pantallas muy pequeñas
+          dots: windowSize.width > 350, // Ocultar dots en pantallas muy pequeas
           centerMode: windowSize.width > 350,
           centerPadding: windowSize.width > 350 ? "20px" : "0px",
         },
@@ -191,12 +191,12 @@ const Divitions = ({ categoryId }: DivitionsProps) => {
           </Slider>
         ) : (
           <div className="text-center py-10 text-gray-500">
-            No hay productos disponibles en esta categoría.
+            No hay productos disponibles en esta categora.
           </div>
         )}
       </div>
 
-      {/* Botones de navegación personalizados */}
+      {/* Botones de navegacin personalizados */}
       {sortedProducts.length > 0 && (
         <>
           <button

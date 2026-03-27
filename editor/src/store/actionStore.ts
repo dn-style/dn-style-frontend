@@ -44,14 +44,14 @@ export const useActionStore = create(
         },
         {
           id: 'act_2',
-          name: 'Enviar Notificación Slack',
-          description: 'Envía un mensaje a un canal de Slack.',
+          name: 'Enviar Notificacin Slack',
+          description: 'Enva un mensaje a un canal de Slack.',
           icon: 'Send',
           inputs: [
             { name: 'mensaje', type: 'string', defaultValue: 'Nueva orden recibida' },
             { name: 'canal', type: 'string', defaultValue: '#ventas' }
           ],
-          code: '// Lógica para llamar a la API de Slack\nconsole.log(`Enviando a ${canal}: ${mensaje}`);',
+          code: '// Lgica para llamar a la API de Slack\nconsole.log(`Enviando a ${canal}: ${mensaje}`);',
           lastModified: Date.now()
         }
       ],

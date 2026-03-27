@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: DN Shop Internal Security
- * Description: Bypass de Nonce para validación interna del Backend.
+ * Description: Bypass de Nonce para validacin interna del Backend.
  */
 
 add_filter('rest_authentication_errors', function($result) {

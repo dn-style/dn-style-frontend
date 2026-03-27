@@ -63,7 +63,7 @@ const RatingSection = ({
               <button key={s} onClick={() => setLocalRating(s)}><Star size={20} className={s <= localRating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"} /></button>
             ))}
           </div>
-          <textarea value={localComment} onChange={(e) => setLocalComment(e.target.value)} placeholder="Tu opinión..." className="w-full p-3 rounded-xl border-none bg-white text-sm mb-3 shadow-inner" rows={2} />
+          <textarea value={localComment} onChange={(e) => setLocalComment(e.target.value)} placeholder="Tu opinin..." className="w-full p-3 rounded-xl border-none bg-white text-sm mb-3 shadow-inner" rows={2} />
           <button onClick={() => handleSendReview(item.product_id, localRating, localComment)} disabled={submittingReview} className="w-full bg-pink-600 text-white py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest">{submittingReview ? 'Enviando...' : 'Publicar'}</button>
         </div>
       )}
@@ -151,7 +151,7 @@ const AccountPage = () => {
         body: JSON.stringify({ username: data.email.trim(), password: data.password })
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Error al iniciar sesión');
+      if (!res.ok) throw new Error(result.message || 'Error al iniciar sesin');
       
       const basicUser: UserProfile = { 
         id: result.user_id || 0,
@@ -165,7 +165,7 @@ const AccountPage = () => {
       login(basicUser, result.token);
       setAnalyticsUser(basicUser.id, { email: basicUser.email });
       trackLogin();
-      toast.success(`¡Hola!`);
+      toast.success(`Hola!`);
       if (redirectPath === 'checkout') navigate('/checkout');
       else { setActiveTab('orders'); fetchOrders(result.user_email); fetchFullProfile(result.user_email); }
     } catch (err: any) { toast.error(stripHtml(err.message)); }
@@ -204,7 +204,7 @@ const AccountPage = () => {
     } catch (err: any) { toast.error(stripHtml(err.message)); }
   };
 
-  const handleLogout = () => { logout(); setActiveTab('login'); toast.info("Sesión cerrada"); navigate('/account'); };
+  const handleLogout = () => { logout(); setActiveTab('login'); toast.info("Sesin cerrada"); navigate('/account'); };
 
   const handleSaveProfile = async (data: any) => {
     if (!user) return;
@@ -246,9 +246,9 @@ const AccountPage = () => {
       
       const updated = await res.json();
       updateUser(updated);
-      toast.success("Perfil actualizado con éxito");
+      toast.success("Perfil actualizado con xito");
       
-      // Volver a pedir los datos para asegurar sincronización total
+      // Volver a pedir los datos para asegurar sincronizacin total
       fetchFullProfile(user.email);
     } catch (err: any) { 
       console.error("[Account] Save error:", err);
@@ -265,14 +265,14 @@ const AccountPage = () => {
       const res = await fetch(`${apiUrl}/orders/upload-receipt`, { method: 'POST', body: formData });
       const result = await res.json();
       if (res.ok) { 
-        toast.success("¡Comprobante enviado!"); 
+        toast.success("Comprobante enviado!"); 
         setSelectedFile(null); 
         fetchOrders(user!.email); 
       } else {
         throw new Error(result.error || "Error al subir el archivo");
       }
     } catch (err: any) { 
-      toast.error(err.message || "Error en la conexión"); 
+      toast.error(err.message || "Error en la conexin"); 
     }
   };
   const handleSendReview = async (productId: number, rating: number, comment: string) => {
@@ -291,7 +291,7 @@ const AccountPage = () => {
         })
       });
       if (res.ok) { 
-        toast.success("¡Gracias por tu opinión!"); 
+        toast.success("Gracias por tu opinin!"); 
         setRatedProducts(p => [...p, productId]); 
         setReviewingProduct(null); 
       }
@@ -309,8 +309,8 @@ const AccountPage = () => {
           {activeTab === 'login' ? (
             <form className="space-y-5" onSubmit={submitLogin(handleLogin)}>
               <input {...registerLogin("email", { required: true })} type="email" placeholder="EMAIL" className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 text-sm font-bold uppercase" />
-              <input {...registerLogin("password", { required: true })} type="password" placeholder="CONTRASEÑA" className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 text-sm font-bold uppercase" />
-              <div className="flex justify-end"><button type="button" onClick={() => setActiveTab('forgot')} className="text-[10px] font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest">¿Olvidaste tu contraseña?</button></div>
+              <input {...registerLogin("password", { required: true })} type="password" placeholder="CONTRASEA" className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 text-sm font-bold uppercase" />
+              <div className="flex justify-end"><button type="button" onClick={() => setActiveTab('forgot')} className="text-[10px] font-black text-gray-400 hover:text-blue-600 uppercase tracking-widest">Olvidaste tu contrasea?</button></div>
               <button 
                 type="submit" 
                 disabled={isSubmitting}
@@ -332,7 +332,7 @@ const AccountPage = () => {
                   <input {...registerReg("last_name", { required: true })} placeholder="APELLIDO" className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 text-xs font-bold" />
                </div>
                <input {...registerReg("email", { required: true })} type="email" placeholder="EMAIL" className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 text-xs font-bold" />
-               <input {...registerReg("password", { required: true })} type="password" placeholder="CONTRASEÑA" className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 text-xs font-bold" />
+               <input {...registerReg("password", { required: true })} type="password" placeholder="CONTRASEA" className="w-full px-5 py-4 rounded-2xl border-gray-100 bg-gray-50 text-xs font-bold" />
                <button 
                 type="submit" 
                 disabled={isSubmitting}
@@ -423,8 +423,8 @@ const AccountPage = () => {
                         <input {...registerProfile("last_name")} placeholder="APELLIDO" className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all" />
                       </div>
                       <input {...registerProfile("email")} type="email" readOnly className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed font-bold text-xs uppercase" />
-                      <input {...registerProfile("phone")} type="tel" placeholder="TELÉFONO" className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-xs uppercase" />
-                      <input {...registerProfile("address_1")} placeholder="DIRECCIÓN" className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-xs uppercase" />
+                      <input {...registerProfile("phone")} type="tel" placeholder="TELFONO" className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-xs uppercase" />
+                      <input {...registerProfile("address_1")} placeholder="DIRECCIN" className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50 focus:bg-white transition-all font-bold text-xs uppercase" />
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 font-bold text-xs uppercase">
                         <input {...registerProfile("city")} placeholder="CIUDAD" className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50" />
                         <input {...registerProfile("state")} placeholder="PROVINCIA" className="w-full px-6 py-4 rounded-2xl border-gray-100 bg-gray-50" />

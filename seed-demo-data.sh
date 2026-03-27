@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== GENERANDO CATÁLOGO EXPANDIDO (PRODUCTOS + MARCAS + IMÁGENES) ==="
+echo "=== GENERANDO CATLOGO EXPANDIDO (PRODUCTOS + MARCAS + IMGENES) ==="
 
 docker-compose run --rm wp-cli wp --allow-root eval '
   if ( ! defined( "WC_PLUGIN_FILE" ) ) {
@@ -11,7 +11,7 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   require_once ABSPATH . "wp-admin/includes/image.php";
 
   // --- 1. LIMPIEZA ---
-  echo "🧹 Limpiando catálogo...\n";
+  echo " Limpiando catlogo...\n";
   $products = get_posts(["post_type" => ["product", "product_variation"], "numberposts" => -1, "post_status" => "any"]);
   foreach ($products as $p) { wp_delete_post($p->ID, true); }
 
@@ -35,7 +35,7 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   }
 
   // --- 3. ATRIBUTOS GLOBALES (MARCAS) ---
-  echo "🏷️ Creando Marcas...\n";
+  echo " Creando Marcas...\n";
   // Primero creamos el atributo global
   $attr_args = array(
       "name" => "Marca",
@@ -49,7 +49,7 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   wc_delete_attribute(wc_attribute_taxonomy_id_by_name("Marca"));
   wc_create_attribute($attr_args);
   
-  // Registrar taxonomía para poder insertar términos inmediatamente
+  // Registrar taxonoma para poder insertar trminos inmediatamente
   register_taxonomy("pa_marca", ["product"], ["hierarchical" => true]);
 
   function get_brand_term_id($brand_name) {
@@ -65,9 +65,9 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   $brand_ysl = get_brand_term_id("Yves Saint Laurent");
   $brand_chanel = get_brand_term_id("Chanel");
 
-  // --- 4. CATEGORÍAS ---
+  // --- 4. CATEGORAS ---
   $cat_frag = get_or_create_cat("Fragancias", "fragancias", "https://images.unsplash.com/photo-1594035910387-fea477942698?w=800");
-  $cat_elec = get_or_create_cat("Electrónica", "electronica", "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800");
+  $cat_elec = get_or_create_cat("Electrnica", "electronica", "https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800");
   $cat_iphone = get_or_create_cat("Iphone", "iphone", "https://images.unsplash.com/photo-1635863138275-d9b33299680b?w=800");
 
   // --- 5. PRODUCTOS ---
@@ -87,15 +87,15 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   }
 
   // A. IPHONE 15 PRO MAX
-  echo "📱 Creando iPhone 15 Pro Max...\n";
+  echo " Creando iPhone 15 Pro Max...\n";
   $p_iphone = new WC_Product_Variable();
   $p_iphone->set_name("iPhone 15 Pro Max");
   $p_iphone->set_slug("iphone-15-pro-max");
-  $p_iphone->set_short_description("El iPhone más avanzado con acabado en titanio de grado aeroespacial.");
+  $p_iphone->set_short_description("El iPhone ms avanzado con acabado en titanio de grado aeroespacial.");
   $p_iphone->set_category_ids([$cat_iphone]);
   $p_iphone->set_image_id(download_img("https://images.unsplash.com/photo-1696446701796-da61225697cc?w=800"));
   
-  // Atributos de variación
+  // Atributos de variacin
   $attr_color = new WC_Product_Attribute();
   $attr_color->set_name("Color"); $attr_color->set_options(["Titanio Natural", "Azul", "Negro"]);
   $attr_color->set_visible(true); $attr_color->set_variation(true);
@@ -123,7 +123,7 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   }
 
   // B. FRAGANCIA YSL
-  echo "🧴 Creando Libre YSL...\n";
+  echo " Creando Libre YSL...\n";
   $p_frag = new WC_Product_Variable();
   $p_frag->set_name("Libre Eau de Parfum");
   $p_frag->set_slug("libre-ysl");
@@ -132,7 +132,7 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   $p_frag->set_image_id(download_img("https://images.unsplash.com/photo-1594035910387-fea477942698?w=800"));
   
   $attr_size = new WC_Product_Attribute();
-  $attr_size->set_name("Tamaño"); $attr_size->set_options(["30ml", "50ml", "90ml"]);
+  $attr_size->set_name("Tamao"); $attr_size->set_options(["30ml", "50ml", "90ml"]);
   $attr_size->set_visible(true); $attr_size->set_variation(true);
   
   $p_frag->set_attributes([$attr_size]);
@@ -143,11 +143,11 @@ docker-compose run --rm wp-cli wp --allow-root eval '
   foreach ($sizes as $s => $p) {
       $v = new WC_Product_Variation();
       $v->set_parent_id($p_frag->get_id());
-      $v->set_attributes(["Tamaño" => $s]);
+      $v->set_attributes(["Tamao" => $s]);
       $v->set_regular_price($p);
       $v->set_status("publish");
       $v->save();
   }
 
-  echo "\n✅ CATÁLOGO FINALIZADO\n";
+  echo "\n CATLOGO FINALIZADO\n";
 '

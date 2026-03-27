@@ -1,11 +1,11 @@
 <?php
 /**
- * Puente de autenticación robusto para validación interna
+ * Puente de autenticacin robusto para validacin interna
  */
 define('WP_USE_THEMES', false);
 require_once('wp-load.php');
 
-// Si no está logueado automáticamente, intentamos validar la cookie manualmente
+// Si no est logueado automticamente, intentamos validar la cookie manualmente
 if (!is_user_logged_in() && !empty($_COOKIE)) {
     foreach ($_COOKIE as $name => $value) {
         if (strpos($name, 'wordpress_logged_in_') === 0) {

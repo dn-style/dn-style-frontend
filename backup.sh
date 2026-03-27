@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# --- CONFIGURACIÓN ---
-# Ruta donde se guardarán los backups
+# --- CONFIGURACIN ---
+# Ruta donde se guardarn los backups
 BACKUP_PATH="/home/leandro/backups"
-# Ruta de la instalación de WordPress (donde está wp-config.php)
+# Ruta de la instalacin de WordPress (donde est wp-config.php)
 WP_ROOT="/var/www/html"
 # Nombre del archivo final
 DATE=$(date +%Y-%m-%d_%H%M%S)
 BACKUP_NAME="wp_full_backup_$DATE"
-# Nombres de los contenedores (ajústalos si tu proyecto tiene un prefijo)
+# Nombres de los contenedores (ajstalos si tu proyecto tiene un prefijo)
 # Si tu carpeta se llama "mi_web", el contenedor suele ser "mi_web-wordpress-1"
 CONTAINER_DB="dn-style-frontend-db-1"
 CONTAINER_WP="dn-style-frontend-wordpress-1"
@@ -41,7 +41,7 @@ docker exec $CONTAINER_WP tar -czf - -C /var/www/html . > "$BACKUP_PATH/$BACKUP_
 cd "$BACKUP_PATH"
 tar -cf "$BACKUP_NAME.tar" "$BACKUP_NAME"
 
-# 5. Limpiar carpeta temporal y backups viejos (opcional: mantener últimos 7 días)
+# 5. Limpiar carpeta temporal y backups viejos (opcional: mantener ltimos 7 das)
 rm -rf "$BACKUP_PATH/$BACKUP_NAME"
 # find "$BACKUP_PATH" -type f -name "*.tar" -mtime +7 -exec rm {} \;
 

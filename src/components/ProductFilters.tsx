@@ -69,7 +69,7 @@ const ProductFilters: React.FC<FilterProps> = ({
         )}
       </div>
 
-      {/* Búsqueda */}
+      {/* Bsqueda */}
       <div className="pb-4 border-b border-gray-100">
         <h3 className="text-sm font-semibold mb-2">Buscar</h3>
         <form onSubmit={handleSearchSubmit} className="relative">
@@ -149,7 +149,7 @@ const ProductFilters: React.FC<FilterProps> = ({
         </div>
       </div>
 
-      {/* Atributos Dinámicos (Marcas, Tallas, etc) */}
+      {/* Atributos Dinmicos (Marcas, Tallas, etc) */}
       {attributes.map((attr) => (
         <div key={attr.slug} className="pb-4 border-b border-gray-100 last:border-0">
           <h3 className="text-sm font-semibold mb-2 capitalize">{attr.name}</h3>

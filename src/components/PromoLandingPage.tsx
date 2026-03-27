@@ -10,7 +10,7 @@ const PromoLandingPage: React.FC = () => {
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // ID del producto Airpods Pro 2 (Hardcoded para esta landing específica)
+  // ID del producto Airpods Pro 2 (Hardcoded para esta landing especfica)
   const AIRPODS_ID = "493"; 
 
   useEffect(() => {
@@ -46,7 +46,7 @@ const PromoLandingPage: React.FC = () => {
     <div className="bg-white min-h-screen overflow-x-hidden">
       <SEO 
         title="Promo AirPods Pro 2 + Sorteo iPhone 15"
-        description="Compra tus AirPods Pro 2 y participa automáticamente por un iPhone 15 sellado. ¡Solo en DN shop!"
+        description="Compra tus AirPods Pro 2 y participa automticamente por un iPhone 15 sellado. Solo en DN shop!"
       />
 
       {/* Hero Section Landing */}
@@ -100,25 +100,25 @@ const PromoLandingPage: React.FC = () => {
               </div>
               <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Sorteo Transparente</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                El sorteo se realizará en vivo a través de nuestro Instagram oficial en vivo y en nuestras oficinas cuando se agoten las 1000 unidades de la promoción.
+                El sorteo se realizar en vivo a travs de nuestro Instagram oficial en vivo y en nuestras oficinas cuando se agoten las 1000 unidades de la promocin.
               </p>
             </div>
             <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-100">
                 <ShieldCheck className="text-blue-600" size={32} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Garantía Oficial</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Garanta Oficial</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Todos nuestros productos son 100% originales con garantía oficial Apple y soporte técnico local en Brandsen.
+                Todos nuestros productos son 100% originales con garanta oficial Apple y soporte tcnico local en Brandsen.
               </p>
             </div>
             {/* <div className="flex flex-col items-center">
               <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-100">
                 <Truck className="text-green-600" size={32} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Envío Inmediato</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Envo Inmediato</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Despachamos tus AirPods en menos de 24hs hábiles. Envío gratis a todo el país para esta promoción.
+                Despachamos tus AirPods en menos de 24hs hbiles. Envo gratis a todo el pas para esta promocin.
               </p> 
             </div> */}
           </div>
@@ -134,20 +134,20 @@ const PromoLandingPage: React.FC = () => {
             </h2>
             <div className="space-y-6 mb-10">
               <p className="text-gray-600">
-                Cancelación activa de ruido el doble de potente. Audio espacial personalizado para una experiencia inmersiva. Y ahora, con estuche de carga USB-C.
+                Cancelacin activa de ruido el doble de potente. Audio espacial personalizado para una experiencia inmersiva. Y ahora, con estuche de carga USB-C.
               </p>
               <ul className="space-y-3">
                 <li className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
-                  <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Cancelación de ruido pro
+                  <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Cancelacin de ruido pro
                 </li>
                 <li className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
-                  <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Hasta 30 horas de batería
+                  <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Hasta 30 horas de batera
                 </li>
                 <li className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
                   <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Resistentes al agua y sudor
                 </li>
                 <li className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
-                  <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Versión alternativa calidad premium
+                  <div className="w-1.5 h-1.5 bg-black rounded-full"></div> Versin alternativa calidad premium
                 </li>
               </ul>
             </div>
@@ -187,16 +187,16 @@ const PromoLandingPage: React.FC = () => {
           <h2 className="text-3xl font-black uppercase tracking-tighter mb-12">Preguntas Frecuentes</h2>
           <div className="space-y-8 text-left">
             <div className="border-b border-white/10 pb-6">
-              <h4 className="font-bold mb-2 uppercase tracking-wide">¿Cómo participo?</h4>
-              <p className="text-gray-400 text-sm">Al comprar tus AirPods, el sistema genera un número de orden. Ese número es tu cupón para el sorteo del iPhone 15.</p>
+              <h4 className="font-bold mb-2 uppercase tracking-wide">Cmo participo?</h4>
+              <p className="text-gray-400 text-sm">Al comprar tus AirPods, el sistema genera un nmero de orden. Ese nmero es tu cupn para el sorteo del iPhone 15.</p>
             </div>
             <div className="border-b border-white/10 pb-6">
-              <h4 className="font-bold mb-2 uppercase tracking-wide">¿Cuándo es el sorteo?</h4>
-              <p className="text-gray-400 text-sm">El sorteo se realiza ante escribano público cuando se completa el cupo de 100 ventas de la promoción.</p>
+              <h4 className="font-bold mb-2 uppercase tracking-wide">Cundo es el sorteo?</h4>
+              <p className="text-gray-400 text-sm">El sorteo se realiza ante escribano pblico cuando se completa el cupo de 100 ventas de la promocin.</p>
             </div>
             <div className="pb-6">
-              <h4 className="font-bold mb-2 uppercase tracking-wide">¿El iPhone 15 es nuevo?</h4>
-              <p className="text-gray-400 text-sm">Sí, entregamos un iPhone 15 de 128GB nuevo, en caja sellada con garantía Apple de 1 año.</p>
+              <h4 className="font-bold mb-2 uppercase tracking-wide">El iPhone 15 es nuevo?</h4>
+              <p className="text-gray-400 text-sm">S, entregamos un iPhone 15 de 128GB nuevo, en caja sellada con garanta Apple de 1 ao.</p>
             </div>
           </div>
         </div>

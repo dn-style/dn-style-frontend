@@ -1,10 +1,10 @@
-# Guía de Seguimiento de Envíos (Tracking)
+# Gua de Seguimiento de Envos (Tracking)
 
-El sistema de DN shop permite notificar automáticamente al cliente cuando su pedido ha sido despachado, enviándole su número de seguimiento por email.
+El sistema de DN shop permite notificar automticamente al cliente cuando su pedido ha sido despachado, envindole su nmero de seguimiento por email.
 
-## Cómo enviar el Número de Seguimiento
+## Cmo enviar el Nmero de Seguimiento
 
-Para que el sistema detecte el código y envíe el correo profesional de "Pedido en Camino", debes seguir estos pasos en el panel de WordPress:
+Para que el sistema detecte el cdigo y enve el correo profesional de "Pedido en Camino", debes seguir estos pasos en el panel de WordPress:
 
 1. Ve a **WooCommerce -> Pedidos** y selecciona el pedido.
 2. En la columna derecha, busca la caja **Notas del pedido**.
@@ -13,19 +13,19 @@ Para que el sistema detecte el código y envíe el correo profesional de "Pedido
 
 ### Formatos Recomendados:
 - `Seguimiento: 123456789`
-- `Guía: AR-998822`
+- `Gua: AR-998822`
 - `Tracking: USP-100200300`
 
 ### Reglas del Sistema:
-- **Palabras clave**: El sistema busca las palabras `seguimiento`, `guia`, `guía` o `tracking`.
-- **Extracción**: El sistema tomará automáticamente todo lo que escribas **después de los dos puntos (:)** como el número de seguimiento para resaltarlo en el mail.
-- **Privacidad**: Si olvidas marcar la nota como "Nota al cliente", el mail **no se enviará**, protegiendo la información interna.
+- **Palabras clave**: El sistema busca las palabras `seguimiento`, `guia`, `gua` o `tracking`.
+- **Extraccin**: El sistema tomar automticamente todo lo que escribas **despus de los dos puntos (:)** como el nmero de seguimiento para resaltarlo en el mail.
+- **Privacidad**: Si olvidas marcar la nota como "Nota al cliente", el mail **no se enviar**, protegiendo la informacin interna.
 
 ## Otros Disparadores de Email
 
-Además de las notas manuales, el sistema envía el correo de despacho automáticamente en este caso:
+Adems de las notas manuales, el sistema enva el correo de despacho automticamente en este caso:
 
-- **Cambio de Estado**: Si cambias el estado del pedido a **"Completado"**, el cliente recibirá el email de confirmación de envío/entrega, incluso si no añadiste una nota de seguimiento previa.
+- **Cambio de Estado**: Si cambias el estado del pedido a **"Completado"**, el cliente recibir el email de confirmacin de envo/entrega, incluso si no aadiste una nota de seguimiento previa.
 
 ---
 
@@ -33,4 +33,4 @@ Además de las notas manuales, el sistema envía el correo de despacho automáti
 **Tipo de nota**: Nota al cliente  
 **Contenido**: `Hola! Tu pedido ya fue despachado por Correo Argentino. Seguimiento: 0000948837722`
 
-**Resultado**: El cliente recibirá un mail con diseño personalizado donde el número `0000948837722` aparecerá destacado en una caja gris de fácil lectura.
+**Resultado**: El cliente recibir un mail con diseo personalizado donde el nmero `0000948837722` aparecer destacado en una caja gris de fcil lectura.

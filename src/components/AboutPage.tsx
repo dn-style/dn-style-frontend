@@ -4,7 +4,7 @@ const AboutPage = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h1 className="text-4xl font-extrabold text-gray-900  mb-6">Sobre DN shop</h1>
         <p className="text-xl text-gray-600  mb-12 leading-relaxed">
-          Somos más que una tienda online. Somos una experiencia curada para aquellos que buscan calidad, estilo y distinción en cada detalle de su vida.
+          Somos ms que una tienda online. Somos una experiencia curada para aquellos que buscan calidad, estilo y distincin en cada detalle de su vida.
         </p>
       </div>
 
@@ -17,9 +17,9 @@ const AboutPage = () => {
            />
         </div>
         <div className="space-y-6">
-           <h2 className="text-3xl font-bold text-gray-900 ">Nuestra Misión</h2>
+           <h2 className="text-3xl font-bold text-gray-900 ">Nuestra Misin</h2>
            <p className="text-gray-600  text-lg">
-             Conectar a nuestros clientes con productos excepcionales, desde las fragancias más exclusivas hasta la última tecnología, garantizando siempre autenticidad y un servicio impecable.
+             Conectar a nuestros clientes con productos excepcionales, desde las fragancias ms exclusivas hasta la ltima tecnologa, garantizando siempre autenticidad y un servicio impecable.
            </p>
            <ul className="space-y-4">
              <li className="flex items-center gap-3">
@@ -32,7 +32,7 @@ const AboutPage = () => {
                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                </div>
-               <span className="font-medium text-gray-800 ">Envíos en 24/48 horas</span>
+               <span className="font-medium text-gray-800 ">Envos en 24/48 horas</span>
              </li>
            </ul>
         </div>

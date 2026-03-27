@@ -39,7 +39,7 @@ const VerifyEmailPage = () => {
              shipping: {} as any
            }, data.token);
            
-           toast.success("¡Cuenta verificada! Redirigiendo...");
+           toast.success("Cuenta verificada! Redirigiendo...");
            setTimeout(() => navigate('/account'), 2000);
         }
       } else {
@@ -64,13 +64,13 @@ const VerifyEmailPage = () => {
             <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle size={40} />
             </div>
-            <h1 className="text-3xl font-black uppercase tracking-tight mb-4">¡Cuenta Verificada!</h1>
+            <h1 className="text-3xl font-black uppercase tracking-tight mb-4">Cuenta Verificada!</h1>
             <p className="text-gray-500 mb-8">Gracias por confirmar tu email. Ya puedes acceder a tu cuenta.</p>
             <button 
               onClick={() => navigate('/account')}
               className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl"
             >
-              Iniciar Sesión
+              Iniciar Sesin
             </button>
           </div>
         )}
@@ -80,8 +80,8 @@ const VerifyEmailPage = () => {
             <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
               <XCircle size={40} />
             </div>
-            <h1 className="text-2xl font-black uppercase tracking-tight mb-4">Enlace Inválido</h1>
-            <p className="text-gray-500 mb-8">El enlace de verificación ha expirado o no es válido.</p>
+            <h1 className="text-2xl font-black uppercase tracking-tight mb-4">Enlace Invlido</h1>
+            <p className="text-gray-500 mb-8">El enlace de verificacin ha expirado o no es vlido.</p>
             <button 
               onClick={() => navigate('/account')}
               className="w-full bg-gray-100 text-gray-900 py-4 rounded-2xl font-black uppercase text-xs tracking-widest"

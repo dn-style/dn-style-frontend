@@ -70,10 +70,10 @@ export const Topbar = ({
         <button 
           onClick={onOpenConfig}
           className="text-gray-500 hover:text-blue-600 transition-all flex items-center gap-2 group"
-          title="Configuración de Workflows"
+          title="Configuracin de Workflows"
         >
           <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-          <span className="font-bold uppercase text-[10px] tracking-widest hidden lg:block">Configuración</span>
+          <span className="font-bold uppercase text-[10px] tracking-widest hidden lg:block">Configuracin</span>
         </button>
       </div>
 
@@ -123,7 +123,7 @@ export const Topbar = ({
           onClick={() => {
             const json = query.serialize();
             console.log("Layout Guardado:", json);
-            alert("¡Layout guardado en consola!");
+            alert("Layout guardado en consola!");
           }}
           className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg font-bold uppercase text-[10px] tracking-widest hover:bg-gray-200 transition-all flex items-center gap-2"
         >

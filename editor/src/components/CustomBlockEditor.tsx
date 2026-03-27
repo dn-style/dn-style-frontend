@@ -77,7 +77,7 @@ const EditorContent = ({ blockId, onBack }: { blockId: string | null, onBack: ()
         console.log("SAVE ATTEMPT - ROOT children:", rootNode.data.nodes);
         
         if (rootNode.data.nodes.length === 0) {
-            alert('El lienzo está vacío. Agrega contenido antes de guardar.');
+            alert('El lienzo est vaco. Agrega contenido antes de guardar.');
             return;
         }
 
@@ -101,7 +101,7 @@ const EditorContent = ({ blockId, onBack }: { blockId: string | null, onBack: ()
                     <div className="w-full max-w-3xl min-h-[500px] bg-white shadow-xl rounded-xl overflow-hidden flex flex-col border border-dashed border-gray-300">
                         <Frame>
                             <Element is={Container} padding={20} canvas>
-                                <Text text="Empieza a construir tu componente aquí..." fontSize={14} color="#9ca3af" textAlign="center" />
+                                <Text text="Empieza a construir tu componente aqu..." fontSize={14} color="#9ca3af" textAlign="center" />
                             </Element>
                         </Frame>
                     </div>

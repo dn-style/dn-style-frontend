@@ -160,7 +160,7 @@ export const ConfigPage = ({ onBack }: { onBack: () => void }) => {
                         onClick={handleSaveAction}
                         className="px-8 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/20"
                     >
-                        {editingAction?.id ? 'Guardar Cambios' : 'Registrar Acción'}
+                        {editingAction?.id ? 'Guardar Cambios' : 'Registrar Accin'}
                     </button>
                 </div>
             </div>
@@ -185,7 +185,7 @@ export const ConfigPage = ({ onBack }: { onBack: () => void }) => {
               <Settings size={18} className="text-white" />
             </div>
             <div>
-              <h1 className="font-black text-xs uppercase tracking-[0.2em] text-white">Configuración</h1>
+              <h1 className="font-black text-xs uppercase tracking-[0.2em] text-white">Configuracin</h1>
               <p className="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Creator Mode \ Registry</p>
             </div>
           </div>
@@ -286,7 +286,7 @@ export const ConfigPage = ({ onBack }: { onBack: () => void }) => {
                             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                             <input 
                                 type="text" 
-                                placeholder="Buscar acción..."
+                                placeholder="Buscar accin..."
                                 className="w-full bg-slate-800 border-none rounded-lg pl-9 pr-4 py-2 text-[11px] text-white focus:ring-1 focus:ring-blue-500 transition-all font-bold placeholder:text-slate-600"
                             />
                         </div>
@@ -334,7 +334,7 @@ export const ConfigPage = ({ onBack }: { onBack: () => void }) => {
                                         </button>
                                         <button 
                                             onClick={() => {
-                                                if(confirm("¿Estás seguro de eliminar esta acción?")) deleteAction(selectedAction.id);
+                                                if(confirm("Ests seguro de eliminar esta accin?")) deleteAction(selectedAction.id);
                                             }}
                                             className="p-3 bg-red-900/20 hover:bg-red-900/40 rounded-xl text-red-500 transition-all border border-red-900/30"
                                         >
@@ -402,7 +402,7 @@ export const ConfigPage = ({ onBack }: { onBack: () => void }) => {
                                     <div className="w-16 h-16 bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-center mx-auto text-slate-600">
                                         <Package size={32} />
                                     </div>
-                                    <h3 className="font-bold text-slate-400">Selecciona una acción del registro para ver su configuración técnica o crear una nueva.</h3>
+                                    <h3 className="font-bold text-slate-400">Selecciona una accin del registro para ver su configuracin tcnica o crear una nueva.</h3>
                                 </div>
                             </div>
                         )}
@@ -462,7 +462,7 @@ export const ConfigPage = ({ onBack }: { onBack: () => void }) => {
                                    
                                    <button 
                                         onClick={() => {
-                                            if (confirm(`¿Estás seguro de eliminar el origen "${source.name}"?`)) {
+                                            if (confirm(`Ests seguro de eliminar el origen "${source.name}"?`)) {
                                                 useDataSourceStore.getState().deleteSource(source.id);
                                             }
                                         }}
