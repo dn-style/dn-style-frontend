@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -73,22 +72,4 @@ func seedData() {
 	DB.Save(&User{Email: "admin@tesla.com", Password: hp, TenantID: "tesla_motors"})
 	DB.Save(&User{Email: "dev@space-x.com", Password: hp, TenantID: "space_x"})
 
-	// Seed Agents
-	configMap := map[string]string{
-		"db_name":     "wordpress",
-		"db_user":     "wordpress",
-		"db_password": "wordpress_password",
-		"db_host":     "db",
-		"wc_key":      "ck_xxxxxxxxxxxx",
-		"wc_secret":   "cs_xxxxxxxxxxxx",
-		"jwt_secret":  "secret_v4_2026",
-		"domain":      "https://tesla-retiro.com.ar",
-		"port":        "4000",
-	}
-	configJSON, _ := json.Marshal(configMap)
-	tagsTesla, _ := json.Marshal([]map[string]string{
-		{"label": "CLIENT: TESLA", "color": "#3b82f6"},
-		{"label": "LOC: LATAM", "color": "#10b981"},
-	})
-	DB.Save(&AgentInfo{Token: "token-tesla-1", TenantID: "tesla_motors", SiteID: "sucursal_retiro", Config: string(configJSON), Tags: string(tagsTesla), Lat: -34.593, Lng: -58.375})
 }

@@ -14,6 +14,7 @@ import hbs from 'handlebars';
 import fs from 'fs';
 import path from 'path';
 import { createClient } from 'redis';
+import { MercadoPagoConfig, Preference, Payment } from 'mercadopago';
 
 // --- CONFIGURACIN DE RUTAS ---
 // Si estamos en la carpeta dist (produccin), el root es un nivel arriba
@@ -35,6 +36,11 @@ if (!isTest) {
     console.error(' Error conexin Redis. Est el servicio arriba?');
   });
 }
+
+// --- CONFIGURACIN MERCADO PAGO ---
+const mpClient = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN || ''
+});
 
 // --- CONFIGURACIN CORS ---
 const allowedOrigins = [
@@ -328,6 +334,41 @@ app.post('/auth/orders', async (req: Request, res: Response) => {
           console.log(`[Create Order]  Nota de conversin creada en pedido #${orderId}`);
         } catch (noteErr: any) {
           console.error(`[Create Order]  Error al crear nota de conversin:`, noteErr.message);
+        }
+      }
+
+      // 3. MERCADO PAGO PREFERENCE
+      if (response.data.payment_method === 'woo-mercado-pago-basic') {
+        try {
+          const preference = new Preference(mpClient);
+          const result = await preference.create({
+            body: {
+              items: [
+                {
+                  id: orderId.toString(),
+                  title: `Pedido DN Style #${orderId}`,
+                  quantity: 1,
+                  unit_price: Number(response.data.total),
+                  currency_id: 'ARS',
+                },
+              ],
+              external_reference: orderId.toString(),
+              notification_url: process.env.MP_WEBHOOK_URL,
+              back_urls: {
+                success: `${SITE_URL}/thanks`,
+                failure: `${SITE_URL}/cart`,
+                pending: `${SITE_URL}/thanks`,
+              },
+              auto_return: 'approved',
+            },
+          });
+
+          if (result.init_point) {
+            console.log(`[Mercado Pago]  Preferencia creada para pedido #${orderId}: ${result.init_point}`);
+            return res.json({ ...rewriteUrls(response.data), init_point: result.init_point });
+          }
+        } catch (mpErr: any) {
+          console.error(`[Mercado Pago Error]  Error al crear preferencia para #${orderId}:`, mpErr.message);
         }
       }
     }
@@ -852,6 +893,43 @@ const sendOrderEmail = async (orderData: any, templateName: string, extraData: a
     console.error('[Email Error]  No se pudo enviar el correo:', err);
   }
 };
+
+// --- WEBHOOKS MERCADO PAGO ---
+app.post('/wc/mercado-pago/webhook', async (req: Request, res: Response) => {
+  const id = req.query['data.id'] || req.query.id;
+  
+  if (!id) {
+    return res.status(200).send('OK (No ID)');
+  }
+
+  console.log(`[Mercado Pago Webhook]  Notification received for ID: ${id}`);
+
+  try {
+    const payment = new Payment(mpClient);
+    const result = await payment.get({ id: id.toString() });
+
+    const status = result.status;
+    const orderId = result.external_reference;
+
+    if (status === 'approved' && orderId) {
+      console.log(`[Mercado Pago Webhook]  Payment approved for Order #${orderId}`);
+
+      // Update WC Order
+      const auth = Buffer.from(`${process.env.WC_KEY}:${process.env.WC_SECRET}`).toString('base64');
+      await axios.put(`http://wordpress/wp-json/wc/v3/orders/${orderId}`, 
+        { status: 'processing', set_paid: true },
+        { headers: { 'Authorization': `Basic ${auth}` } }
+      );
+      
+      console.log(`[Mercado Pago Webhook]  Order #${orderId} updated to 'processing'`);
+    }
+
+    res.status(200).send('OK');
+  } catch (err: any) {
+    console.error(`[Mercado Pago Webhook Error]  Error fetching payment ${id}:`, err.message);
+    res.status(500).send('Error');
+  }
+});
 
 // --- WEBHOOKS WOOCOMMERCE ---
 app.post('/webhooks/woocommerce', async (req: Request, res: Response) => {

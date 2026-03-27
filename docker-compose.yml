@@ -69,7 +69,7 @@ services:
       - app-network
 
   backend:
-    build: ./back-go
+    build: ./back
     restart: always
     extra_hosts:
       - "host.docker.internal:host-gateway"

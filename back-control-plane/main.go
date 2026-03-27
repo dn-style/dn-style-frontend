@@ -42,6 +42,9 @@ func main() {
 	}))
 
 	app.Static("/assets", "./assets")
+	app.Get("/install.sh", func(c *fiber.Ctx) error {
+		return c.SendFile("./assets/install.sh")
+	})
 	app.Static("/", "./www", fiber.Static{
 		Compress: true,
 		Index:    "index.html",
@@ -61,10 +64,12 @@ func main() {
 	api.Post("/login", handleLogin)
 	api.Get("/billing", handleBilling)
 	api.Get("/online", handleOnlineAgents)
+	api.Get("/market-plugins", handleMarketPlugins)
 	api.Post("/agents", handleCreateAgent)
 	api.Delete("/agents/delete", handleDeleteAgent)
 	api.Patch("/update-tags", handleUpdateTags)
 	api.Post("/push-config", handlePushConfig)
+	api.Post("/trigger-update", handleTriggerUpdate)
 	api.Get("/usage", handleUsage)
 	api.Post("/paypal/webhook", handlePaypalWebhook)
 

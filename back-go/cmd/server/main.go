@@ -25,7 +25,12 @@ import (
 )
 
 func main() {
-	_ = godotenv.Load()
+	// Load Environment
+	if ep := os.Getenv("WP_ENV_PATH"); ep != "" {
+		_ = godotenv.Load(ep)
+	} else {
+		_ = godotenv.Load()
+	}
 
 	// Initialize Configuration
 	config.WcKey = os.Getenv("WC_KEY")

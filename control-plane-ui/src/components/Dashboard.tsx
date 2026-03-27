@@ -23,7 +23,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, notify }) => {
   const [showTagModal, setShowTagModal] = useState(false);
   const [tagTarget, setTagTarget] = useState<{token: string, tags?: string} | null>(null);
   const [showProvision, setShowProvision] = useState(false);
-  const selectedAgent = agents.find(a => a.token === selectedToken);
+  const selectedAgent = Array.isArray(agents) ? agents.find(a => a.token === selectedToken) : null;
 
   const fetchAgents = async () => {
     try {
@@ -80,7 +80,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, notify }) => {
     } catch (err) { notify('App installation failed', 'error'); }
   };
 
+   const triggerUpdate = async (token: string) => {
+     try {
+       await api.post('/trigger-update', { token });
+       notify('Update signal broadcasted', 'success');
+     } catch (err) { notify('Failed to trigger update', 'error'); }
+   };
+
    const filteredAgents = useMemo(() => {
+     if (!Array.isArray(agents)) return [];
      return agents.filter(a => {
        const term = tagSearch.toLowerCase();
        const matchSite = a.site.toLowerCase().includes(term);
@@ -295,7 +303,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, notify }) => {
                              <div className="w-10 h-10 bg-blue-600/10 rounded-xl border border-blue-500/20 flex items-center justify-center italic text-blue-500 font-black"><Package size={20} /></div>
                              <div className="flex-1">
                                 <div className="text-[10px] font-black text-white uppercase tracking-tighter">Core Engine</div>
-                                <div className="text-[8px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">Main Package v4.0 (Active)</div>
+                                <div className="flex items-center gap-3 mt-0.5">
+                                   <div className="text-[8px] text-gray-500 font-bold uppercase tracking-widest">v4.3.0 (SIGNED)</div>
+                                   <button onClick={() => triggerUpdate(selectedAgent.token)} className="text-[7px] font-black text-blue-500 hover:text-white transition-colors bg-blue-500/10 hover:bg-blue-600 px-2 py-0.5 rounded-md uppercase tracking-[0.2em] border border-blue-500/20">Check_for_Updates</button>
+                                </div>
                              </div>
                           </div>
                           <ShieldCheck size={18} className="text-blue-500/40" />

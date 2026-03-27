@@ -19,6 +19,25 @@ const HINTS: {[key: string]: string} = {
   s3_secret_key: "Private cryptographic secret for S3 authentication."
 };
 
+const PLACEHOLDERS: {[key: string]: string} = {
+  db_name: "e.g. woogo_production",
+  db_user: "e.g. root or dbuser",
+  db_password: "e.g. **********",
+  db_host: "e.g. localhost or 127.0.0.1",
+  domain: "e.g. https://system.tesla.com",
+  port: "e.g. 80, 443, 3000",
+  redis_host: "e.g. redis-service or 127.0.0.1",
+  redis_port: "e.g. 6379",
+  s3_endpoint: "e.g. http://s3.amazonaws.com or http://minio:9000",
+  s3_bucket: "e.g. production-storage",
+  smtp_host: "e.g. smtp.postmarkapp.com",
+  smtp_port: "e.g. 587 (TLS) or 465 (SSL)",
+  smtp_user: "e.g. relay@tesla.com",
+  smtp_pass: "e.g. my_secret_app_pass",
+  smtp_secure: "e.g. true or false",
+  email_sender: "e.g. System Notifications <noreply@tesla.com>"
+};
+
 const PROTECTED_KEYS = new Set([
   'domain', 'wc_wp_url', 'redis_host', 'redis_port', 
   'redis_prefix', 'redis_user', 'redis_pass',
@@ -56,11 +75,11 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ config, setConfig, onC
     };
     Object.entries(config).forEach(([k, v]) => {
        const key = k.toLowerCase();
-       if (key === 'domain' || key === 'wc_wp_url') groups.CORE.push([k, v]);
+       if (isSensitive(k)) groups.SECURITY.push([k, v]);
+       else if (key === 'domain' || key === 'wc_wp_url') groups.CORE.push([k, v]);
        else if (key.includes('s3')) groups.S3.push([k, v]);
        else if (key.includes('redis') || key.includes('db') || key.includes('sql')) groups.DATA.push([k, v]);
        else if (key.includes('smtp') || key.includes('mail')) groups.MAIL.push([k, v]);
-       else if (isSensitive(k)) groups.SECURITY.push([k, v]);
        else groups.CUSTOM.push([k, v]);
     });
     return groups;
@@ -167,9 +186,10 @@ export const ConfigModal: React.FC<ConfigModalProps> = ({ config, setConfig, onC
                        <input 
                           type={isSensitive(k) && !showSecrets ? "password" : "text"}
                           value={v}
+                          placeholder={PLACEHOLDERS[k.toLowerCase()] || `Enter ${k.toLowerCase()}...`}
                           spellCheck={false}
                           onChange={(e) => setConfig({...config, [k]: e.target.value})}
-                          className="w-full bg-transparent border-none outline-none py-2 text-xl font-bold tracking-tight text-white focus:text-blue-400 transition-colors placeholder:opacity-20 translate-y-[-2px]"
+                          className="w-full bg-transparent border-none outline-none py-2 text-xl font-bold tracking-tight text-white focus:text-blue-400 transition-colors placeholder:text-gray-800 translate-y-[-2px]"
                        />
                        <div className="absolute bottom-0 left-0 h-[1px] w-full bg-white/5 group-hover:bg-blue-500/30 transition-all" />
                     </div>

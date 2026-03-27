@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -32,15 +33,19 @@ func getEnvPath() string {
 	pathBytes, err := os.ReadFile(envPathConfigFile)
 	if err != nil {
 		// Default fallback for legacy or development
-		return "/mnt/beleriand/codigo/dn-style-frontend/.env"
+		return ".env"
 	}
 	return strings.TrimSpace(string(pathBytes))
 }
 
 func isAllowedKey(key string) bool {
 	key = strings.ToUpper(key)
-	allowedPrefixes := []string{"WP_", "DB_", "WC_", "JWT_", "SERVER_", "API_"}
-	allowedExact := []string{"PORT", "DOMAIN", "DEBUG", "LOG_LEVEL"}
+	allowedPrefixes := []string{
+		"WP_", "DB_", "WC_", "JWT_", "SERVER_", "API_",
+		"REDIS_", "SMTP_", "S3_", "MAIL_", "AWS_", "MINIO_",
+		"MYSQL_", "POSTGRES_", "EMAIL_",
+	}
+	allowedExact := []string{"PORT", "DOMAIN", "DEBUG", "LOG_LEVEL", "SITE_URL", "APP_ENV"}
 
 	for _, p := range allowedPrefixes {
 		if strings.HasPrefix(key, p) {
@@ -218,12 +223,27 @@ func reconfigureSystem(payload map[string]string) error {
 		syncCount++
 	}
 
+	// PORT CONFLICT DETECTION
+	if p, exists := payload["PORT"]; exists {
+		ln, err := net.Listen("tcp", ":"+p)
+		if err != nil {
+			log.Printf("PORT_CONFLICT_WARNING: Environment specifies port %s but it is already occupied!", p)
+		} else {
+			_ = ln.Close()
+		}
+	}
+
 	err = os.WriteFile(envPath, []byte(strings.Join(lines, "\n")), 0600)
 	if err != nil {
 		return fmt.Errorf("failed to write .env: %v", err)
 	}
 
 	log.Printf("RECONFIGURATION_PROGRESS: Synced %d authorized parameters to %s", syncCount, envPath)
+
+	// AUTO-RESTART WORKLOAD TO APPLY CHANGES
+	log.Println("RECONFIGURATION_APPLY: Restarting Workload Core (wooGo-Proxy-core)...")
+	exec.Command("systemctl", "restart", "wooGo-Proxy-core").Run()
+
 	return nil
 }
 

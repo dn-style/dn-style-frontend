@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"os"
 	"strings"
 	"time"
 
@@ -108,6 +109,33 @@ func handleCreateAgent(c *fiber.Ctx) error {
 	a.TenantID = tenantID
 	a.Token = "at_" + secureToken(16) + "_" + a.TenantID
 	a.Status = "OFFLINE"
+
+	defaultConfig := map[string]string{
+		"DB_NAME":       "app_db",
+		"DB_USER":       "root",
+		"DB_PASSWORD":   "password",
+		"DB_HOST":       "localhost",
+		"WC_KEY":        "",
+		"WC_SECRET":     "",
+		"JWT_SECRET":    "jwt_secret_here",
+		"DOMAIN":        "",
+		"PORT":          "80",
+		"REDIS_HOST":    "127.0.0.1",
+		"REDIS_PORT":    "6379",
+		"S3_ENDPOINT":   "",
+		"S3_BUCKET":     "",
+		"S3_ACCESS_KEY": "",
+		"S3_SECRET_KEY": "",
+		"SMTP_HOST":     "",
+		"SMTP_PORT":     "587",
+		"SMTP_USER":     "",
+		"SMTP_PASS":     "",
+		"SMTP_SECURE":   "true",
+		"EMAIL_SENDER":  "",
+	}
+	confJSON, _ := json.Marshal(defaultConfig)
+	a.Config = string(confJSON)
+
 	DB.Create(&a)
 	return c.JSON(a)
 }
@@ -181,6 +209,37 @@ func handlePushConfig(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"status": "ok"})
+}
+
+func handleTriggerUpdate(c *fiber.Ctx) error {
+	u := c.Locals("user").(*jwt.Token)
+	claims := u.Claims.(jwt.MapClaims)
+	tenantID := claims["tenant"].(string)
+
+	var req struct {
+		Token string `json:"token"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(400).SendString("Invalid request")
+	}
+
+	var agent AgentInfo
+	if err := DB.First(&agent, "token = ? AND tenant_id = ?", req.Token, tenantID).Error; err != nil {
+		return c.Status(403).SendString("Unauthorized")
+	}
+
+	mutex.Lock()
+	a, ok := activeAgents[req.Token]
+	mutex.Unlock()
+
+	if !ok {
+		return c.Status(404).SendString("Agent offline")
+	}
+
+	msg, _ := json.Marshal(map[string]interface{}{"action": "TRIGGER_UPDATE"})
+	a.Conn.WriteMessage(websocket.TextMessage, msg)
+
+	return c.JSON(fiber.Map{"status": "Update sequence initiated for node " + req.Token})
 }
 
 func handleUsage(c *fiber.Ctx) error {
@@ -284,4 +343,18 @@ func handlePaypalWebhook(c *fiber.Ctx) error {
 		})
 	}
 	return c.SendStatus(200)
+}
+func handleMarketPlugins(c *fiber.Ctx) error {
+	plugins := []string{}
+	files, err := os.ReadDir("./assets/plugins")
+	if err != nil {
+		return c.JSON(plugins)
+	}
+
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".so") {
+			plugins = append(plugins, strings.TrimSuffix(f.Name(), ".so"))
+		}
+	}
+	return c.JSON(plugins)
 }

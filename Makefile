@@ -23,6 +23,7 @@ agent:
 	@go build -o $(ASSETS_DIR)/bin/wooGo-Proxy ./$(AGENT_SRC)/main.go
 	@echo " Compiling DN Workload Agent (Core)..."
 	@cd $(WORKLOAD_SRC) && make all
+	@cp -f $(WORKLOAD_SRC)/bin/agent $(ASSETS_DIR)/bin/wooGo-Proxy-core
 	@cp -f $(WORKLOAD_SRC)/bin/plugins/*.so $(ASSETS_DIR)/plugins/
 	@echo " Compiling SECURE UPDATER..."
 	@go build -o $(ASSETS_DIR)/bin/wooGo-Proxy-updater ./updater/main.go
@@ -34,7 +35,7 @@ release: directories agent
 
 controlplane:
 	@echo " Compiling DN CONTROL PLANE..."
-	@cd $(CONTROLPLANE_SRC) && go build -o ../$(BIN_DIR)/controlplane ./main.go
+	@cd $(CONTROLPLANE_SRC) && go build -o ../$(BIN_DIR)/controlplane .
 
 frontend:
 	@echo " Building Frontend UI..."
