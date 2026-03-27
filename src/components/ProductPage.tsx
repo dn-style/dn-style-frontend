@@ -343,7 +343,7 @@ const ProductPage = () => {
                >
                  {product.type === 'variable' && !currentVariation 
                     ? 'Selecciona opciones' 
-                    : isOutOfStock ? 'Agotado' : 'Aadir al Carrito'}
+                    : isOutOfStock ? 'Agotado' : 'Añadir al Carrito'}
                </button>
                
                <a
