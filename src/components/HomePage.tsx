@@ -24,8 +24,8 @@ const HomePage = () => {
   return (
     <div className="bg-white min-h-screen">
       <SEO 
-        title="Inicio"
-        description="DN shop Store - Fragancias Premium, lo ltimo en Electrnica y Tecnologa Apple. Envos a todo el pas desde Brandsen."
+        title="Fragancias & Tech"
+        description="DN shop Store - Fragancias Premium, lo último en Electrónica y Tecnología Apple. Envíos a todo el país desde Brandsen."
         structuredData={structuredData}
       />
       

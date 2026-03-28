@@ -5,11 +5,11 @@ const ShippingPolicyPage = () => {
   return (
     <div className="bg-white min-h-screen py-16 px-4">
       <SEO 
-        title="Polticas de Envo" 
-        description="Conoce nuestras polticas de envo y garantas para equipos sellados, seminuevos, electrodomsticos y fragancias."
+        title="Políticas de Envío" 
+        description="Conoce nuestras políticas de envío y garantías para equipos sellados, seminuevos, electrodomésticos y fragancias."
       />
       <div className="max-w-4xl mx-auto prose prose-blue text-gray-600">
-        <h1 className="text-4xl font-extrabold text-gray-900 mb-12 text-center uppercase tracking-tighter italic">Polticas de Envo y Garanta</h1>
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-12 text-center uppercase tracking-tighter italic">Políticas de Envío y Garantía</h1>
 
         {/* EQUIPOS SELLADOS */}
         <section className="mb-12 bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">

@@ -51,7 +51,7 @@ const ResetPasswordPage = () => {
             <CheckCircle size={40} />
           </div>
           <h1 className="text-3xl font-black uppercase tracking-tight mb-4">Todo listo!</h1>
-          <p className="text-gray-500 mb-8">Tu contrasea ha sido actualizada correctamente. Ahora puedes iniciar sesin con tus nuevas credenciales.</p>
+          <p className="text-gray-500 mb-8">Tu contraseña ha sido actualizada correctamente. Ahora puedes iniciar sesión con tus nuevas credenciales.</p>
           <button 
             onClick={() => navigate('/account')}
             className="w-full bg-black text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl flex items-center justify-center gap-2"

@@ -191,7 +191,7 @@ func HandleGetCategories(c *fiber.Ctx) error {
 func HandleValidateCoupon(c *fiber.Ctx) error {
 	code := c.Query("code")
 	if code == "" {
-		return c.Status(400).JSON(fiber.Map{"valid": false, "message": "Cdigo vaco"})
+		return c.Status(400).JSON(fiber.Map{"valid": false, "message": "Código vacío"})
 	}
 
 	auth := base64.StdEncoding.EncodeToString([]byte(config.WcKey + ":" + config.WcSecret))
@@ -201,23 +201,23 @@ func HandleValidateCoupon(c *fiber.Ctx) error {
 		Get("/wp-json/wc/v3/coupons")
 
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"valid": false, "message": "Error al validar cupn"})
+		return c.Status(500).JSON(fiber.Map{"valid": false, "message": "Error al validar cupón"})
 	}
 
 	var coupons []map[string]interface{}
 	_ = json.Unmarshal(resp.Body(), &coupons)
 
 	if len(coupons) == 0 {
-		return c.JSON(fiber.Map{"valid": false, "message": "Cupn invlido"})
+		return c.Status(200).JSON(fiber.Map{"valid": false, "message": "Cupón inválido"})
 	}
 
 	coupon := coupons[0]
 
-	// Verificar fecha de expiracin
+	// Verificar fecha de expiración
 	if dateExp, ok := coupon["date_expires"].(string); ok && dateExp != "" {
 		expires, _ := time.Parse("2006-01-02T15:04:05", dateExp)
 		if time.Now().After(expires) {
-			return c.JSON(fiber.Map{"valid": false, "message": "Cupn expirado"})
+			return c.JSON(fiber.Map{"valid": false, "message": "Cupón expirado"})
 		}
 	}
 

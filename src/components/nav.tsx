@@ -56,9 +56,9 @@ const Header: React.FC = () => {
   return (
     <header className="w-full sticky top-0 z-[100] bg-white shadow-sm">
       {/* 1. Barra de Anuncio Superior */}
-      {/* <div className="bg-black text-white text-[10px] md:text-[11px] font-bold uppercase tracking-[0.25em] py-2 text-center">
-        <span> Envos Gratis en compras superiores a $100.000  De Brandsen a todo el pas</span>
-      </div> */}
+      <div className="bg-black text-white text-[10px] md:text-[11px] font-bold uppercase tracking-[0.25em] py-2 text-center">
+        <span> Envíos Gratis en compras superiores a $100.000  De Brandsen a todo el país</span>
+      </div>
 
       {/* 2. Main Header (Logo, Search, Icons) */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

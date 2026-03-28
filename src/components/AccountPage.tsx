@@ -131,7 +131,7 @@ const AccountPage = () => {
           country: data.billing?.country || "AR"
         });
       } else if (res.ok && (!data || !data.id)) {
-        console.warn("[Account] Perfil no encontrado en el servidor. Sincronizando sesin...");
+        console.warn("[Account] Perfil no encontrado en el servidor. Sincronizando sesión...");
         logout();
       }
     } catch (err) { console.error("[Account] Error fetching profile:", err); } finally { setLoadingProfile(false); }
@@ -154,7 +154,7 @@ const AccountPage = () => {
         body: JSON.stringify({ username: data.email.trim(), password: data.password })
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Error al iniciar sesin');
+      if (!res.ok) throw new Error(result.message || 'Error al iniciar sesión');
       
       const basicUser: UserProfile = { 
         id: result.user_id || 0,
@@ -190,8 +190,31 @@ const AccountPage = () => {
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || 'Error al registrarse');
       trackSignUp();
-      toast.success('Registro exitoso. Ya puedes entrar.');
-      setActiveTab('login');
+      
+      if (result.jwt_token) {
+        const basicUser: UserProfile = { 
+          id: result.id || 0,
+          email: result.email, 
+          first_name: result.first_name,
+          last_name: result.last_name,
+          billing: result.billing || {} as CustomerAddress, 
+          shipping: result.shipping || {} as CustomerAddress
+        };
+        
+        login(basicUser, result.jwt_token);
+        setAnalyticsUser(basicUser.id, { email: basicUser.email });
+        toast.success(`Registro exitoso! Ya estás logueado.`);
+        
+        if (redirectPath === 'checkout') navigate('/checkout');
+        else { 
+          setActiveTab('orders'); 
+          fetchOrders(result.email); 
+          fetchFullProfile(result.email); 
+        }
+      } else {
+        toast.success('Registro exitoso. Ya puedes entrar.');
+        setActiveTab('login');
+      }
     } catch (err: any) { toast.error(stripHtml(err.message)); }
   };
 

@@ -116,9 +116,9 @@ const PromoLandingPage: React.FC = () => {
               <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-100">
                 <Truck className="text-green-600" size={32} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Envo Inmediato</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-4">Envío Inmediato</h3>
               <p className="text-gray-500 text-sm leading-relaxed">
-                Despachamos tus AirPods en menos de 24hs hbiles. Envo gratis a todo el pas para esta promocin.
+                Despachamos tus AirPods en menos de 24hs hábiles. Envío gratis a todo el país para esta promoción.
               </p> 
             </div> */}
           </div>
@@ -188,7 +188,7 @@ const PromoLandingPage: React.FC = () => {
           <div className="space-y-8 text-left">
             <div className="border-b border-white/10 pb-6">
               <h4 className="font-bold mb-2 uppercase tracking-wide">Cmo participo?</h4>
-              <p className="text-gray-400 text-sm">Al comprar tus AirPods, el sistema genera un nmero de orden. Ese nmero es tu cupn para el sorteo del iPhone 15.</p>
+              <p className="text-gray-400 text-sm">Al comprar tus AirPods, el sistema genera un número de orden. Ese número es tu cupón para el sorteo del iPhone 15.</p>
             </div>
             <div className="border-b border-white/10 pb-6">
               <h4 className="font-bold mb-2 uppercase tracking-wide">Cundo es el sorteo?</h4>

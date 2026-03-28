@@ -35,7 +35,7 @@ interface PaymentGateway {
 }
 
 const StarRating = ({ rating }: { rating: number }) => {
-  // Asegurar que rating sea un nmero vlido entre 0 y 5
+  // Asegurar que rating sea un número válido entre 0 y 5
   const safeRating = isNaN(rating) ? 0 : Math.min(5, Math.max(0, rating));
   const fullStars = Math.floor(safeRating);
   const hasHalfStar = safeRating % 1 >= 0.5;
@@ -85,7 +85,7 @@ const ProductPage = () => {
     fetch(`${apiUrl}/wc/products/${id}`)
       .then(res => res.ok ? res.json() : Promise.reject("Error en API"))
       .then(data => {
-        if (!data || data.error || !data.id) throw new Error("Producto invlido");
+        if (!data || data.error || !data.id) throw new Error("Producto inválido");
         setProduct(data);
         setError(false);
         
@@ -97,7 +97,7 @@ const ProductPage = () => {
         fetch(`${apiUrl}/wc/products/${id}/reviews`).then(r => r.json()).then(r => setReviews(Array.isArray(r) ? r : [])).catch(() => {});
         fetch(`${apiUrl}/wc/payment_gateways`).then(r => r.json()).then(gateways => {
           if (Array.isArray(gateways)) {
-            // Filtramos solo los que son de transferencia (bacs es el ID estndar de WooCommerce para transferencia bancaria)
+            // Filtramos solo los que son de transferencia (bacs es el ID estándar de WooCommerce para transferencia bancaria)
             setPaymentGateways(gateways.filter(g => g.enabled && (g.id === 'bacs' || g.id.toLowerCase().includes('transferencia'))));
           }
         }).catch(() => {});
@@ -105,7 +105,7 @@ const ProductPage = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error("[ProductPage]  Fallo crtico:", err);
+        console.error("[ProductPage]  Fallo crítico:", err);
         setError(true);
         setLoading(false);
       });
@@ -116,7 +116,6 @@ const ProductPage = () => {
     
     const match = variations.find(v => {
       return v.attributes.every(vAttr => {
-        // Buscamos en el estado del usuario una llave que coincida (ignorando maysculas)
         const userSelectedOption = Object.entries(selectedAttributes).find(
           ([name]) => name.toLowerCase() === vAttr.name.toLowerCase()
         )?.[1];
@@ -127,13 +126,13 @@ const ProductPage = () => {
     setCurrentVariation(match || null);
     
     if (match && match.image?.src) {
-       console.log("[ProductPage]  Cambio de imagen detectado por variacin:", match.image.src);
+       console.log("[ProductPage]  Cambio de imagen detectado por variación:", match.image.src);
        const imgIndex = (product.images || []).findIndex(img => img.src === match.image?.src);
        if (imgIndex !== -1) {
          setSelectedImage(imgIndex);
          setVariationImageOverride(null);
        } else {
-         // Si la imagen de la variacin no est en la galera principal, la usamos como override
+         // Si la imagen de la variación no está en la galería principal, la usamos como override
          setVariationImageOverride(match.image.src);
        }
     } else {
@@ -200,7 +199,7 @@ const ProductPage = () => {
   if (error || !product) return (
     <div className="text-center py-20 min-h-screen flex flex-col items-center justify-center">
       <h2 className="text-2xl font-bold mb-4 text-gray-900">Producto no disponible</h2>
-      <p className="text-gray-500 mb-8">No pudimos encontrar la informacin del producto solicitado.</p>
+      <p className="text-gray-500 mb-8">No pudimos encontrar la información del producto solicitado.</p>
       <button onClick={() => navigate('/')} className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl uppercase text-xs tracking-widest hover:bg-blue-600 transition-colors">Volver al inicio</button>
     </div>
   );
@@ -225,7 +224,7 @@ const ProductPage = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           
-          {/* GALERA */}
+          {/* GALERÍA */}
           <div className="space-y-6">
             <div 
               className="relative w-full aspect-square bg-gray-50 rounded-3xl overflow-hidden cursor-crosshair border border-gray-100 group"
@@ -278,7 +277,7 @@ const ProductPage = () => {
              
              <div className="flex items-center gap-3 mb-6">
                 <StarRating rating={parseFloat(product.average_rating || "0")} />
-                <span className="text-sm font-bold text-gray-400">({reviews.length} reseas)</span>
+                <span className="text-sm font-bold text-gray-400">({reviews.length} reseñas)</span>
              </div>
              
              <div className="flex flex-col mb-8">
@@ -358,9 +357,9 @@ const ProductPage = () => {
                </a>
              </div>
 
-             <Link to="/envios" className="block text-center text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors mb-8">
-               Consultar Polticas de Envo y Garanta 
-             </Link>
+              <Link to="/envios" className="block text-center text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700 transition-colors mb-8">
+                Consultar Políticas de Envío y Garantía 
+              </Link>
 
              {/* MEDIOS DE PAGO (Solo Transferencias) */}
              {paymentGateways.length > 0 && (
@@ -383,7 +382,7 @@ const ProductPage = () => {
 
         {product.description && (
           <div className="mt-24 max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100 uppercase tracking-tight">Descripcin Detallada</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100 uppercase tracking-tight">Descripción Detallada</h3>
             <div className="prose prose-lg prose-blue max-w-none text-gray-600" dangerouslySetInnerHTML={{ __html: product.description }} />
           </div>
         )}
@@ -391,13 +390,13 @@ const ProductPage = () => {
         {/* RESEAS */}
         <div className="mt-24 max-w-7xl mx-auto">
           <h3 className="text-2xl font-bold text-gray-900 mb-8 pb-4 border-b border-gray-100 uppercase tracking-tight flex items-center gap-4">
-            Reseas del Producto
+            Reseñas del Producto
             <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-black">{reviews.length}</span>
           </h3>
           
           {reviews.length === 0 ? (
             <div className="text-center py-12 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-              <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">An no hay reseas</p>
+              <p className="text-gray-400 font-bold uppercase text-xs tracking-widest">Aún no hay reseñas</p>
             </div>
           ) : (
             <div className="px-4">

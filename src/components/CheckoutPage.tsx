@@ -115,7 +115,7 @@ const CheckoutPage = () => {
       set_paid: false, // El pago se valida vía webhook o revisión manual
       billing: finalBillingData,
       shipping: finalBillingData,
-      shipping_lines: selectedShipping ? [{ method_id: selectedShipping, method_title: shippingMethods.find(s => s.id === selectedShipping)?.title || 'Envo' }] : [],
+      shipping_lines: selectedShipping ? [{ method_id: selectedShipping, method_title: shippingMethods.find(s => s.id === selectedShipping)?.title || 'Envío' }] : [],
       line_items: items.map(item => {
         return {
           product_id: Number(item.id),
@@ -161,8 +161,8 @@ const CheckoutPage = () => {
         toast.success('Pedido recibido con éxito!');
       }
 
-      // --- ACTUALIZACIN DE PERFIL ---
-      // Si el usuario est logueado, actualizamos sus datos en WordPress para futuras compras
+      // --- ACTUALIZACIÓN DE PERFIL ---
+      // Si el usuario está logueado, actualizamos sus datos en WordPress para futuras compras
       if (user?.id) {
         try {
           const updatePayload = {
@@ -284,17 +284,17 @@ const CheckoutPage = () => {
                      <div>
                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
                        <input {...register("email", { required: true, pattern: /^\S+@\S+$/i })} type="email" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="juan@ejemplo.com" />
-                       {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVLIDO</span>}
+                       {errors.email && <span className="text-red-500 text-[10px] font-bold">EMAIL INVÁLIDO</span>}
                      </div>
                      <div>
-                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Telfono</label>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Teléfono</label>
                        <input {...register("phone", { required: true })} type="tel" className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="11 1234 5678" />
                        {errors.phone && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                      </div>
                    </div>
                    
                     <div>
-                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Direccin</label>
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Dirección</label>
                      <input {...register("address_1", { required: true })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" placeholder="Calle Falsa 123" />
                       {errors.address_1 && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                    </div>
@@ -306,7 +306,7 @@ const CheckoutPage = () => {
                         {errors.city && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                      </div>
                      <div>
-                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Cdigo Postal</label>
+                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Código Postal</label>
                        <input {...register("postcode", { required: true })} className="w-full rounded-xl border-gray-200 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 placeholder-gray-300" />
                         {errors.postcode && <span className="text-red-500 text-[10px] font-bold">REQUERIDO</span>}
                      </div>

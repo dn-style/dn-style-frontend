@@ -71,7 +71,7 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"message": "Error al crear pedido"})
 	}
 
-	// Reintento si el ID de cliente es invlido (stale data en cliente)
+	// Reintento si el ID de cliente es inválido (stale data en cliente)
 	if resp.StatusCode() == 400 {
 		var errData map[string]interface{}
 		_ = json.Unmarshal(resp.Body(), &errData)
@@ -93,7 +93,7 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 	_ = json.Unmarshal(resp.Body(), &data)
 
 	if orderID, ok := data["id"]; ok {
-		// 1. Notificacion admin
+		// 1. Notificación admin
 		customerName := "Cliente"
 		if billing, ok := body["billing"].(map[string]interface{}); ok {
 			customerName = fmt.Sprintf("%v %v", billing["first_name"], billing["last_name"])
@@ -113,8 +113,8 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 					details = d
 				}
 
-				noteContent := fmt.Sprintf(" DETALLES DE CONVERSIN (ARS):\n\n"+
-					" Cotizacin aplicada: $%v\n"+
+				noteContent := fmt.Sprintf(" DETALLES DE CONVERSIÓN (ARS):\n\n"+
+					" Cotización aplicada: $%v\n"+
 					" Total en Pesos: ARS $%v\n\n"+
 					"Detalle de productos:\n%s", rateVal, totalVal, details)
 
@@ -125,7 +125,7 @@ func HandleCreateOrder(c *fiber.Ctx) error {
 			}
 		}
 
-		// 3. MOTOR DE PLUGINS DINMICO (Soporte Interceptores)
+		// 3. MOTOR DE PLUGINS DINÁMICO (Soporte Interceptores)
 		totalVal, _ := strconv.ParseFloat(fmt.Sprintf("%v", data["total"]), 64)
 
 		for _, plugin := range plugins.OrderInterceptors {
